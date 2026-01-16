@@ -1,26 +1,490 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ======================================
+     JOZI MARKET DESIGN SYSTEM
+     ====================================== */
+
+  /* ===================
+     1. CORE COLOR PALETTE
+     =================== */
+  
+  /* Jozi Forest - Primary brand color, headers, primary buttons */
+  --jozi-forest: #1B5E52;
+  --jozi-forest-light: #247A6A;
+  --jozi-forest-dark: #144840;
+  
+  /* Jozi Gold - Secondary/Accent, badges, highlights, "Artisan Verified" */
+  --jozi-gold: #C7A16E;
+  --jozi-gold-light: #D4B485;
+  --jozi-gold-dark: #B08D5B;
+  
+  /* Jozi Bright - Tertiary accent, high-vibrancy CTAs, hover states */
+  --jozi-bright: #D4A854;
+  
+  /* Jozi Cream - Global background, paper-like soft white */
+  --jozi-cream: #FCFAF7;
+  
+  /* Jozi Dark - Deep off-black for hero, footers, deep shadows */
+  --jozi-dark: #0A1A17;
+
+  /* ===================
+     2. SEMANTIC TOKENS (HSL for Tailwind)
+     =================== */
+  
+  /* Primary - Forest Green */
+  --primary: 160 55% 22%;           /* #1B5E52 */
+  --primary-foreground: 40 33% 98%; /* Light cream text on green */
+  
+  /* Secondary - Gold */
+  --secondary: 37 35% 60%;          /* #C7A16E */
+  --secondary-foreground: 160 55% 22%; /* Forest text on gold */
+  
+  /* Accent - Bright Gold */
+  --accent: 40 60% 58%;             /* #D4A854 */
+  --accent-foreground: 160 55% 15%;
+
+  /* Background & Surface - Cream is global background */
+  --background: 40 33% 98%;         /* #FCFAF7 - Paper-like cream */
+  --foreground: 165 40% 7%;         /* #0A1A17 - Jozi Dark text */
+
+  --card: 40 33% 98%;               /* Same as background */
+  --card-foreground: 165 40% 7%;
+
+  --popover: 0 0% 100%;             /* Pure white for popovers */
+  --popover-foreground: 165 40% 7%;
+
+  --muted: 40 20% 94%;              /* Slightly darker cream */
+  --muted-foreground: 160 15% 40%;  /* Muted gray-green */
+
+  /* Borders & Input */
+  --border: 160 10% 90%;            /* Very subtle forest-tinted border */
+  --input: 160 10% 90%;
+  --ring: 160 55% 22%;              /* Forest for focus rings */
+
+  /* Semantic Colors */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 76% 36%;           /* Emerald for positive feedback */
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --info: 199 89% 48%;
+  --info-foreground: 0 0% 100%;
+
+  /* ===================
+     3. STRUCTURAL DESIGN - Border Radius
+     =================== */
+  --radius-sm: 0.5rem;              /* 8px - Small elements */
+  --radius: 0.75rem;                /* 12px - Default */
+  --radius-md: 0.75rem;             /* 12px */
+  --radius-lg: 1rem;                /* 16px - Buttons/Inputs */
+  --radius-xl: 1.5rem;              /* 24px */
+  --radius-2xl: 2rem;               /* 32px - Cards */
+  --radius-3xl: 2.5rem;             /* 40px - Feature cards */
+  --radius-4xl: 3rem;               /* 48px - Hero sections */
+  --radius-full: 9999px;
+
+  /* ===================
+     4. SHADOW SYSTEM - Disabled (flat design)
+     =================== */
+  --shadow-soft: none;
+  --shadow-medium: none;
+  --shadow-lg: none;
+  --shadow-glow: none;
+  --shadow-glow-forest: none;
+
+  /* ===================
+     5. GRADIENTS
+     =================== */
+  --gradient-hero: linear-gradient(135deg, #1B5E52 0%, #247A6A 50%, #2D8F7D 100%);
+  --gradient-gold: linear-gradient(135deg, #B08D5B 0%, #C7A16E 50%, #D4B485 100%);
+  --gradient-bright: linear-gradient(135deg, #C7A16E 0%, #D4A854 100%);
+  --gradient-success: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  --gradient-dark: linear-gradient(135deg, #0A1A17 0%, #1B5E52 100%);
+  --gradient-cream: linear-gradient(135deg, #FCFAF7 0%, #F5F0E8 100%);
+
+  /* ===================
+     6. TRANSITIONS & MOTION
+     =================== */
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);   /* Standard easing */
+  --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* Playful bounce */
+  --transition-snappy: cubic-bezier(0.16, 1, 0.3, 1); /* Quick snap */
+
+  /* Typography - Font variable set by Next.js font loader */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* Dark Mode - Inverted with maintained contrast */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 165 40% 5%;       /* Deep green-tinted black */
+    --foreground: 40 20% 95%;       /* Light cream text */
+    
+    --card: 165 35% 8%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 165 35% 10%;
+    --popover-foreground: 40 20% 95%;
+
+    --muted: 165 25% 12%;
+    --muted-foreground: 40 15% 65%;
+
+    --border: 165 20% 15%;
+    --input: 165 20% 15%;
+    
+    /* Swap cream and dark for dark mode */
+    --jozi-cream: #0A1A17;
+    --jozi-dark: #FCFAF7;
+
+    --shadow-soft: none;
+    --shadow-medium: none;
   }
 }
 
+/* Tailwind v4 Theme - Extends default Tailwind with Jozi Market tokens */
+@theme inline {
+  /* ===================
+     JOZI BRAND COLORS
+     Use: bg-jozi-forest, text-jozi-gold, etc.
+     =================== */
+  --color-jozi-forest: #1B5E52;
+  --color-jozi-gold: #C7A16E;
+  --color-jozi-bright: #D4A854;
+  --color-jozi-cream: #FCFAF7;
+  --color-jozi-dark: #0A1A17;
+
+  /* ===================
+     PRIMARY & ACCENT
+     Use: bg-primary, text-primary-foreground, bg-accent, etc.
+     =================== */
+  --color-primary: #1B5E52;
+  --color-primary-foreground: #FCFAF7;
+  --color-accent: #C7A16E;
+  --color-accent-foreground: #1B5E52;
+
+  /* ===================
+     SEMANTIC COLORS
+     =================== */
+  --color-background: #FCFAF7;        /* Jozi Cream */
+  --color-foreground: #0A1A17;        /* Jozi Dark */
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: #F5F2ED;             /* Slightly darker cream */
+  --color-muted-foreground: #5A6B67;  /* Muted gray-green */
+  --color-card: #FCFAF7;              /* Same as background */
+  --color-card-foreground: #0A1A17;
+  --color-popover: #FFFFFF;           /* Pure white for popovers */
+  --color-popover-foreground: #0A1A17;
+  --color-border: rgba(27, 94, 82, 0.08); /* Subtle forest border */
+  --color-input: rgba(27, 94, 82, 0.08);
+  --color-ring: #C7A16E;              /* Jozi Gold for focus rings */
+  --color-destructive: #DC2626;
+  --color-destructive-foreground: #FFFFFF;
+
+  /* ===================
+     BOX SHADOWS - Disabled
+     =================== */
+  --shadow-soft: none;
+  --shadow-2xl: none;
+
+  /* ===================
+     BORDER RADIUS - Organic Rounding
+     Use: rounded-xl, rounded-2xl, rounded-3xl, rounded-4xl, rounded-5xl
+     =================== */
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-4xl: 2.5rem;
+  --radius-5xl: 3rem;
+
+  /* ===================
+     TYPOGRAPHY
+     =================== */
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-mono: var(--font-geist-mono);
+
+  /* Letter Spacing */
+  --tracking-tighter: -0.05em;
+  --tracking-widest: 0.25em;
+}
+
+/* Base Styles */
+* {
+  border-color: rgba(27, 94, 82, 0.05); /* Subtle forest-tinted border - felt not seen */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--jozi-cream);      /* Paper-like soft white background */
+  color: var(--jozi-dark);            /* Deep off-black text */
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--jozi-forest);
+  border-radius: 9999px;
+  opacity: 0.3;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  opacity: 0.5;
+}
+
+/* Selection */
+::selection {
+  background: var(--jozi-gold);
+  color: var(--jozi-forest);
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid #C7A16E; /* Jozi Gold */
+  outline-offset: 2px;
+}
+
+/* Ring utility for focus states */
+.ring-jozi-forest {
+  --tw-ring-color: #1B5E52;
+}
+
+.ring-jozi-gold {
+  --tw-ring-color: #C7A16E;
+}
+
+/* ===================
+   UTILITY CLASSES
+   =================== */
+
+/* Shadow System - Soft, multi-layered */
+.shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+.shadow-medium {
+  box-shadow: var(--shadow-medium);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+.shadow-glow-forest {
+  box-shadow: var(--shadow-glow-forest);
+}
+
+/* Gradients */
+.gradient-hero {
+  background: var(--gradient-hero);
+}
+
+.gradient-gold {
+  background: var(--gradient-gold);
+}
+
+.gradient-bright {
+  background: var(--gradient-bright);
+}
+
+.gradient-success {
+  background: var(--gradient-success);
+}
+
+.gradient-dark {
+  background: var(--gradient-dark);
+}
+
+.gradient-cream {
+  background: var(--gradient-cream);
+}
+
+/* Glassmorphism - For headers and overlays */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-dark {
+  background: rgba(10, 26, 23, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-forest {
+  background: rgba(27, 94, 82, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Categorization - Status Badges */
+.badge-urgency {
+  background-color: rgb(254 242 242);
+  color: rgb(220 38 38);
+}
+
+.badge-stability {
+  background-color: rgb(239 246 255);
+  color: rgb(37 99 235);
+}
+
+.badge-growth {
+  background-color: var(--jozi-gold);
+  color: white;
+}
+
+.badge-verified {
+  background-color: var(--jozi-gold);
+  color: var(--jozi-forest);
+}
+
+/* Subtle Container Border - Felt not seen */
+.border-subtle {
+  border: 1px solid rgba(27, 94, 82, 0.05);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideDown {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s var(--transition-smooth);
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s var(--transition-smooth);
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s var(--transition-smooth);
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s var(--transition-bounce);
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Text Gradient */
+.text-gradient-gold {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-forest {
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Line Clamp */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
