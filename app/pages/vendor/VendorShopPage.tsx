@@ -29,7 +29,8 @@ import {
   Sparkles,
   Flame,
   Timer,
-  Percent
+  Percent,
+  BadgeCheck
 } from 'lucide-react';
 import { vendors, products } from '../../data/mockData';
 import ProductCard from '../../components/ProductCard';
@@ -147,7 +148,7 @@ const VendorShopPage: React.FC = () => {
       {/* Review Modal */}
       <AnimatePresence>
         {isReviewModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -159,7 +160,7 @@ const VendorShopPage: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-xl rounded-[3rem] p-10 lg:p-12 shadow-2xl overflow-hidden"
+              className="relative bg-white w-full max-w-xl rounded-5xl p-10 lg:p-12 shadow-2xl overflow-hidden"
             >
               <button onClick={() => setIsReviewModalOpen(false)} className="absolute top-8 right-8 p-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
                 <X className="w-6 h-6 text-gray-400" />
@@ -231,61 +232,60 @@ const VendorShopPage: React.FC = () => {
       </AnimatePresence>
 
       {/* Premium Hero Section */}
-      <section className="bg-white border-b border-jozi-forest/5 pt-12 pb-20 relative overflow-hidden">
-        {/* Background Decorative Element */}
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-jozi-forest/[0.02] -skew-x-12 transform translate-x-20" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <Link href="/vendors" className="inline-flex items-center text-gray-400 font-bold text-xs uppercase tracking-widest mb-12 hover:text-jozi-forest transition-colors group">
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to All Artisans
-          </Link>
+      <section className="relative">
+        <div className="h-[300px] md:h-[450px] w-full relative overflow-hidden bg-jozi-dark">
+          <img 
+            src="https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1600" 
+            className="w-full h-full object-cover opacity-40 scale-105"
+            alt="Artisan Banner"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-[#FDFCFB] via-transparent to-transparent" />
+        </div>
 
-          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-12 lg:gap-20">
+        <div className="container mx-auto px-6 max-w-[1550px] -mt-40 relative z-10">
+          <div className="bg-white rounded-[3.5rem] p-10 md:p-14 shadow-2xl border border-jozi-forest/5 flex flex-col md:flex-row items-center md:items-end gap-12">
+            {/* Store Logo */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="relative shrink-0"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-40 h-40 md:w-56 md:h-56 rounded-5xl overflow-hidden border-8 border-white shadow-2xl -mt-24 md:-mt-48 shrink-0 bg-white"
             >
-              <div className="w-56 h-56 lg:w-72 lg:h-72 rounded-[3.5rem] overflow-hidden shadow-2xl border-8 border-jozi-cream">
-                <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute -bottom-4 -right-4 bg-jozi-gold text-white p-4 rounded-3xl shadow-xl shadow-jozi-gold/20 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
+              <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
             </motion.div>
 
-            <div className="flex-grow text-center lg:text-left space-y-6">
-              <div className="space-y-4">
-                <div className="flex flex-wrap justify-center lg:justify-start items-center gap-4">
-                  <h1 className="text-5xl lg:text-7xl font-black text-jozi-forest tracking-tighter leading-none">{vendor.name}</h1>
-                  <div className="bg-jozi-forest/5 px-4 py-2 rounded-full flex items-center space-x-2 border border-jozi-forest/10">
+            {/* Info and Tagline */}
+            <div className="grow text-center md:text-left space-y-5">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                  <h1 className="text-4xl md:text-6xl font-black text-jozi-forest tracking-tighter uppercase leading-none">{vendor.name}</h1>
+                  <BadgeCheck className="w-10 h-10 text-jozi-gold" />
+                </div>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-5 text-gray-400 font-bold text-xs uppercase tracking-widest">
+                  <div className="flex items-center gap-2 bg-jozi-forest/5 px-4 py-2 rounded-full">
                     <Star className="w-4 h-4 text-jozi-gold fill-current" />
-                    <span className="text-sm font-black text-jozi-forest">{vendor.rating}</span>
-                    <span className="text-xs text-gray-400 font-bold">({reviewsList.length} Reviews)</span>
+                    <span className="text-jozi-forest">{vendor.rating}</span>
+                    <span className="opacity-40">/ 5.0</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 border border-gray-100 rounded-full">
+                    <MapPin className="w-4 h-4 text-jozi-gold" />
+                    <span>{vendor.location}ggg</span>
                   </div>
                 </div>
-                <div className="flex items-center justify-center lg:justify-start space-x-3 text-jozi-gold">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-xs font-black uppercase tracking-[0.3em]">{vendor.location}</span>
-                  <div className="w-1 h-1 bg-jozi-gold rounded-full" />
-                  <span className="text-xs font-black uppercase tracking-[0.3em]">{rawVendorProducts.length} Items</span>
-                </div>
               </div>
-
               <p className="text-gray-500 font-medium text-xl max-w-3xl leading-relaxed italic">
                 "{vendor.description}"
               </p>
+            </div>
 
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4">
-                <button className="bg-jozi-forest text-white px-10 py-5 rounded-2xl font-black shadow-xl shadow-jozi-forest/10 flex items-center hover:scale-105 transition-all">
-                  <Heart className="w-5 h-5 mr-2" />
-                  Follow Workshop
-                </button>
-                <button className="bg-white border border-jozi-forest/10 p-5 rounded-2xl text-jozi-forest hover:bg-jozi-forest/5 transition-all shadow-sm">
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
+            {/* Header Primary Actions */}
+            <div className="flex items-center gap-4 shrink-0 pb-2">
+              <button className="bg-jozi-forest text-white px-10 py-5 rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center">
+                <Heart className="w-5 h-5 mr-3" />
+                Follow Workshop
+              </button>
+              <button className="bg-white border border-gray-100 text-jozi-forest p-5 rounded-3xl hover:bg-jozi-forest hover:text-white transition-all shadow-sm">
+                <Share2 className="w-6 h-6" />
+              </button>
             </div>
           </div>
         </div>
@@ -362,7 +362,7 @@ const VendorShopPage: React.FC = () => {
             </div>
 
             {/* Store Loyalty Badge */}
-            <div className="p-8 bg-jozi-forest rounded-[2.5rem] text-white space-y-4 relative overflow-hidden group">
+            <div className="p-8 bg-jozi-forest rounded-4xl text-white space-y-4 relative overflow-hidden group">
               <Award className="absolute -bottom-4 -right-4 w-24 h-24 opacity-10 group-hover:rotate-12 transition-transform" />
               <h4 className="text-lg font-black leading-tight">Certified <br />Artisan Store</h4>
               <p className="text-xs text-jozi-cream/60 font-medium">All items are inspected at the Jozi Hub before being dispatched to ensure authenticity.</p>
@@ -370,7 +370,7 @@ const VendorShopPage: React.FC = () => {
           </aside>
 
           {/* Product Feed */}
-          <div className="flex-grow space-y-12">
+          <div className="grow space-y-12">
             
             {/* NEW: Workshop Promotions Section */}
             {vendorDeals.length > 0 && (
@@ -405,7 +405,7 @@ const VendorShopPage: React.FC = () => {
                         <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border-2 border-white/10">
                           <img src={deal.images[0]} className="w-full h-full object-cover group-hover/deal:scale-110 transition-transform duration-500" />
                         </div>
-                        <div className="flex-grow text-left space-y-2">
+                        <div className="grow text-left space-y-2">
                            <p className="text-[10px] font-black text-jozi-gold uppercase tracking-widest">Flash Offer</p>
                            <h4 className="font-black text-lg leading-tight">{deal.name}</h4>
                            <div className="flex items-center space-x-3">
@@ -492,7 +492,7 @@ const VendorShopPage: React.FC = () => {
                         <div className="w-40 h-40 rounded-2xl overflow-hidden shrink-0">
                           <img src={product.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <div className="flex-grow flex flex-col justify-between py-1">
+                        <div className="grow flex flex-col justify-between py-1">
                           <div>
                             <span className="text-[10px] font-black text-jozi-gold uppercase tracking-[0.2em]">{product.category}</span>
                             <h4 className="text-xl font-black text-jozi-forest group-hover:text-jozi-gold transition-colors">{product.name}</h4>
@@ -517,7 +517,7 @@ const VendorShopPage: React.FC = () => {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="py-24 text-center space-y-6 bg-white rounded-[3rem] border border-dashed border-jozi-forest/20"
+                className="py-24 text-center space-y-6 bg-white rounded-5xl border border-dashed border-jozi-forest/20"
               >
                 <div className="w-20 h-20 bg-jozi-cream rounded-full flex items-center justify-center mx-auto">
                   <PackageSearch className="w-10 h-10 text-gray-300" />
@@ -570,7 +570,7 @@ const VendorShopPage: React.FC = () => {
                   return (
                     <div key={star} className="flex items-center space-x-4">
                       <span className="text-xs font-black text-jozi-forest w-8">{star} Star</span>
-                      <div className="flex-grow h-2 bg-jozi-cream rounded-full overflow-hidden">
+                      <div className="grow h-2 bg-jozi-cream rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
                           whileInView={{ width: `${percentage}%` }}
@@ -611,7 +611,7 @@ const VendorShopPage: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: idx * 0.1 }}
-                      className="p-8 bg-jozi-cream/30 rounded-[2.5rem] border border-jozi-forest/5 hover:bg-jozi-cream/50 transition-all group"
+                      className="p-8 bg-jozi-cream/30 rounded-4xl border border-jozi-forest/5 hover:bg-jozi-cream/50 transition-all group"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center space-x-4">
@@ -679,7 +679,7 @@ const VendorShopPage: React.FC = () => {
                   <span className="block text-4xl font-black text-jozi-gold">100%</span>
                   <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Artisan Led</span>
                 </div>
-                <div className="w-[1px] h-12 bg-white/10" />
+                <div className="w-px h-12 bg-white/10" />
                 <div className="space-y-1">
                   <span className="block text-4xl font-black text-jozi-gold">Local</span>
                   <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Sourced Materials</span>

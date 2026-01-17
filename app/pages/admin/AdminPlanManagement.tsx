@@ -137,7 +137,7 @@ const AdminPlanManagement: React.FC = () => {
       const isDarkValue = Boolean(formData.isDark);
       const isStarValue = Boolean(formData.isStar);
 
-      if (editingPlan) {
+    if (editingPlan) {
         // Update existing plan
         const updateData: IUpdateSubscriptionPlan = {
           id: editingPlan.id!,
@@ -157,7 +157,7 @@ const AdminPlanManagement: React.FC = () => {
         }
         
         showSuccess('Subscription plan updated successfully');
-      } else {
+    } else {
         // Create new plan
         const createData: ICreateSubscriptionPlan = {
           name: formData.name,
@@ -176,9 +176,9 @@ const AdminPlanManagement: React.FC = () => {
         }
         
         showSuccess('Subscription plan created successfully');
-      }
+    }
 
-      setIsModalOpen(false);
+    setIsModalOpen(false);
       setEditingPlan(null);
       await fetchPlans();
     } catch (err: any) {
@@ -266,72 +266,72 @@ const AdminPlanManagement: React.FC = () => {
             <p className="text-gray-400 font-bold">Loading subscription plans...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-12">
-            {plans.map((plan) => (
-              <motion.div
-                layout
-                key={plan.id}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-12">
+          {plans.map((plan) => (
+            <motion.div
+              layout
+              key={plan.id}
                 className={`rounded-5xl p-10 flex flex-col h-full shadow-soft border-2 transition-all relative group ${
-                  plan.isDark ? 'bg-jozi-dark text-white border-jozi-dark' : 'bg-white text-jozi-forest border-transparent'
-                }`}
-              >
+                plan.isDark ? 'bg-jozi-dark text-white border-jozi-dark' : 'bg-white text-jozi-forest border-transparent'
+              }`}
+            >
                 {plan.isStar ?(
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-jozi-gold text-jozi-dark text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg z-10 flex items-center">
-                    <Star className="w-3 h-3 mr-1 fill-current" /> Recommended
-                  </div>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-jozi-gold text-jozi-dark text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg z-10 flex items-center">
+                  <Star className="w-3 h-3 mr-1 fill-current" /> Recommended
+                </div>
                 ) : null}
 
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${plan.isDark ? 'text-jozi-gold' : 'text-gray-400'}`}>
-                      {plan.subtitle}
-                    </p>
-                    <h3 className="text-2xl font-black tracking-tight">{plan.name}</h3>
-                  </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleOpenModal(plan)}
-                      className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:text-jozi-forest hover:bg-white"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => openDeleteConfirm(plan)}
-                      className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:text-red-500 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${plan.isDark ? 'text-jozi-gold' : 'text-gray-400'}`}>
+                    {plan.subtitle}
+                  </p>
+                  <h3 className="text-2xl font-black tracking-tight">{plan.name}</h3>
                 </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => handleOpenModal(plan)}
+                    className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:text-jozi-forest hover:bg-white"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button 
+                      onClick={() => openDeleteConfirm(plan)}
+                    className="p-2 bg-gray-100 text-gray-400 rounded-lg hover:text-red-500 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
 
-                <div className="mb-8 p-6 rounded-3xl bg-jozi-cream/5 border border-white/10 space-y-4">
-                  <div className="flex items-baseline space-x-1">
+              <div className="mb-8 p-6 rounded-3xl bg-jozi-cream/5 border border-white/10 space-y-4">
+                <div className="flex items-baseline space-x-1">
                     <span className="text-2xl font-black">R{plan.price}</span>
                     <span className={`text-xs font-bold ${plan.isDark ? 'text-white/40' : 'text-gray-400'}`}>/{plan.duration === SubscriptionDuration.MONTHLY ? 'month' : 'year'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
+                </div>
+                <div className="flex items-center justify-between">
                     <span className="text-xs font-black uppercase tracking-widest opacity-60">Status</span>
                     <span className={`text-xs font-black px-2 py-1 rounded ${plan.status === SubscriptionPlanStatus.ACTIVE ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'}`}>
                       {plan.status}
                     </span>
-                  </div>
                 </div>
+              </div>
 
-                <p className={`text-xs font-medium leading-relaxed mb-10 ${plan.isDark ? 'text-white/60' : 'text-gray-500'}`}>
-                  {plan.description}
-                </p>
+              <p className={`text-xs font-medium leading-relaxed mb-10 ${plan.isDark ? 'text-white/60' : 'text-gray-500'}`}>
+                {plan.description}
+              </p>
 
-                <div className="mt-auto pt-8 border-t border-white/5 flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-xs font-bold opacity-60">
-                    <Users className="w-4 h-4" />
+              <div className="mt-auto pt-8 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-xs font-bold opacity-60">
+                  <Users className="w-4 h-4" />
                     <span>{plan.vendorCount || 0} Artisans</span>
-                  </div>
-                  <Link href="/admin/plan-matrix" className={`text-[10px] font-black uppercase tracking-widest flex items-center hover:underline ${plan.isDark ? 'text-jozi-gold' : 'text-jozi-forest'}`}>
-                    Manage Rules <ChevronRight className="w-3 h-3 ml-1" />
-                  </Link>
                 </div>
-              </motion.div>
-            ))}
+                <Link href="/admin/plan-matrix" className={`text-[10px] font-black uppercase tracking-widest flex items-center hover:underline ${plan.isDark ? 'text-jozi-gold' : 'text-jozi-forest'}`}>
+                  Manage Rules <ChevronRight className="w-3 h-3 ml-1" />
+                </Link>
+              </div>
+            </motion.div>
+          ))}
 
           {/* Add New Card Callout */}
           <button 
@@ -344,7 +344,7 @@ const AdminPlanManagement: React.FC = () => {
             <h4 className="text-xl font-black text-gray-300 group-hover:text-jozi-forest transition-colors uppercase tracking-tight">Add New Tier</h4>
             <p className="text-xs text-gray-300 font-bold mt-2">Expand the marketplace <br />membership options.</p>
           </button>
-          </div>
+        </div>
         )}
       </section>
 
@@ -428,14 +428,14 @@ const AdminPlanManagement: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Subtitle *</label>
-                    <input 
+                      <input 
                       type="text" 
-                      required
+                        required
                       value={formData.subtitle}
                       onChange={e => setFormData({...formData, subtitle: e.target.value})}
                       placeholder="e.g. Essential Growth, Market Leader"
                       className="w-full bg-gray-50 rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
-                    />
+                      />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Description *</label>

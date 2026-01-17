@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,8 +17,6 @@ import {
   Trash2,
   AlertCircle
 } from 'lucide-react';
-'use client';
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../contexts/CartContext';
@@ -73,7 +72,7 @@ const CheckoutPage: React.FC = () => {
           </div>
           <h2 className="text-3xl font-black text-jozi-forest">Your bag is empty</h2>
           <p className="text-gray-500 font-medium max-w-xs mx-auto">Looks like you haven't added any treasures to your collection yet.</p>
-          <Link to="/shop" className="inline-block bg-jozi-forest text-white px-10 py-4 rounded-2xl font-black shadow-xl">Start Shopping</Link>
+          <Link href="/shop" className="inline-block bg-jozi-forest text-white px-10 py-4 rounded-2xl font-black shadow-xl">Start Shopping</Link>
         </div>
       </div>
     );
@@ -88,14 +87,14 @@ const CheckoutPage: React.FC = () => {
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="fixed inset-0 z-[200] bg-jozi-dark flex items-center justify-center p-4"
+              className="fixed inset-0 z-200 bg-jozi-dark flex items-center justify-center p-4"
             >
               <motion.div 
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 className="bg-white rounded-[4rem] p-12 lg:p-20 max-w-2xl w-full text-center space-y-8 shadow-2xl"
               >
-                <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-200">
+                <div className="w-24 h-24 bg-emerald-500 text-white rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-emerald-200">
                   <CheckCircle2 className="w-14 h-14" />
                 </div>
                 <div className="space-y-4">
@@ -103,8 +102,8 @@ const CheckoutPage: React.FC = () => {
                   <p className="text-xl text-gray-500 font-medium">Your local treasures are being prepared at the artisan workshops. We've sent a detailed summary to your email.</p>
                 </div>
                 <div className="pt-8 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
-                  <Link to="/profile" className="flex-grow bg-jozi-forest text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-jozi-dark transition-all">Track My Order</Link>
-                  <Link to="/" className="flex-grow bg-jozi-cream text-jozi-forest py-5 rounded-2xl font-black uppercase tracking-widest">Back to Market</Link>
+                  <Link href="/profile" className="grow bg-jozi-forest text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-jozi-dark transition-all">Track My Order</Link>
+                  <Link href="/" className="grow bg-jozi-cream text-jozi-forest py-5 rounded-2xl font-black uppercase tracking-widest">Back to Market</Link>
                 </div>
               </motion.div>
             </motion.div>
@@ -112,7 +111,7 @@ const CheckoutPage: React.FC = () => {
         </AnimatePresence>
 
         <div className="flex items-center justify-between mb-12">
-          <Link to="/shop" className="inline-flex items-center text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-jozi-forest transition-colors">
+          <Link href="/shop" className="inline-flex items-center text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-jozi-forest transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Return to Gallery
           </Link>
@@ -129,7 +128,7 @@ const CheckoutPage: React.FC = () => {
             <form id="checkout-form" onSubmit={handlePlaceOrder} className="space-y-8">
               
               {/* Personal Info */}
-              <section className="bg-white rounded-[3rem] p-10 shadow-soft border border-jozi-forest/5 space-y-8">
+              <section className="bg-white rounded-5xl p-10 shadow-soft border border-jozi-forest/5 space-y-8">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-jozi-forest/5 rounded-2xl flex items-center justify-center text-jozi-forest">
                     <CheckCircle2 className="w-6 h-6" />
@@ -153,7 +152,7 @@ const CheckoutPage: React.FC = () => {
               </section>
 
               {/* Delivery Address */}
-              <section className="bg-white rounded-[3rem] p-10 shadow-soft border border-jozi-forest/5 space-y-8">
+              <section className="bg-white rounded-5xl p-10 shadow-soft border border-jozi-forest/5 space-y-8">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-jozi-forest/5 rounded-2xl flex items-center justify-center text-jozi-forest">
                     <MapPin className="w-6 h-6" />
@@ -183,7 +182,7 @@ const CheckoutPage: React.FC = () => {
               </section>
 
               {/* Shipping Method */}
-              <section className="bg-white rounded-[3rem] p-10 shadow-soft border border-jozi-forest/5 space-y-8">
+              <section className="bg-white rounded-5xl p-10 shadow-soft border border-jozi-forest/5 space-y-8">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-jozi-forest/5 rounded-2xl flex items-center justify-center text-jozi-forest">
                     <Truck className="w-6 h-6" />
@@ -194,7 +193,7 @@ const CheckoutPage: React.FC = () => {
                   <button 
                     type="button"
                     onClick={() => setShippingMethod('standard')}
-                    className={`p-6 rounded-[2rem] border-2 text-left transition-all relative overflow-hidden group ${shippingMethod === 'standard' ? 'border-jozi-forest bg-jozi-forest/5' : 'border-gray-100 hover:border-jozi-gold/20'}`}
+                    className={`p-6 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${shippingMethod === 'standard' ? 'border-jozi-forest bg-jozi-forest/5' : 'border-gray-100 hover:border-jozi-gold/20'}`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <span className={`text-xs font-black uppercase tracking-widest ${shippingMethod === 'standard' ? 'text-jozi-forest' : 'text-gray-400'}`}>Standard</span>
@@ -208,7 +207,7 @@ const CheckoutPage: React.FC = () => {
                   <button 
                     type="button"
                     onClick={() => setShippingMethod('express')}
-                    className={`p-6 rounded-[2rem] border-2 text-left transition-all relative overflow-hidden group ${shippingMethod === 'express' ? 'border-jozi-forest bg-jozi-forest/5' : 'border-gray-100 hover:border-jozi-gold/20'}`}
+                    className={`p-6 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${shippingMethod === 'express' ? 'border-jozi-forest bg-jozi-forest/5' : 'border-gray-100 hover:border-jozi-gold/20'}`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <span className={`text-xs font-black uppercase tracking-widest ${shippingMethod === 'express' ? 'text-jozi-forest' : 'text-gray-400'}`}>Priority Express</span>
@@ -222,7 +221,7 @@ const CheckoutPage: React.FC = () => {
               </section>
 
               {/* Payment Method Selector (UI Only) */}
-              <section className="bg-white rounded-[3rem] p-10 shadow-soft border border-jozi-forest/5 space-y-8">
+              <section className="bg-white rounded-5xl p-10 shadow-soft border border-jozi-forest/5 space-y-8">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-jozi-forest/5 rounded-2xl flex items-center justify-center text-jozi-forest">
                     <CreditCard className="w-6 h-6" />
@@ -270,7 +269,7 @@ const CheckoutPage: React.FC = () => {
                       <div className="w-14 h-14 bg-white/10 rounded-xl overflow-hidden shrink-0 border border-white/10">
                         <img src={item.images[0]} className="w-full h-full object-cover" />
                       </div>
-                      <div className="flex-grow min-w-0">
+                      <div className="grow min-w-0">
                         <h4 className="font-bold text-sm truncate">{item.name}</h4>
                         <p className="text-[10px] text-white/40 font-bold uppercase">Qty: {item.quantity}</p>
                       </div>
@@ -282,7 +281,7 @@ const CheckoutPage: React.FC = () => {
                 {/* Coupon Input */}
                 <div className="pt-6 border-t border-white/10 space-y-4">
                   <div className="flex gap-2">
-                    <div className="relative flex-grow">
+                    <div className="relative grow">
                       <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                       <input 
                         type="text" 
@@ -363,7 +362,7 @@ const CheckoutPage: React.FC = () => {
               </div>
 
               {/* Guarantees */}
-              <div className="bg-white p-8 rounded-[3rem] border border-jozi-forest/5 space-y-6">
+              <div className="bg-white p-8 rounded-5xl border border-jozi-forest/5 space-y-6">
                 <div className="flex items-start space-x-4">
                   <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 shrink-0">
                     <AlertCircle className="w-5 h-5" />

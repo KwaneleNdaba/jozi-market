@@ -31,15 +31,15 @@ const SignUpPage: React.FC = () => {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-6xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row-reverse min-h-[700px] border border-jozi-forest/5"
+        className="max-w-6xl w-full bg-white rounded-5xl shadow-2xl overflow-hidden flex flex-col lg:flex-row-reverse min-h-[700px] border border-jozi-forest/5"
       >
         {/* Right Side: Features/Benefits */}
         <div className="lg:w-1/2 bg-jozi-gold relative overflow-hidden hidden lg:block">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1574634534894-89d7576c8259?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-bl from-jozi-gold via-jozi-gold/80 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-bl from-jozi-gold via-jozi-gold/80 to-transparent" />
           
           <div className="relative z-10 h-full p-16 flex flex-col justify-between text-jozi-forest">
-            <Link to="/" className="inline-block -ml-10">
+            <Link href="/" className="inline-block -ml-10">
               <Logo className="h-40 w-auto" variant="white" />
             </Link>
 
@@ -70,7 +70,7 @@ const SignUpPage: React.FC = () => {
         {/* Left Side: Form */}
         <div className="lg:w-1/2 p-8 md:p-16 lg:p-24 flex flex-col justify-center bg-white">
           <div className="lg:hidden mb-12">
-            <Link to="/" className="flex items-center space-x-2 text-jozi-forest font-bold">
+            <Link href="/" className="flex items-center space-x-2 text-jozi-forest font-bold">
               <ChevronLeft className="w-5 h-5" />
               <span>Back Home</span>
             </Link>
@@ -138,7 +138,7 @@ const SignUpPage: React.FC = () => {
 
           <p className="mt-12 text-center text-sm font-medium text-gray-500">
             Already have an account? {' '}
-            <Link to="/signin" className="text-jozi-gold font-black hover:underline">Sign In</Link>
+            <Link href="/signin" className="text-jozi-gold font-black hover:underline">Sign In</Link>
           </p>
         </div>
       </motion.div>

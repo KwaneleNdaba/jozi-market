@@ -141,7 +141,7 @@ const AdminOrderManagement: React.FC = () => {
 
       {/* Main Dashboard Section */}
       <section className="px-6 lg:px-12 -mt-12 relative z-20">
-        <div className="bg-white rounded-[3rem] p-8 lg:p-12 shadow-soft border border-jozi-forest/5">
+        <div className="bg-white rounded-5xl p-8 lg:p-12 shadow-soft border border-jozi-forest/5">
           
           {/* Filters Bar */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
@@ -334,7 +334,7 @@ const AdminOrderManagement: React.FC = () => {
       {/* Order Details Modal */}
       <AnimatePresence>
         {selectedOrder && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -369,7 +369,7 @@ const AdminOrderManagement: React.FC = () => {
               </div>
 
               {/* Modal Body */}
-              <div className="flex-grow overflow-y-auto p-8 md:p-12 space-y-12 text-left">
+              <div className="grow overflow-y-auto p-8 md:p-12 space-y-12 text-left">
                 
                 {/* Timeline Visualization */}
                 <div className="space-y-8">
@@ -388,7 +388,7 @@ const AdminOrderManagement: React.FC = () => {
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-gray-100 text-gray-300'}`}>
                               <step.icon className="w-5 h-5" />
                             </div>
-                            <div className="flex-grow">
+                            <div className="grow">
                               <p className={`font-black text-sm ${step.active ? 'text-jozi-forest' : 'text-gray-300'}`}>{step.label}</p>
                               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{step.active ? step.time : 'Awaiting Stage'}</p>
                             </div>
@@ -410,7 +410,7 @@ const AdminOrderManagement: React.FC = () => {
                   
                   <div className="space-y-3">
                     {selectedOrder.products.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-6 bg-jozi-cream/30 rounded-[2rem] border border-jozi-forest/5 group hover:bg-jozi-cream transition-colors">
+                      <div key={idx} className="flex items-center justify-between p-6 bg-jozi-cream/30 rounded-3xl border border-jozi-forest/5 group hover:bg-jozi-cream transition-colors">
                         <div className="flex items-center space-x-5">
                           <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-jozi-forest shadow-sm group-hover:scale-105 transition-transform border border-jozi-forest/5">
                             <Package className="w-6 h-6 opacity-40" />
@@ -433,7 +433,7 @@ const AdminOrderManagement: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-12 pt-4">
                   <div className="space-y-6">
                     <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest">Recipient Details</h3>
-                    <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-6 relative overflow-hidden">
+                    <div className="p-8 bg-gray-50 rounded-4xl border border-gray-100 space-y-6 relative overflow-hidden">
                       <div className="flex items-start space-x-4">
                         <User className="w-5 h-5 text-jozi-gold shrink-0 mt-1" />
                         <div>
@@ -463,7 +463,7 @@ const AdminOrderManagement: React.FC = () => {
                         <span>Hub Logistics</span>
                         <span>R75</span>
                       </div>
-                      <div className="h-[1px] bg-gray-100 my-4" />
+                      <div className="h-px bg-gray-100 my-4" />
                       <div className="flex justify-between items-end pt-2">
                          <div>
                             <span className="text-[10px] font-black text-jozi-gold uppercase tracking-[0.2em]">Grand Total</span>
@@ -480,7 +480,7 @@ const AdminOrderManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-amber-50 p-8 rounded-[2.5rem] border border-amber-100 flex items-start space-x-6">
+                <div className="bg-amber-50 p-8 rounded-4xl border border-amber-100 flex items-start space-x-6">
                    <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
                    <div>
                      <h4 className="font-black text-amber-900 text-sm uppercase tracking-widest">Admin Note</h4>
@@ -491,8 +491,8 @@ const AdminOrderManagement: React.FC = () => {
 
               {/* Modal Footer Actions */}
               <div className="p-8 md:p-12 bg-gray-50 flex flex-col sm:flex-row gap-4 border-t border-gray-100">
-                <div className="flex-grow flex items-center gap-4">
-                  <div className="relative flex-grow">
+                <div className="grow flex items-center gap-4">
+                  <div className="relative grow">
                     <select 
                       className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 font-bold text-sm outline-none appearance-none cursor-pointer"
                       value={selectedOrder.status}

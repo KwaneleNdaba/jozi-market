@@ -29,12 +29,12 @@ const InfluencerSidebar: React.FC<InfluencerSidebarProps> = ({ profile, activeTa
   return (
     <aside className="w-full lg:w-72 shrink-0 space-y-6 lg:sticky lg:top-8">
       {/* Mini Profile Card */}
-      <div className="bg-jozi-dark rounded-[2.5rem] p-8 text-white space-y-6 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+      <div className="bg-jozi-dark rounded-4xl p-8 text-white space-y-6 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent pointer-events-none" />
         
         <div className="relative z-10 flex flex-col items-center text-center space-y-4">
           <div className="relative">
-            <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-jozi-gold shadow-xl group-hover:scale-105 transition-transform duration-500">
+            <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-jozi-gold shadow-xl group-hover:scale-105 transition-transform duration-500">
               <img src={profile.avatar} className="w-full h-full object-cover" alt={profile.name} />
             </div>
             <div className="absolute -bottom-2 -right-2 bg-jozi-forest text-white p-2 rounded-xl border-4 border-jozi-dark">
@@ -54,7 +54,7 @@ const InfluencerSidebar: React.FC<InfluencerSidebarProps> = ({ profile, activeTa
       </div>
 
       {/* Navigation */}
-      <div className="bg-white rounded-[2.5rem] shadow-soft border border-jozi-forest/5 p-6 space-y-2 text-left">
+      <div className="bg-white rounded-4xl shadow-soft border border-jozi-forest/5 p-6 space-y-2 text-left">
         {menuItems.map((item) => (
           <button
             key={item.id}
@@ -70,7 +70,7 @@ const InfluencerSidebar: React.FC<InfluencerSidebarProps> = ({ profile, activeTa
           </button>
         ))}
         
-        <div className="h-[1px] bg-gray-50 my-6 mx-4" />
+        <div className="h-px bg-gray-50 my-6 mx-4" />
 
         <Link href="/influencer/settings" className="w-full flex items-center space-x-4 px-6 py-4 rounded-2xl font-black text-sm text-gray-400 hover:bg-jozi-forest/5 hover:text-jozi-forest transition-all">
           <Settings className="w-5 h-5 shrink-0" />
@@ -83,7 +83,7 @@ const InfluencerSidebar: React.FC<InfluencerSidebarProps> = ({ profile, activeTa
       </div>
 
       {/* Support Card */}
-      <div className="p-8 bg-jozi-cream rounded-[2.5rem] border border-jozi-forest/5 text-left relative overflow-hidden">
+      <div className="p-8 bg-jozi-cream rounded-4xl border border-jozi-forest/5 text-left relative overflow-hidden">
         <AlertCircle className="absolute -top-2 -right-2 w-16 h-16 text-jozi-forest opacity-5" />
         <p className="text-[10px] font-black uppercase tracking-widest text-jozi-gold mb-2">Creator Support</p>
         <p className="text-sm font-medium text-jozi-forest leading-relaxed mb-4">Need help with a campaign proof or payout?</p>

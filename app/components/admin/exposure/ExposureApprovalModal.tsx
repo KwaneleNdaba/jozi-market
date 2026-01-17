@@ -39,7 +39,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-8">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 lg:p-8">
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }} 
@@ -51,7 +51,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
         initial={{ scale: 0.9, opacity: 0, x: 50 }} 
         animate={{ scale: 1, opacity: 1, x: 0 }} 
         exit={{ scale: 0.9, opacity: 0, x: 50 }}
-        className="relative bg-white w-full max-w-7xl h-full lg:h-auto lg:max-h-[92vh] rounded-[3rem] lg:rounded-[4rem] shadow-2xl flex flex-col lg:flex-row overflow-hidden text-left"
+        className="relative bg-white w-full max-w-7xl h-full lg:h-auto lg:max-h-[92vh] rounded-5xl lg:rounded-5xl shadow-2xl flex flex-col lg:flex-row overflow-hidden text-left"
       >
         <button onClick={onClose} className="absolute top-8 right-8 z-50 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all hidden lg:flex">
           <X className="w-6 h-6" />
@@ -63,9 +63,9 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
               <img src={post.mediaUrl} className="w-full h-full object-cover blur-3xl scale-125" />
            </div>
            
-           <div className="relative w-full aspect-[9/16] bg-black rounded-[3.5rem] border-[10px] border-white/10 overflow-hidden shadow-2xl flex flex-col group">
+           <div className="relative w-full aspect-9/16 bg-black rounded-5xl border-10 border-white/10 overflow-hidden shadow-2xl flex flex-col group">
               <img src={post.mediaUrl} className="w-full h-full object-cover opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
               
               <div className="absolute top-8 left-6 right-6 flex items-center justify-between text-white">
                  <div className="flex items-center space-x-3">
@@ -90,7 +90,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
                     {post.caption}
                  </p>
                  <div className="flex items-center space-x-2 pt-4">
-                    <div className="h-0.5 flex-grow bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-0.5 grow bg-white/20 rounded-full overflow-hidden">
                        <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: '100%' }}
@@ -116,7 +116,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
         </div>
 
         {/* Right Section: Orchestration Controls */}
-        <div className="flex-grow overflow-y-auto p-10 lg:p-16 space-y-12">
+        <div className="grow overflow-y-auto p-10 lg:p-16 space-y-12">
            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-10">
               <div className="space-y-4">
                  <div className="flex items-center space-x-3">
@@ -128,7 +128,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
                  <p className="text-gray-400 font-medium italic">{post.contentType} Showcase • {post.vendor}</p>
               </div>
 
-              <div className="bg-jozi-cream rounded-[2rem] px-8 py-5 border border-jozi-forest/5 flex items-center space-x-6">
+              <div className="bg-jozi-cream rounded-3xl px-8 py-5 border border-jozi-forest/5 flex items-center space-x-6">
                  <div className="text-right">
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Vibrancy Score</p>
                     <p className={`text-3xl font-black ${post.aiScore >= 85 ? 'text-emerald-600' : 'text-jozi-gold'}`}>{post.aiScore}</p>
@@ -144,7 +144,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
               <div className="space-y-10">
                  <div className="space-y-4">
                     <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-4">Narrative Guard</h3>
-                    <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 relative group">
+                    <div className="p-8 bg-gray-50 rounded-4xl border border-gray-100 relative group">
                        <p className="text-sm text-gray-500 font-medium leading-relaxed italic">"{post.caption}"</p>
                        <button className="absolute top-4 right-4 p-2 bg-white rounded-lg text-gray-300 hover:text-jozi-gold transition-all shadow-sm">
                           <Edit3 className="w-4 h-4" />
@@ -198,7 +198,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
 
                  <div className="space-y-4">
                     <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-4">Exposure Equity Adjustment</h3>
-                    <div className="p-8 bg-jozi-dark rounded-[2.5rem] text-white space-y-6 relative overflow-hidden shadow-2xl">
+                    <div className="p-8 bg-jozi-dark rounded-4xl text-white space-y-6 relative overflow-hidden shadow-2xl">
                        <div className="relative z-10 space-y-4">
                           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-jozi-gold">
                              <span>Boost Priority</span>
@@ -222,7 +222,7 @@ const ExposureApprovalModal: React.FC<ExposureApprovalModalProps> = ({ post, onC
               <textarea 
                 rows={3} 
                 placeholder="Add internal notes or feedback for the artisan workshop..." 
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-jozi-gold/20 rounded-[2rem] px-8 py-6 font-medium text-sm text-jozi-forest outline-none transition-all resize-none"
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-jozi-gold/20 rounded-3xl px-8 py-6 font-medium text-sm text-jozi-forest outline-none transition-all resize-none"
               />
            </div>
 

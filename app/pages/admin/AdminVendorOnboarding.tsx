@@ -409,21 +409,21 @@ const AdminVendorOnboarding: React.FC = () => {
                               {/* Only show approve/decline buttons if status is not Approved or Declined */}
                               {app.status !== 'Approved' && app.status !== 'Declined' && (
                                 <>
-                                  <button 
-                                    onClick={() => handleStatusUpdate(app.id, 'Approved')}
-                                    title="Approve Application"
-                                    className="p-3 bg-emerald-50 text-emerald-400 rounded-xl hover:text-white hover:bg-emerald-500 transition-all shadow-sm"
-                                  >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                  </button>
+                              <button 
+                                onClick={() => handleStatusUpdate(app.id, 'Approved')}
+                                title="Approve Application"
+                                className="p-3 bg-emerald-50 text-emerald-400 rounded-xl hover:text-white hover:bg-emerald-500 transition-all shadow-sm"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </button>
 
-                                  <button 
-                                    onClick={() => openConfirm(app.id, 'Declined')}
-                                    title="Decline Application"
-                                    className="p-3 bg-rose-50 text-rose-400 rounded-xl hover:text-white hover:bg-rose-500 transition-all shadow-sm"
-                                  >
-                                    <XCircle className="w-4 h-4" />
-                                  </button>
+                              <button 
+                                onClick={() => openConfirm(app.id, 'Declined')}
+                                title="Decline Application"
+                                className="p-3 bg-rose-50 text-rose-400 rounded-xl hover:text-white hover:bg-rose-500 transition-all shadow-sm"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
                                 </>
                               )}
                             </div>
@@ -571,12 +571,12 @@ const AdminVendorOnboarding: React.FC = () => {
 
               {/* Action Bar Bottom */}
               {selectedApp.status !== 'Approved' && selectedApp.status !== 'Declined' && (
-                <div className="p-8 bg-gray-50 flex items-center justify-end space-x-4 border-t border-gray-100">
-                   <button onClick={() => openConfirm(selectedApp.id, 'Declined')} className="px-8 py-4 bg-white text-rose-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-50 transition-all">Decline Application</button>
-                   <button onClick={() => handleStatusUpdate(selectedApp.id, 'Approved')} className="px-10 py-4 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center">
-                      <UserCheck className="w-4 h-4 mr-2" /> Activate Vendor
-                   </button>
-                </div>
+              <div className="p-8 bg-gray-50 flex items-center justify-end space-x-4 border-t border-gray-100">
+                 <button onClick={() => openConfirm(selectedApp.id, 'Declined')} className="px-8 py-4 bg-white text-rose-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-50 transition-all">Decline Application</button>
+                 <button onClick={() => handleStatusUpdate(selectedApp.id, 'Approved')} className="px-10 py-4 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center">
+                    <UserCheck className="w-4 h-4 mr-2" /> Activate Vendor
+                 </button>
+              </div>
               )}
             </motion.div>
           </div>

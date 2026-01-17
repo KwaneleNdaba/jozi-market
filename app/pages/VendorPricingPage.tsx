@@ -122,8 +122,8 @@ const VendorPricingPage: React.FC = () => {
           {/* Primary Apply CTA */}
           <div className="pt-8">
             <Link 
-              to="/vendor/apply" 
-              className="inline-flex items-center bg-jozi-gold text-jozi-forest px-12 py-6 rounded-[2rem] font-black text-2xl uppercase tracking-widest shadow-2xl shadow-black/20 hover:bg-white hover:scale-105 transition-all group"
+              href="/vendor/apply" 
+              className="inline-flex items-center bg-jozi-gold text-jozi-forest px-12 py-6 rounded-3xl font-black text-2xl uppercase tracking-widest shadow-2xl shadow-black/20 hover:bg-white hover:scale-105 transition-all group"
             >
               <UserPlus className="w-8 h-8 mr-3" />
               Apply to Sell
@@ -138,7 +138,7 @@ const VendorPricingPage: React.FC = () => {
 
       {/* Process Flow */}
       <section className="container mx-auto px-4 -mt-10 relative z-20">
-        <div className="bg-white rounded-[3rem] p-10 shadow-xl border border-jozi-forest/5 grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+        <div className="bg-white rounded-5xl p-10 shadow-xl border border-jozi-forest/5 grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto">
           {[
             { step: '01', title: 'Submit Application', desc: 'Provide your business details and verification docs for our team to review.', icon: ClipboardCheck },
             { step: '02', title: 'Quality Audit', desc: 'We verify your artisan status and product quality to maintain hub standards.', icon: ShieldCheck },
@@ -173,7 +173,7 @@ const VendorPricingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
-              className={`relative rounded-[3rem] p-10 flex flex-col h-full transition-all shadow-lg ${
+              className={`relative rounded-5xl p-10 flex flex-col h-full transition-all shadow-lg ${
                 plan.dark ? 'bg-jozi-dark text-white' : 'bg-white text-jozi-forest'
               } ${plan.recommended ? 'ring-4 ring-jozi-gold scale-105 z-10' : 'border border-jozi-forest/5'}`}
             >
@@ -207,7 +207,7 @@ const VendorPricingPage: React.FC = () => {
                 {plan.description}
               </p>
 
-              <div className="space-y-4 mb-12 flex-grow text-left">
+              <div className="space-y-4 mb-12 grow text-left">
                 {plan.features.map((feat, i) => (
                   <div key={i} className="flex items-start space-x-3">
                     <CheckCircle2 className={`w-5 h-5 shrink-0 ${plan.dark ? 'text-jozi-gold' : 'text-jozi-forest'}`} />

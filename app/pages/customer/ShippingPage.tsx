@@ -29,7 +29,7 @@ const ShippingPage: React.FC = () => {
       <section className="container mx-auto px-4 -mt-12 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, i) => (
-            <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 flex flex-col items-center text-center space-y-4">
+            <div key={i} className="bg-white p-8 rounded-4xl shadow-soft border border-jozi-forest/5 flex flex-col items-center text-center space-y-4">
               <div className="w-16 h-16 bg-jozi-forest/5 rounded-2xl flex items-center justify-center text-jozi-forest">
                 <step.icon className="w-8 h-8" />
               </div>
@@ -67,7 +67,7 @@ const ShippingPage: React.FC = () => {
 
             <div className="space-y-8">
               <h2 className="text-4xl font-black text-jozi-forest tracking-tight">Important Notes</h2>
-              <div className="bg-jozi-forest p-10 rounded-[3rem] text-white space-y-8 relative overflow-hidden">
+              <div className="bg-jozi-forest p-10 rounded-5xl text-white space-y-8 relative overflow-hidden">
                 <div className="flex items-start space-x-4">
                   <Clock className="w-6 h-6 text-jozi-gold mt-1 shrink-0" />
                   <div>

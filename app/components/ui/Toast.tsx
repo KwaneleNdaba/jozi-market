@@ -66,7 +66,7 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onClose }) => {
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       className={`flex items-start gap-3 p-4 rounded-2xl border shadow-lg min-w-[320px] max-w-[420px] ${getStyles()}`}
     >
-      <div className="flex-shrink-0 mt-0.5">
+      <div className="shrink-0 mt-0.5">
         {getIcon()}
       </div>
       <div className="flex-1 min-w-0">
@@ -74,7 +74,7 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onClose }) => {
       </div>
       <button
         onClick={() => onClose(toast.id)}
-        className="flex-shrink-0 p-1 hover:bg-black/5 rounded-lg transition-colors"
+        className="shrink-0 p-1 hover:bg-black/5 rounded-lg transition-colors"
         aria-label="Close toast"
       >
         <X className="w-4 h-4" />
@@ -90,7 +90,7 @@ interface ToastContainerProps {
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-9999 flex flex-col gap-3 pointer-events-none">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <div key={toast.id} className="pointer-events-auto">

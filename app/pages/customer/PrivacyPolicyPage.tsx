@@ -86,7 +86,7 @@ const PrivacyPolicyPage: React.FC = () => {
                     { target: 'Riders', data: 'Mobile Number, Street Address', reason: 'Safe arrival & door-to-door delivery.' },
                     { target: 'Payment Hub', data: 'Email, Billing Logic', reason: 'Secure transaction verification.' }
                   ].map((flow, i) => (
-                    <div key={i} className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-4">
+                    <div key={i} className="p-8 bg-gray-50 rounded-4xl border border-gray-100 space-y-4">
                        <h5 className="font-black text-jozi-gold text-xs uppercase tracking-widest">{flow.target}</h5>
                        <p className="text-sm font-black text-jozi-forest leading-none">{flow.data}</p>
                        <p className="text-xs text-gray-400 font-medium italic">"{flow.reason}"</p>
@@ -121,7 +121,7 @@ const PrivacyPolicyPage: React.FC = () => {
             <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-10 border-t border-gray-100">
                <div className="flex items-center space-x-6 text-gray-400">
                   <div className="flex items-center"><Smartphone className="w-5 h-5 mr-2" /> <span>Cookie Consent Active</span></div>
-                  <div className="w-[1px] h-4 bg-gray-200 hidden md:block" />
+                  <div className="w-px h-4 bg-gray-200 hidden md:block" />
                   <div className="flex items-center"><Mail className="w-5 h-5 mr-2" /> <span>POPIA Officer: dpo@jozimarket.za</span></div>
                </div>
                <div className="flex items-center space-x-2 text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-4 py-2 rounded-xl">

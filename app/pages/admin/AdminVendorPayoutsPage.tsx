@@ -172,7 +172,7 @@ const AdminVendorPayoutsPage: React.FC = () => {
                   { label: 'Projected Platform Yield', value: 'R8,420', icon: TrendingUp, color: 'text-emerald-500' },
                   { label: 'Vendors Ready', value: MOCK_VENDORS.length, icon: Users, color: 'text-blue-500' },
                 ].map((stat, i) => (
-                  <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100 flex items-center space-x-6">
+                  <div key={i} className="bg-white p-8 rounded-4xl shadow-soft border border-gray-100 flex items-center space-x-6">
                     <div className={`w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center ${stat.color}`}>
                       <stat.icon className="w-7 h-7" />
                     </div>
@@ -185,7 +185,7 @@ const AdminVendorPayoutsPage: React.FC = () => {
               </div>
 
               {/* Master Payout Table */}
-              <div className="bg-white rounded-[3rem] p-10 shadow-soft border border-gray-100 overflow-hidden">
+              <div className="bg-white rounded-5xl p-10 shadow-soft border border-gray-100 overflow-hidden">
                 <div className="flex justify-between items-center mb-10">
                    <h2 className="text-2xl font-black text-jozi-dark tracking-tight uppercase">Active Cycle Payouts</h2>
                    <button className="flex items-center space-x-2 bg-jozi-cream text-jozi-forest px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-jozi-gold hover:text-white transition-all">
@@ -265,7 +265,7 @@ const AdminVendorPayoutsPage: React.FC = () => {
                     { label: 'Platform Hit', value: `-R${selectedStats?.commission.toLocaleString()}`, icon: Percent, color: 'text-red-500' },
                     { label: 'Artisan Net', value: `R${selectedStats?.net.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-600' },
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100 group transition-all hover:shadow-xl">
+                    <div key={i} className="bg-white p-8 rounded-4xl shadow-soft border border-gray-100 group transition-all hover:shadow-xl">
                        <div className="flex items-center justify-between mb-4">
                          <div className={`p-3 rounded-2xl ${i === 2 ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-50 text-gray-400'}`}>
                            <stat.icon className="w-6 h-6" />
@@ -278,7 +278,7 @@ const AdminVendorPayoutsPage: React.FC = () => {
                 </div>
 
                 {/* Ledger */}
-                <div className="bg-white rounded-[3rem] p-10 shadow-soft border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-5xl p-10 shadow-soft border border-gray-100 overflow-hidden">
                   <div className="flex justify-between items-center mb-10">
                     <div>
                       <h2 className="text-2xl font-black text-jozi-dark tracking-tight">Financial Ledger</h2>
@@ -323,7 +323,7 @@ const AdminVendorPayoutsPage: React.FC = () => {
 
               {/* Action Sidebar */}
               <div className="space-y-8">
-                <div className="bg-jozi-forest p-10 rounded-[3rem] text-white space-y-8 shadow-2xl relative overflow-hidden group">
+                <div className="bg-jozi-forest p-10 rounded-5xl text-white space-y-8 shadow-2xl relative overflow-hidden group">
                    <div className="relative z-10 space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="w-16 h-16 bg-jozi-gold rounded-3xl flex items-center justify-center text-jozi-dark shadow-xl">
@@ -367,7 +367,7 @@ const AdminVendorPayoutsPage: React.FC = () => {
                    <TrendingUp className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-12 transition-transform duration-1000" />
                 </div>
 
-                <div className="bg-white rounded-[2.5rem] p-10 shadow-soft border border-gray-100 space-y-8">
+                <div className="bg-white rounded-4xl p-10 shadow-soft border border-gray-100 space-y-8">
                   <h3 className="text-xl font-black text-jozi-dark">Compliance Check</h3>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 text-emerald-500">

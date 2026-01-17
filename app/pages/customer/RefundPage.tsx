@@ -61,7 +61,7 @@ const RefundPage: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white p-8 rounded-[3rem] shadow-soft border border-jozi-forest/5 text-left flex flex-col"
+                className="bg-white p-8 rounded-5xl shadow-soft border border-jozi-forest/5 text-left flex flex-col"
               >
                 <div className="w-12 h-12 bg-jozi-cream rounded-2xl flex items-center justify-center text-jozi-forest mb-6">
                   <section.icon className="w-6 h-6" />
@@ -82,7 +82,7 @@ const RefundPage: React.FC = () => {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 relative">
-               <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-100 hidden lg:block -translate-y-12" />
+               <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-100 hidden lg:block -translate-y-12" />
                {[
                  { step: '01', title: 'Log Request', desc: 'Initiate the return via your Profile Dashboard within 30 days.' },
                  { step: '02', title: 'Hub Pickup', desc: 'Our courier partners will collect the item from your doorstep.' },
@@ -117,7 +117,7 @@ const RefundPage: React.FC = () => {
                   <button className="text-white font-bold text-xs uppercase tracking-widest underline underline-offset-8">Policy FAQ</button>
                 </div>
               </div>
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[3rem] space-y-8">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-5xl space-y-8">
                 <h4 className="font-black text-xl text-jozi-gold uppercase tracking-tight">Cycle Timelines</h4>
                 <div className="space-y-6">
                   {[

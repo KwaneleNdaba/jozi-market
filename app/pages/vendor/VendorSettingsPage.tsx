@@ -44,10 +44,10 @@ const VendorSettingsPage: React.FC = () => {
       />
 
       {/* AI Recommendation Banner */}
-      <div className="bg-jozi-forest rounded-[3rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-jozi-dark via-transparent to-jozi-gold/10" />
+      <div className="bg-jozi-forest rounded-5xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 bg-linear-to-r from-jozi-dark via-transparent to-jozi-gold/10" />
         <div className="relative z-10 flex items-center space-x-6">
-          <div className="w-16 h-16 bg-jozi-gold rounded-[1.5rem] flex items-center justify-center text-jozi-dark shadow-xl">
+          <div className="w-16 h-16 bg-jozi-gold rounded-2xl flex items-center justify-center text-jozi-dark shadow-xl">
             <Sparkles className="w-8 h-8 animate-pulse" />
           </div>
           <div className="text-left">
@@ -66,7 +66,7 @@ const VendorSettingsPage: React.FC = () => {
       </div>
 
       {/* Settings Navigation */}
-      <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
+      <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}

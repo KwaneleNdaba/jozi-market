@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'next/link';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, 
@@ -85,7 +86,7 @@ const ProductDetailPage: React.FC = () => {
       setSelectedImage(0);
       setQuantity(1);
       const initialVariants: Record<string, string> = {};
-      product.variants?.forEach(v => {
+      product.variants?.forEach((v: { type: string; options: string[] }) => {
         initialVariants[v.type] = v.options[0];
       });
       setSelectedVariants(initialVariants);
@@ -118,7 +119,7 @@ const ProductDetailPage: React.FC = () => {
       {/* Review Modal */}
       <AnimatePresence>
         {isReviewModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -130,7 +131,7 @@ const ProductDetailPage: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-xl rounded-[3rem] p-10 lg:p-12 shadow-2xl overflow-hidden"
+              className="relative bg-white w-full max-w-xl rounded-5xl p-10 lg:p-12 shadow-2xl overflow-hidden"
             >
               <button onClick={() => setIsReviewModalOpen(false)} className="absolute top-8 right-8 p-3 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
                 <X className="w-6 h-6 text-gray-400" />
@@ -213,14 +214,14 @@ const ProductDetailPage: React.FC = () => {
       </nav>
 
       <section className="container mx-auto px-4">
-        <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-soft border border-jozi-forest/5">
+        <div className="bg-white rounded-5xl p-8 md:p-12 shadow-soft border border-jozi-forest/5">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             
             {/* Left: Image Gallery */}
             <div className="space-y-6">
               <motion.div 
                 layoutId={`img-${product.id}`}
-                className="aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-jozi-cream relative group shadow-2xl"
+                className="aspect-4/5 rounded-4xl overflow-hidden bg-jozi-cream relative group shadow-2xl"
               >
                 <img 
                   src={product.images[selectedImage]} 
@@ -233,7 +234,7 @@ const ProductDetailPage: React.FC = () => {
               </motion.div>
               
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                {product.images.map((img, idx) => (
+                {product.images.map((img: string, idx: number) => (
                   <button 
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
@@ -288,11 +289,11 @@ const ProductDetailPage: React.FC = () => {
               </p>
 
               {/* Variants */}
-              {product.variants?.map((variant) => (
+              {product.variants?.map((variant: { type: string; options: string[] }) => (
                 <div key={variant.type} className="space-y-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-jozi-forest/60">Select {variant.type}</p>
                   <div className="flex flex-wrap gap-3">
-                    {variant.options.map((opt) => (
+                    {variant.options.map((opt: string) => (
                       <button
                         key={opt}
                         onClick={() => setSelectedVariants(prev => ({ ...prev, [variant.type]: opt }))}
@@ -330,7 +331,7 @@ const ProductDetailPage: React.FC = () => {
                   
                   <button 
                     onClick={handleAddToCart}
-                    className="flex-grow bg-jozi-forest text-white py-5 px-8 rounded-3xl font-black text-xl flex items-center justify-center shadow-2xl shadow-jozi-forest/30 hover:bg-jozi-dark hover:-translate-y-1 transition-all group"
+                    className="grow bg-jozi-forest text-white py-5 px-8 rounded-3xl font-black text-xl flex items-center justify-center shadow-2xl shadow-jozi-forest/30 hover:bg-jozi-dark hover:-translate-y-1 transition-all group"
                   >
                     <ShoppingCart className="w-6 h-6 mr-4 group-hover:scale-110 transition-transform" />
                     Add to Collection
@@ -450,7 +451,7 @@ const ProductDetailPage: React.FC = () => {
                 {activeTab === 'shipping' && (
                   <motion.div key="ship" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                     <p>We treat every order like a precious cargo. All items are packed in eco-friendly, locally manufactured materials designed for maximum protection and minimal waste.</p>
-                    <div className="bg-jozi-forest p-10 rounded-[2.5rem] flex items-start space-x-6 text-white relative overflow-hidden">
+                    <div className="bg-jozi-forest p-10 rounded-4xl flex items-start space-x-6 text-white relative overflow-hidden">
                       <div className="relative z-10">
                         <h4 className="text-xl font-black mb-4">Care Guidelines</h4>
                         <ul className="space-y-3 opacity-90 text-sm">
@@ -468,11 +469,11 @@ const ProductDetailPage: React.FC = () => {
 
             {/* Artisan Spotlight */}
             <div className="bg-jozi-forest p-12 rounded-[4rem] text-white flex flex-col md:flex-row items-center gap-12 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-jozi-gold/20 to-transparent" />
-              <div className="w-40 h-40 rounded-[2.5rem] overflow-hidden shrink-0 border-8 border-white/10 shadow-2xl relative z-10 group-hover:scale-110 transition-transform duration-700">
+              <div className="absolute inset-0 bg-linear-to-br from-jozi-gold/20 to-transparent" />
+              <div className="w-40 h-40 rounded-4xl overflow-hidden shrink-0 border-8 border-white/10 shadow-2xl relative z-10 group-hover:scale-110 transition-transform duration-700">
                 <img src={fullVendor?.image || 'https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=400'} className="w-full h-full object-cover" />
               </div>
-              <div className="flex-grow space-y-6 text-center md:text-left relative z-10">
+              <div className="grow space-y-6 text-center md:text-left relative z-10">
                 <div className="space-y-2">
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-jozi-gold">Artisan Master</p>
                   <h3 className="text-4xl lg:text-5xl font-black tracking-tighter leading-none">{product.vendor.name}</h3>
@@ -550,7 +551,7 @@ const ProductDetailPage: React.FC = () => {
 
           {/* Sidebar */}
           <aside className="lg:w-1/3 space-y-12">
-            <div className="bg-white p-10 rounded-[3rem] border border-jozi-forest/5 shadow-soft space-y-8">
+            <div className="bg-white p-10 rounded-5xl border border-jozi-forest/5 shadow-soft space-y-8">
               <h3 className="text-xl font-black text-jozi-forest flex items-center">
                 <Sparkles className="w-5 h-5 text-jozi-gold mr-3" />
                 Artisan Pick

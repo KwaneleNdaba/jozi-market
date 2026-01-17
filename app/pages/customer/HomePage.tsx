@@ -195,7 +195,7 @@ const HomePage: React.FC = () => {
             <div className="absolute -top-20 -right-20 w-96 h-96 bg-jozi-gold/10 rounded-full blur-[100px]" />
             <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-jozi-forest/5 rounded-full blur-[100px]" />
 
-            <div className="relative aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white bg-white">
+            <div className="relative aspect-4/5 rounded-5xl overflow-hidden shadow-2xl border-8 border-white bg-white">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentAd}
@@ -228,7 +228,7 @@ const HomePage: React.FC = () => {
 
       {/* Trust Badges */}
       <section className="container mx-auto px-4 -mt-12 relative z-20">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 bg-white p-10 rounded-[3rem] shadow-xl border border-jozi-forest/5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 bg-white p-10 rounded-5xl shadow-xl border border-jozi-forest/5">
           {[
             { icon: Truck, title: "Fast Local Shipping", sub: "1-3 Days Across GP" },
             { icon: ShieldCheck, title: "Secure Checkout", sub: "PayFast & Instant EFT" },
@@ -308,7 +308,7 @@ const HomePage: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[3rem] w-full max-w-md shadow-2xl relative">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-5xl w-full max-w-md shadow-2xl relative">
               <div className="absolute -top-5 -right-5 w-20 h-20 bg-jozi-gold rounded-3xl flex items-center justify-center rotate-12 shadow-2xl">
                 <Percent className="w-10 h-10 text-jozi-forest" />
               </div>
@@ -591,7 +591,7 @@ const HomePage: React.FC = () => {
           </div>
           <div className="relative z-10 mt-12 lg:mt-0 lg:w-1/3 w-full">
             <div className="flex bg-white rounded-3xl p-3 shadow-2xl ring-8 ring-white/20">
-              <input type="email" placeholder="Your best email..." className="flex-grow px-6 py-4 outline-none text-jozi-forest font-bold rounded-2xl" />
+              <input type="email" placeholder="Your best email..." className="grow px-6 py-4 outline-none text-jozi-forest font-bold rounded-2xl" />
               <button className="bg-jozi-forest text-white px-10 py-4 rounded-2xl font-black hover:bg-jozi-dark transition-all">
                 JOIN
               </button>

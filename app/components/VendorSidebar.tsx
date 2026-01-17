@@ -41,7 +41,7 @@ const VendorSidebar: React.FC<VendorSidebarProps> = ({ vendor }) => {
 
   return (
     <div className="flex flex-col h-full space-y-6">
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-jozi-forest/5 p-6 flex-grow space-y-8 text-left">
+      <div className="bg-white rounded-4xl shadow-sm border border-jozi-forest/5 p-6 grow space-y-8 text-left">
         <div className="flex items-center space-x-4">
           <div className="w-14 h-14 rounded-2xl overflow-hidden border border-jozi-forest/5 shadow-sm shrink-0">
             <img src={vendor.logo} className="w-full h-full object-cover" alt={vendor.name} />
@@ -80,7 +80,7 @@ const VendorSidebar: React.FC<VendorSidebarProps> = ({ vendor }) => {
         </nav>
       </div>
 
-      <div className="p-8 bg-[#FFF9E5] rounded-[2.5rem] border border-[#FFECB3] space-y-4 text-left relative overflow-hidden shrink-0">
+      <div className="p-8 bg-[#FFF9E5] rounded-4xl border border-[#FFECB3] space-y-4 text-left relative overflow-hidden shrink-0">
         <AlertTriangle className="absolute -top-2 -right-2 w-16 h-16 text-[#B38F00] opacity-5" />
         <div className="flex items-center space-x-3 text-[#B38F00]">
           <AlertTriangle className="w-5 h-5" />

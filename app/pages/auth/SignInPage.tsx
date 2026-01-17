@@ -40,12 +40,12 @@ const SignInPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-6xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[750px] border border-jozi-forest/5"
+        className="max-w-6xl w-full bg-white rounded-5xl shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[750px] border border-jozi-forest/5"
       >
         {/* Left Side: Brand Visual */}
         <div className="lg:w-1/2 bg-jozi-forest relative overflow-hidden hidden lg:block">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-br from-jozi-forest via-jozi-forest/80 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-br from-jozi-forest via-jozi-forest/80 to-transparent" />
 
           <div className="relative z-10 h-full p-16 flex flex-col justify-between text-white">
             <Link href="/" className="inline-block -ml-10">
@@ -165,7 +165,7 @@ const SignInPage: React.FC = () => {
           </form>
 
           {/* Demo Credentials Box */}
-          <div className="mt-8 p-6 bg-jozi-gold/5 rounded-[2rem] border border-jozi-gold/10">
+          <div className="mt-8 p-6 bg-jozi-gold/5 rounded-3xl border border-jozi-gold/10">
             <div className="flex items-center space-x-2 mb-4">
               <Info className="w-4 h-4 text-jozi-gold" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-jozi-gold">
@@ -194,7 +194,7 @@ const SignInPage: React.FC = () => {
 
           <div className="mt-10">
             <div className="relative flex items-center justify-center mb-8">
-              <div className="absolute inset-x-0 h-[1px] bg-gray-100" />
+              <div className="absolute inset-x-0 h-px bg-gray-100" />
               <span className="relative bg-white px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">
                 Or login with
               </span>

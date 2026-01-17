@@ -29,7 +29,7 @@ const SuperAdminDashboard: React.FC = () => {
           { label: 'Total Users', value: '18,450', trend: '+2.4k', icon: Users },
           { label: 'Platform Rev', value: 'R184k', trend: '+14%', icon: TrendingUp },
         ].map((stat, i) => (
-          <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100 relative group overflow-hidden">
+          <div key={i} className="bg-white p-8 rounded-4xl shadow-soft border border-gray-100 relative group overflow-hidden">
              <div className="flex items-center justify-between mb-4">
                <div className="p-3 bg-gray-50 rounded-2xl"><stat.icon className="w-6 h-6 text-jozi-dark" /></div>
                <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-md">{stat.trend}</span>
@@ -41,7 +41,7 @@ const SuperAdminDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         <div className="bg-jozi-forest p-10 rounded-[3rem] text-white space-y-6 relative overflow-hidden group shadow-2xl">
+         <div className="bg-jozi-forest p-10 rounded-5xl text-white space-y-6 relative overflow-hidden group shadow-2xl">
            <div className="relative z-10 space-y-6">
               <div className="w-16 h-16 bg-jozi-gold rounded-3xl flex items-center justify-center text-jozi-dark shadow-xl">
                 <LayoutDashboard className="w-8 h-8" />
@@ -58,7 +58,7 @@ const SuperAdminDashboard: React.FC = () => {
            <Zap className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
          </div>
 
-        <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-soft border border-jozi-forest/5">
+        <div className="lg:col-span-2 bg-white p-10 rounded-5xl shadow-soft border border-jozi-forest/5">
           <h3 className="text-xl font-black text-jozi-dark mb-8 uppercase tracking-tight">Monthly Revenue Performance</h3>
           <div className="h-[250px]">
             <ResponsiveContainer width="100%" height="100%">

@@ -63,7 +63,7 @@ const PromotionsPage: React.FC = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-jozi-forest/5 relative overflow-hidden group"
+                className="bg-white p-8 rounded-4xl shadow-xl border border-jozi-forest/5 relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
                   <Tag className="w-20 h-20 text-jozi-forest" />

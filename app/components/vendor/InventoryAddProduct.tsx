@@ -122,7 +122,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
     video: null,
     variants: []
   });
-
+  
   // Artisan Notes State
   const [highlights, setHighlights] = useState<string[]>(['', '', '', '']);
 
@@ -1178,13 +1178,13 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
 
                     {/* Craft & Care Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div className="bg-jozi-forest p-10 rounded-4xl text-white space-y-6 shadow-2xl relative overflow-hidden">
-                          <div className="relative z-10 flex items-center space-x-3 text-jozi-gold">
-                             <Hammer className="w-6 h-6" />
-                             <span className="text-xs font-black uppercase tracking-widest">Craft & Care</span>
-                          </div>
-                          <div className="relative z-10 space-y-2">
-                             <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Care Guidelines (One item per line)</label>
+                           <div className="bg-jozi-forest p-10 rounded-4xl text-white space-y-6 shadow-2xl relative overflow-hidden">
+                             <div className="relative z-10 flex items-center space-x-3 text-jozi-gold">
+                                <Hammer className="w-6 h-6" />
+                                <span className="text-xs font-black uppercase tracking-widest">Craft & Care</span>
+                             </div>
+                             <div className="relative z-10 space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Care Guidelines (One item per line)</label>
                              <textarea 
                                rows={4} 
                                placeholder="e.g. Hand wash only with cold water&#10;Avoid direct sunlight during drying" 
@@ -1192,16 +1192,16 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                                value={formData.careGuidelines}
                                onChange={(e) => setFormData(prev => ({ ...prev, careGuidelines: e.target.value }))}
                              />
+                             </div>
                           </div>
-                       </div>
 
-                       <div className="bg-white rounded-3xl p-8 space-y-4 border border-gray-100 shadow-soft">
-                          <div className="flex items-center space-x-3 text-jozi-forest">
-                             <Truck className="w-6 h-6 text-jozi-gold" />
-                             <span className="text-xs font-black uppercase tracking-widest">Packaging Narrative</span>
-                          </div>
-                          <div className="space-y-2">
-                             <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">How do you pack this piece?</label>
+                          <div className="bg-white rounded-3xl p-8 space-y-4 border border-gray-100 shadow-soft">
+                             <div className="flex items-center space-x-3 text-jozi-forest">
+                                <Truck className="w-6 h-6 text-jozi-gold" />
+                                <span className="text-xs font-black uppercase tracking-widest">Packaging Narrative</span>
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">How do you pack this piece?</label>
                              <textarea 
                                rows={4} 
                                placeholder="e.g. Packed in eco-friendly locally manufactured materials..." 
@@ -1212,7 +1212,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                           </div>
                        </div>
                     </div>
-                  </div>
+                   </div>
                 </motion.div>
               )}
 
@@ -1229,18 +1229,18 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                         const hasImage = file || existingImageUrl;
                         
                         return (
-                          <div key={idx} className="space-y-3">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">
-                              {idx === 0 ? 'Master Shot' : idx === 3 ? 'Optional View' : `Detail 0${idx + 1}`}
-                            </p>
-                            <div 
-                              className={`relative aspect-[4/5] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center p-4 group cursor-pointer ${
+                        <div key={idx} className="space-y-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">
+                            {idx === 0 ? 'Master Shot' : idx === 3 ? 'Optional View' : `Detail 0${idx + 1}`}
+                          </p>
+                          <div 
+                            className={`relative aspect-[4/5] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center p-4 group cursor-pointer ${
                                 hasImage ? 'border-emerald-500 bg-emerald-50/10' : 'border-gray-200 bg-gray-50 hover:border-jozi-gold/20'
-                              }`}
-                            >
-                              <input 
-                                type="file" 
-                                accept="image/*"
+                            }`}
+                          >
+                            <input 
+                              type="file" 
+                              accept="image/*"
                                 onChange={(e) => {
                                   handleImageChange(idx, e.target.files?.[0] || null);
                                   // Clear existing URL when new file is selected
@@ -1250,16 +1250,16 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                                     setImageUrls(newUrls);
                                   }
                                 }}
-                                className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                              />
-                              {file ? (
-                                <div className="relative w-full h-full z-10">
-                                  <img 
-                                    src={URL.createObjectURL(file)} 
-                                    className="w-full h-full object-cover rounded-2xl" 
-                                    alt={`Upload ${idx}`} 
-                                  />
-                                  <button 
+                              className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                            />
+                            {file ? (
+                              <div className="relative w-full h-full z-10">
+                                <img 
+                                  src={URL.createObjectURL(file)} 
+                                  className="w-full h-full object-cover rounded-2xl" 
+                                  alt={`Upload ${idx}`} 
+                                />
+                                <button 
                                     onClick={(e) => { 
                                       e.preventDefault(); 
                                       handleImageChange(idx, null); 
@@ -1283,19 +1283,19 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                                       newUrls[idx] = '';
                                       setImageUrls(newUrls);
                                     }}
-                                    className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 hover:scale-110 transition-transform z-30"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="space-y-2">
-                                  <Upload className="w-6 h-6 text-gray-300 mx-auto group-hover:text-jozi-gold transition-colors" />
-                                  <p className="text-[10px] font-black text-jozi-forest uppercase tracking-widest">Select Image</p>
-                                </div>
-                              )}
-                            </div>
+                                  className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-red-500 hover:scale-110 transition-transform z-30"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <Upload className="w-6 h-6 text-gray-300 mx-auto group-hover:text-jozi-gold transition-colors" />
+                                <p className="text-[10px] font-black text-jozi-forest uppercase tracking-widest">Select Image</p>
+                              </div>
+                            )}
                           </div>
+                        </div>
                         );
                       })}
                    </div>
@@ -1409,7 +1409,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                     ) : (
                       <>
                         {step === 4 ? (isEditMode ? 'Update Treasure' : 'Publish Treasure') : 'Continue Forward'}
-                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                  </button>

@@ -42,7 +42,7 @@ const CustomerLoyaltyPage: React.FC = () => {
           
           <CustomerSidebar user={MOCK_USER} />
 
-          <main className="flex-grow space-y-12">
+          <main className="grow space-y-12">
             {/* Header Section */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
               <div className="text-left space-y-2">
@@ -101,7 +101,7 @@ const CustomerLoyaltyPage: React.FC = () => {
                 <AchievementsSection />
                 
                 {/* Limited Time Challenge */}
-                <div className="bg-jozi-dark p-8 rounded-[3rem] text-white relative overflow-hidden shadow-2xl group">
+                <div className="bg-jozi-dark p-8 rounded-5xl text-white relative overflow-hidden shadow-2xl group">
                   <Zap className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-12 transition-transform duration-700 text-jozi-gold" />
                   <div className="relative z-10 space-y-6 text-left">
                     <div className="flex items-center space-x-3">
@@ -130,7 +130,7 @@ const CustomerLoyaltyPage: React.FC = () => {
                 </div>
 
                 {/* Loyalty Info Tooltip Card */}
-                <div className="p-8 bg-jozi-cream rounded-[2.5rem] border border-jozi-forest/5 text-left space-y-4">
+                <div className="p-8 bg-jozi-cream rounded-4xl border border-jozi-forest/5 text-left space-y-4">
                   <div className="flex items-center space-x-3 text-jozi-forest">
                     <Info className="w-5 h-5" />
                     <h4 className="font-black text-xs uppercase tracking-widest">How it works</h4>

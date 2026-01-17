@@ -11,7 +11,7 @@ const SocialScheduler: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
       {/* Platform Capacity Controls */}
-      <div className="lg:col-span-8 bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100">
+      <div className="lg:col-span-8 bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
            <div className="space-y-1">
               <h3 className="text-2xl font-black text-jozi-dark uppercase tracking-tight">Capacity Logic</h3>
@@ -24,7 +24,7 @@ const SocialScheduler: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            {DAILY_SLOT_CONFIG.map((config, i) => (
-             <div key={i} className="p-8 rounded-[2.5rem] border-2 border-gray-50 bg-gray-50/30 group hover:border-jozi-forest/10 hover:bg-white transition-all flex flex-col justify-between h-[220px]">
+             <div key={i} className="p-8 rounded-4xl border-2 border-gray-50 bg-gray-50/30 group hover:border-jozi-forest/10 hover:bg-white transition-all flex flex-col justify-between h-[220px]">
                 <div className="flex justify-between items-start">
                    <div className="flex items-center space-x-4">
                       <div className="p-3 bg-white rounded-2xl shadow-sm">
@@ -63,7 +63,7 @@ const SocialScheduler: React.FC = () => {
            ))}
         </div>
 
-        <div className="mt-12 p-8 bg-jozi-forest rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+        <div className="mt-12 p-8 bg-jozi-forest rounded-4xl text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
            <div className="relative z-10 space-y-4 max-w-xl">
               <div className="inline-flex items-center bg-white/10 px-4 py-1.5 rounded-full text-[9px] font-black uppercase text-jozi-gold tracking-widest">
                  System Suggestion
@@ -80,7 +80,7 @@ const SocialScheduler: React.FC = () => {
 
       {/* Exposure Equity Panel */}
       <div className="lg:col-span-4 space-y-8">
-        <div className="bg-jozi-dark p-10 rounded-[3rem] text-white space-y-10 relative overflow-hidden shadow-2xl group">
+        <div className="bg-jozi-dark p-10 rounded-5xl text-white space-y-10 relative overflow-hidden shadow-2xl group">
            <div className="relative z-10 space-y-6">
               <div className="flex items-center gap-3">
                  <div className="p-3 bg-white/10 rounded-2xl text-jozi-gold shadow-sm"><Target className="w-6 h-6" /></div>
@@ -124,7 +124,7 @@ const SocialScheduler: React.FC = () => {
            <RefreshCw className="absolute -bottom-10 -left-10 w-64 h-64 opacity-5 group-hover:rotate-180 transition-transform duration-[20s] pointer-events-none" />
         </div>
 
-        <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left flex flex-col justify-between min-h-[350px]">
+        <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left flex flex-col justify-between min-h-[350px]">
            <div className="space-y-6">
               <div className="flex items-center space-x-3 text-jozi-forest">
                  <AlertCircle className="w-6 h-6 text-jozi-gold" />

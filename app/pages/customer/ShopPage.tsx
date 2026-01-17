@@ -160,7 +160,7 @@ const ShopPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="p-8 bg-jozi-dark rounded-[2.5rem] text-white relative overflow-hidden group">
+          <div className="p-8 bg-jozi-dark rounded-4xl text-white relative overflow-hidden group">
             <Tag className="absolute -bottom-4 -right-4 w-24 h-24 opacity-5 group-hover:scale-110 transition-transform duration-700" />
             <h4 className="text-lg font-black leading-tight mb-4">Want Free <br />Delivery?</h4>
             <p className="text-[11px] text-white/50 leading-relaxed font-medium mb-6">Spend over R1000 and we&apos;ll courier your treasures anywhere in GP for free.</p>
@@ -171,7 +171,7 @@ const ShopPage: React.FC = () => {
         </aside>
 
         {/* Product Listing */}
-        <div className="flex-grow space-y-8">
+        <div className="grow space-y-8">
           {/* Header Actions */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white p-6 rounded-3xl border border-jozi-forest/5 shadow-soft">
             <div>
@@ -233,7 +233,7 @@ const ShopPage: React.FC = () => {
           </div>
 
           {filteredProducts.length === 0 && (
-            <div className="py-32 text-center space-y-6 bg-white rounded-[3rem] border border-dashed border-jozi-forest/10 shadow-inner">
+            <div className="py-32 text-center space-y-6 bg-white rounded-5xl border border-dashed border-jozi-forest/10 shadow-inner">
               <div className="w-20 h-20 bg-jozi-gold/10 rounded-full flex items-center justify-center mx-auto text-jozi-gold">
                 <Tag className="w-10 h-10" />
               </div>

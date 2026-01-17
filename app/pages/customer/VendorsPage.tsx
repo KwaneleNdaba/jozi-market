@@ -39,8 +39,8 @@ const VendorsPage: React.FC = () => {
 
       {/* Filter & Search Bar */}
       <section className="container mx-auto px-4 -mt-10 relative z-20">
-        <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-jozi-forest/5 flex flex-col md:flex-row items-center gap-6">
-          <div className="flex-grow flex items-center bg-jozi-cream rounded-2xl px-6 py-4 w-full">
+        <div className="bg-white p-6 rounded-4xl shadow-xl border border-jozi-forest/5 flex flex-col md:flex-row items-center gap-6">
+          <div className="grow flex items-center bg-jozi-cream rounded-2xl px-6 py-4 w-full">
             <Search className="w-5 h-5 text-gray-400 mr-3" />
             <input 
               type="text" 
@@ -49,7 +49,7 @@ const VendorsPage: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto">
-            <button className="flex items-center space-x-2 bg-jozi-cream px-6 py-4 rounded-2xl font-black text-jozi-forest hover:bg-jozi-forest/5 transition-all flex-grow md:flex-grow-0">
+            <button className="flex items-center space-x-2 bg-jozi-cream px-6 py-4 rounded-2xl font-black text-jozi-forest hover:bg-jozi-forest/5 transition-all grow md:grow-0">
               <MapPin className="w-5 h-5 text-jozi-gold" />
               <span>Joburg Central</span>
             </button>
@@ -71,11 +71,11 @@ const VendorsPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -10 }}
-              className="group bg-white rounded-[3rem] overflow-hidden border border-jozi-forest/5 shadow-soft hover:shadow-2xl transition-all flex flex-col"
+              className="group bg-white rounded-5xl overflow-hidden border border-jozi-forest/5 shadow-soft hover:shadow-2xl transition-all flex flex-col"
             >
               {/* Cover/Accent */}
               <div className="h-40 bg-jozi-forest/5 relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white" />
+                <div className="absolute inset-0 bg-linear-to-b from-transparent to-white" />
                 <div className="absolute top-6 right-6">
                   <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full border border-jozi-forest/10 flex items-center space-x-1 shadow-sm">
                     <Star className="w-4 h-4 text-jozi-gold fill-current" />
@@ -85,12 +85,12 @@ const VendorsPage: React.FC = () => {
               </div>
 
               {/* Profile Image & Content */}
-              <div className="px-10 pb-10 -mt-16 relative flex-grow flex flex-col">
-                <div className="w-32 h-32 rounded-[2.5rem] border-8 border-white overflow-hidden shadow-xl mb-6 bg-white group-hover:scale-110 transition-transform duration-500">
+              <div className="px-10 pb-10 -mt-16 relative grow flex flex-col">
+                <div className="w-32 h-32 rounded-4xl border-8 border-white overflow-hidden shadow-xl mb-6 bg-white group-hover:scale-110 transition-transform duration-500">
                   <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
                 </div>
 
-                <div className="space-y-4 flex-grow">
+                <div className="space-y-4 grow">
                   <div className="flex items-center space-x-2 text-jozi-gold">
                     <MapPin className="w-4 h-4" />
                     <span className="text-[10px] font-black uppercase tracking-widest">{vendor.location}</span>

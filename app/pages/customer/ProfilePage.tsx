@@ -131,7 +131,7 @@ const ProfilePage: React.FC = () => {
           
           <CustomerSidebar user={user} />
 
-          <main className="flex-grow">
+          <main className="grow">
             <AnimatePresence mode="wait">
               {selectedOrder ? (
                 <motion.div
@@ -149,7 +149,7 @@ const ProfilePage: React.FC = () => {
                     Back to History
                   </button>
 
-                  <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-jozi-forest/5 space-y-12">
+                  <div className="bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-jozi-forest/5 space-y-12">
                     <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-jozi-forest/5 pb-10">
                       <div className="space-y-2 text-left">
                         <div className="flex items-center space-x-3">
@@ -199,7 +199,7 @@ const ProfilePage: React.FC = () => {
                             <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white shadow-sm shrink-0">
                               <img src={item.image} className="w-full h-full object-cover" />
                             </div>
-                            <div className="flex-grow text-center sm:text-left">
+                            <div className="grow text-center sm:text-left">
                               <h4 className="text-xl font-black text-jozi-forest">{item.name}</h4>
                               <p className="text-xs font-bold text-jozi-gold uppercase tracking-widest mt-1">by {item.vendor}</p>
                             </div>
@@ -224,11 +224,11 @@ const ProfilePage: React.FC = () => {
                           <h4 className="text-sm font-black text-jozi-forest uppercase tracking-widest flex items-center">
                             <MapPin className="w-4 h-4 mr-2 text-jozi-gold" /> Delivery Destination
                           </h4>
-                          <div className="p-6 bg-jozi-cream/30 rounded-[2rem] border border-jozi-forest/5">
+                          <div className="p-6 bg-jozi-cream/30 rounded-3xl border border-jozi-forest/5">
                             <p className="font-bold text-jozi-forest leading-relaxed">{selectedOrder.deliveryAddress}</p>
                           </div>
                         </div>
-                        <div className="bg-jozi-forest p-8 rounded-[2.5rem] text-white relative overflow-hidden group shadow-2xl">
+                        <div className="bg-jozi-forest p-8 rounded-4xl text-white relative overflow-hidden group shadow-2xl">
                           <Award className="absolute -bottom-4 -right-4 w-24 h-24 opacity-10 group-hover:scale-125 transition-transform duration-700" />
                           <div className="relative z-10 flex items-center space-x-6">
                             <div className="w-16 h-16 bg-jozi-gold rounded-2xl flex items-center justify-center text-jozi-forest shadow-xl">
@@ -263,7 +263,7 @@ const ProfilePage: React.FC = () => {
                                <span>-{selectedOrder.discount}</span>
                              </div>
                            )}
-                           <div className="h-[1px] bg-jozi-forest/5 w-full my-4" />
+                           <div className="h-px bg-jozi-forest/5 w-full my-4" />
                            <div className="flex justify-between items-end">
                              <div>
                                <p className="text-[10px] font-black uppercase tracking-widest text-jozi-gold">Final Paid Amount</p>
@@ -301,7 +301,7 @@ const ProfilePage: React.FC = () => {
                           { label: 'Active Streak', value: `${user.streak} Days`, icon: Flame, color: 'text-orange-500' },
                           { label: 'Total Saved', value: 'R1,420', icon: Zap, color: 'text-emerald-500' },
                         ].map((stat, i) => (
-                          <div key={i} className="bg-white p-8 rounded-[2rem] border border-jozi-forest/5 shadow-soft flex items-center space-x-6">
+                          <div key={i} className="bg-white p-8 rounded-3xl border border-jozi-forest/5 shadow-soft flex items-center space-x-6">
                             <div className={`p-4 bg-gray-50 rounded-2xl ${stat.color}`}>
                               <stat.icon className="w-6 h-6" />
                             </div>
@@ -313,7 +313,7 @@ const ProfilePage: React.FC = () => {
                         ))}
                       </div>
 
-                      <div className="bg-white rounded-[3rem] p-10 border border-jozi-forest/5 shadow-soft">
+                      <div className="bg-white rounded-5xl p-10 border border-jozi-forest/5 shadow-soft">
                         <div className="flex items-center justify-between mb-8">
                           <h3 className="text-2xl font-black text-jozi-forest uppercase tracking-tight">Recent Manifests</h3>
                           <Link href="/profile?tab=orders" className="text-sm font-bold text-jozi-gold hover:underline">Full History</Link>
@@ -346,7 +346,7 @@ const ProfilePage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="bg-jozi-forest rounded-[3rem] p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+                      <div className="bg-jozi-forest rounded-5xl p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
                         <div className="relative z-10 space-y-4 max-w-md">
                           <h3 className="text-3xl font-black tracking-tight leading-none uppercase">Level 22 Connector: <br /><span className="text-jozi-gold italic">Premium Neighbor</span></h3>
                           <p className="text-jozi-cream/60 font-medium">You've empowered 12 local artisans this cycle! Your contribution keeps the Joburg creative heartbeat strong.</p>
@@ -361,7 +361,7 @@ const ProfilePage: React.FC = () => {
 
                   {activeTab === 'orders' && (
                     <div className="space-y-6 text-left">
-                      <div className="bg-white rounded-[3rem] p-10 border border-jozi-forest/5 shadow-soft">
+                      <div className="bg-white rounded-5xl p-10 border border-jozi-forest/5 shadow-soft">
                         <h3 className="text-2xl font-black text-jozi-forest mb-10 uppercase tracking-tight">Artisan Order Registry</h3>
                         <div className="space-y-6">
                            {orders.map((order) => (
@@ -391,7 +391,7 @@ const ProfilePage: React.FC = () => {
                                      <img src={item.image} className="w-full h-full object-cover" />
                                    </div>
                                  ))}
-                                 <div className="h-20 flex flex-col justify-center px-6 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100 flex-grow">
+                                 <div className="h-20 flex flex-col justify-center px-6 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100 grow">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Shipment Logic</p>
                                     <p className="text-xs font-bold text-jozi-forest">{order.trackingNumber}</p>
                                  </div>
@@ -404,7 +404,7 @@ const ProfilePage: React.FC = () => {
                   )}
 
                   {activeTab === 'wishlist' && (
-                    <div className="bg-white rounded-[3rem] p-10 border border-jozi-forest/5 shadow-soft text-left">
+                    <div className="bg-white rounded-5xl p-10 border border-jozi-forest/5 shadow-soft text-left">
                       <div className="flex items-center justify-between mb-10">
                         <h3 className="text-2xl font-black text-jozi-forest uppercase tracking-tight">Saved Treasures</h3>
                         <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{wishlistItems.length} Handpicked Pieces</p>
@@ -415,7 +415,7 @@ const ProfilePage: React.FC = () => {
                              <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-sm shrink-0">
                                 <img src={item.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                              </div>
-                             <div className="flex-grow flex flex-col justify-between py-2">
+                             <div className="grow flex flex-col justify-between py-2">
                                <div>
                                  <h4 className="font-black text-jozi-forest group-hover:text-jozi-gold transition-colors">{item.name}</h4>
                                  <p className="text-xs font-bold text-jozi-gold uppercase tracking-widest mt-1">by {item.vendor.name}</p>
@@ -433,7 +433,7 @@ const ProfilePage: React.FC = () => {
 
                   {activeTab === 'settings' && (
                     <div className="grid md:grid-cols-2 gap-8 text-left">
-                      <div className="bg-white p-10 rounded-[3rem] border border-jozi-forest/5 shadow-soft space-y-8">
+                      <div className="bg-white p-10 rounded-5xl border border-jozi-forest/5 shadow-soft space-y-8">
                         <h3 className="text-xl font-black text-jozi-forest flex items-center uppercase tracking-tight">
                           <ShieldCheck className="w-5 h-5 mr-3 text-jozi-gold" />
                           Security Protocol
@@ -453,7 +453,7 @@ const ProfilePage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="bg-white p-10 rounded-[3rem] border border-jozi-forest/5 shadow-soft space-y-8">
+                      <div className="bg-white p-10 rounded-5xl border border-jozi-forest/5 shadow-soft space-y-8">
                         <h3 className="text-xl font-black text-jozi-forest flex items-center uppercase tracking-tight">
                           <MapPin className="w-5 h-5 mr-3 text-jozi-gold" />
                           Delivery Hubs

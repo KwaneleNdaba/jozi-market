@@ -22,7 +22,7 @@ const VendorNotificationsPage: React.FC = () => {
         onUploadClick={() => {}} 
       />
 
-      <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 w-fit">
+      <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 w-fit">
         <button
           onClick={() => setActiveView('feed')}
           className={`flex items-center space-x-3 px-8 py-4 rounded-[1.8rem] font-black text-xs uppercase tracking-widest transition-all ${

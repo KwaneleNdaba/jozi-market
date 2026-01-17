@@ -77,7 +77,7 @@ const TermsOfServicePage: React.FC = () => {
           
           {/* Sticky Navigation sidebar */}
           <aside className="lg:w-80 shrink-0 sticky top-24 hidden lg:block text-left">
-            <div className="bg-white rounded-[3rem] p-8 border border-jozi-forest/5 shadow-soft space-y-6">
+            <div className="bg-white rounded-5xl p-8 border border-jozi-forest/5 shadow-soft space-y-6">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50 pb-4">Table of Contents</p>
               <nav className="space-y-1">
                 {SECTIONS.map((s) => (
@@ -99,7 +99,7 @@ const TermsOfServicePage: React.FC = () => {
           </aside>
 
           {/* Legal Content Area */}
-          <main className="flex-grow max-w-4xl space-y-10">
+          <main className="grow max-w-4xl space-y-10">
             
             <LegalSection id="introduction" title="Agreement to Terms" icon={Globe}>
               <p>
@@ -183,7 +183,7 @@ const TermsOfServicePage: React.FC = () => {
             </LegalSection>
 
             <LegalSection id="governing-law" title="Governing Law" icon={ShieldCheck}>
-               <div className="bg-jozi-dark p-10 rounded-[3rem] text-white relative overflow-hidden group shadow-2xl mt-12">
+               <div className="bg-jozi-dark p-10 rounded-5xl text-white relative overflow-hidden group shadow-2xl mt-12">
                   <div className="relative z-10 space-y-4">
                     <h3 className="text-2xl font-black tracking-tight uppercase leading-none">South African Jurisdiction</h3>
                     <p className="text-sm text-jozi-cream/60 leading-relaxed italic">

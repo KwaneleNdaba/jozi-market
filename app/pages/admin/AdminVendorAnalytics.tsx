@@ -115,7 +115,7 @@ const AdminVendorAnalytics: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-4 space-y-2">
+        <div className="grow overflow-y-auto p-4 space-y-2">
           {filteredVendors.map((v) => (
             <button
               key={v.id}
@@ -148,11 +148,11 @@ const AdminVendorAnalytics: React.FC = () => {
       </aside>
 
       {/* Main Dashboard Canvas */}
-      <main className="flex-grow p-6 lg:p-12 space-y-10 overflow-x-hidden">
+      <main className="grow p-6 lg:p-12 space-y-10 overflow-x-hidden">
         {/* Header Summary */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center space-x-6">
-            <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl relative">
+            <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white shadow-2xl relative">
                <img src={selectedVendor.image} className="w-full h-full object-cover" />
                <div className="absolute bottom-1 right-1 bg-emerald-500 w-4 h-4 rounded-full border-2 border-white shadow-sm" />
             </div>
@@ -169,7 +169,7 @@ const AdminVendorAnalytics: React.FC = () => {
                   ))}
                   <span className="text-xs font-black text-jozi-dark ml-2">{selectedVendor.rating} Rating</span>
                 </div>
-                <div className="h-3 w-[1px] bg-gray-200" />
+                <div className="h-3 w-px bg-gray-200" />
                 <button className="text-[10px] font-black text-jozi-forest uppercase hover:underline">View Public Storefront</button>
               </div>
             </div>
@@ -237,7 +237,7 @@ const AdminVendorAnalytics: React.FC = () => {
                   { label: 'Avg Order Value', val: stats.aov, trend: '-2.1%', icon: Target, color: 'text-orange-500' },
                   { label: 'Net Payout', val: stats.payout, trend: '+15%', icon: Wallet, color: 'text-jozi-gold' },
                 ].map((kpi, i) => (
-                  <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100 relative group overflow-hidden text-left">
+                  <div key={i} className="bg-white p-8 rounded-4xl shadow-soft border border-gray-100 relative group overflow-hidden text-left">
                      <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-gray-50 rounded-2xl"><kpi.icon className="w-6 h-6 text-jozi-dark" /></div>
                         <span className={`text-[9px] font-black ${kpi.trend.startsWith('+') ? 'text-emerald-500' : 'text-red-500'} bg-gray-50 px-2 py-1 rounded-md`}>{kpi.trend}</span>
@@ -251,7 +251,7 @@ const AdminVendorAnalytics: React.FC = () => {
               {/* Main Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Timeline */}
-                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="lg:col-span-2 bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">xl
                   <div className="flex items-center justify-between mb-10">
                      <div>
                        <h3 className="text-xl font-black text-jozi-dark">Revenue Velocity</h3>
@@ -291,7 +291,7 @@ const AdminVendorAnalytics: React.FC = () => {
                 </div>
 
                 {/* Status Distribution */}
-                <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                   <h3 className="text-xl font-black text-jozi-dark mb-2">Cycle Health</h3>
                   <p className="text-xs text-gray-400 font-medium mb-8">Fulfillment distribution.</p>
                   <div className="h-[250px]">

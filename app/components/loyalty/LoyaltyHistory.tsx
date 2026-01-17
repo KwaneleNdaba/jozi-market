@@ -12,7 +12,7 @@ const HISTORY = [
 
 const LoyaltyHistory: React.FC = () => {
   return (
-    <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100 text-left space-y-10">
+    <div className="bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-gray-100 text-left space-y-10">
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-black text-jozi-dark uppercase tracking-tight">Points Lifecycle</h3>
         <button className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-jozi-forest transition-colors">

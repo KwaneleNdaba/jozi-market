@@ -62,7 +62,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onClose }) => {
       </div>
 
       {/* Navigation Groups */}
-      <nav className="flex-grow p-5 space-y-8 pt-6">
+      <nav className="grow p-5 space-y-8 pt-6">
         {NAV_ITEMS.map((group) => (
           <div key={group.group} className="space-y-2.5">
             <p className="px-4 text-[10px] font-bold text-white/30 uppercase tracking-wider">{group.group}</p>

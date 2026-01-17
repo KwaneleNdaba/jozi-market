@@ -85,7 +85,7 @@ export const vendors: Vendor[] = [
   }
 ];
 
-export const products: Product[] = [
+export const products: any[] = [
   {
     id: 'p1',
     name: 'Shweshwe Evening Dress',

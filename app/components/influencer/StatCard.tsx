@@ -14,7 +14,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, val, trend, icon: Icon, colo
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 text-left group transition-all relative overflow-hidden"
+      className="bg-white p-8 rounded-4xl shadow-soft border border-jozi-forest/5 text-left group transition-all relative overflow-hidden"
     >
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-6">

@@ -95,12 +95,12 @@ const AdminFeatureManagement: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData(e.currentTarget);
+    const formData = new FormData(e.currentTarget);
       const name = formData.get('name') as string;
       const description = formData.get('description') as string;
       const slug = formData.get('slug') as string;
 
-      if (editingFeature) {
+    if (editingFeature) {
         // Update existing feature
         const updateData: IUpdateFeature = {
           id: editingFeature.id!,
@@ -115,7 +115,7 @@ const AdminFeatureManagement: React.FC = () => {
         }
         
         showSuccess('Feature updated successfully');
-      } else {
+    } else {
         // Create new feature
         const createData: ICreateFeature = {
           name,
@@ -126,7 +126,7 @@ const AdminFeatureManagement: React.FC = () => {
         
         if (response.error || !response.data) {
           throw new Error(response.message || 'Failed to create feature');
-        }
+    }
         
         showSuccess('Feature created successfully');
       }
@@ -198,18 +198,18 @@ const AdminFeatureManagement: React.FC = () => {
               <p className="text-gray-400 font-bold">Loading features...</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-gray-50">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-50">
                     <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Name</th>
                     <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Slug</th>
                     <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Created At</th>
                     <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Updated At</th>
-                    <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Ops</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
+                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Ops</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
                   {filteredFeatures.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-24 text-center">
@@ -221,14 +221,14 @@ const AdminFeatureManagement: React.FC = () => {
                     </tr>
                   ) : (
                     filteredFeatures.map((f) => (
-                      <tr key={f.id} className="group hover:bg-gray-50/30 transition-colors">
-                        <td className="py-8">
-                          <div className="space-y-1">
-                            <p className="font-black text-jozi-forest text-lg">{f.name}</p>
+                  <tr key={f.id} className="group hover:bg-gray-50/30 transition-colors">
+                    <td className="py-8">
+                      <div className="space-y-1">
+                        <p className="font-black text-jozi-forest text-lg">{f.name}</p>
                             <p className="text-sm text-gray-400 font-medium max-w-md">{f.description}</p>
-                          </div>
-                        </td>
-                        <td className="py-8">
+                      </div>
+                    </td>
+                    <td className="py-8">
                           <code className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">{f.slug}</code>
                         </td>
                         <td className="py-8">
@@ -236,32 +236,32 @@ const AdminFeatureManagement: React.FC = () => {
                             <Calendar className="w-3.5 h-3.5 mr-2 opacity-40" />
                             {formatDate(f.createdAt)}
                           </div>
-                        </td>
-                        <td className="py-8">
+                    </td>
+                    <td className="py-8">
                           <div className="flex items-center text-gray-400 text-xs font-bold">
                             <Calendar className="w-3.5 h-3.5 mr-2 opacity-40" />
                             {formatDate(f.updatedAt)}
                           </div>
-                        </td>
-                        <td className="py-8 text-right">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button onClick={() => handleOpenModal(f)} className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-jozi-forest hover:bg-white transition-all shadow-sm">
-                              <Edit3 className="w-4 h-4" />
-                            </button>
+                    </td>
+                    <td className="py-8 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button onClick={() => handleOpenModal(f)} className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-jozi-forest hover:bg-white transition-all shadow-sm">
+                          <Edit3 className="w-4 h-4" />
+                        </button>
                             <button 
                               onClick={() => openDeleteConfirm(f)} 
                               className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-red-500 hover:bg-white transition-all shadow-sm"
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                     ))
                   )}
-                </tbody>
-              </table>
-            </div>
+              </tbody>
+            </table>
+          </div>
           )}
         </div>
       </section>
@@ -283,7 +283,7 @@ const AdminFeatureManagement: React.FC = () => {
                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Description *</label>
                     <textarea name="description" required defaultValue={editingFeature?.description} rows={3} className="w-full bg-gray-50 rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none resize-none border-2 border-transparent focus:border-jozi-gold/20" placeholder="Enter feature description..." />
                   </div>
-                  <div className="space-y-2">
+                    <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Slug {editingFeature ? '(Optional)' : '*'}</label>
                     <input 
                       name="slug" 

@@ -302,11 +302,11 @@ const VendorForgotPasswordPage: React.FC = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-6xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[650px] border border-jozi-forest/5"
+        className="max-w-6xl w-full bg-white rounded-5xl shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[650px] border border-jozi-forest/5"
       >
         <div className="lg:w-1/2 bg-jozi-forest relative overflow-hidden hidden lg:block">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-20" />
-          <div className="absolute inset-0 bg-gradient-to-br from-jozi-forest via-jozi-forest/80 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-br from-jozi-forest via-jozi-forest/80 to-transparent" />
           
           <div className="relative z-10 h-full p-16 flex flex-col justify-between text-white text-left">
             <Link href="/" className="inline-block -ml-10">
@@ -374,7 +374,7 @@ const VendorForgotPasswordPage: React.FC = () => {
                           if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
                         }}
                         placeholder="artisan@workshop.za" 
-                        className={`w-full bg-gray-50 border-2 rounded-[2rem] py-6 pl-16 pr-8 font-black text-jozi-forest outline-none transition-all ${
+                        className={`w-full bg-gray-50 border-2 rounded-3xl py-6 pl-16 pr-8 font-black text-jozi-forest outline-none transition-all ${
                           errors.email ? 'border-red-300' : 'border-transparent focus:border-jozi-gold/30'
                         }`}
                       />
@@ -392,7 +392,7 @@ const VendorForgotPasswordPage: React.FC = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-jozi-forest text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center group shadow-xl shadow-jozi-forest/20 hover:bg-jozi-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-jozi-forest text-white py-6 rounded-3xl font-black text-sm uppercase tracking-widest flex items-center justify-center group shadow-xl shadow-jozi-forest/20 hover:bg-jozi-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -446,7 +446,7 @@ const VendorForgotPasswordPage: React.FC = () => {
                     <button 
                       type="submit"
                       disabled={isLoading || otp.some(d => !d)}
-                      className="w-full bg-jozi-forest text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center shadow-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-jozi-dark transition-all"
+                      className="w-full bg-jozi-forest text-white py-6 rounded-3xl font-black text-sm uppercase tracking-widest flex items-center justify-center shadow-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-jozi-dark transition-all"
                     >
                       {isLoading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -575,7 +575,7 @@ const VendorForgotPasswordPage: React.FC = () => {
                   <button 
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-jozi-forest text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center hover:bg-jozi-dark transition-all mt-6 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
+                    className="w-full bg-jozi-forest text-white py-6 rounded-3xl font-black text-sm uppercase tracking-widest flex items-center justify-center hover:bg-jozi-dark transition-all mt-6 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
                   >
                     {isLoading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -589,12 +589,12 @@ const VendorForgotPasswordPage: React.FC = () => {
 
             {step === 'success' && (
               <motion.div key="success" variants={stepVariants} initial="hidden" animate="visible" className="text-center space-y-8 py-8">
-                <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl mb-4">
+                <div className="w-24 h-24 bg-emerald-500 text-white rounded-4xl flex items-center justify-center mx-auto shadow-2xl mb-4">
                   <CheckCircle2 className="w-12 h-12" />
                 </div>
                 <h2 className="text-4xl font-black text-jozi-forest tracking-tighter uppercase leading-none">Credentials <br /><span className="text-emerald-500">Restored.</span></h2>
                 <p className="text-gray-400 font-medium">Your artisan account is now secure. Please sign in to re-access your cockpit.</p>
-                <Link href="/vendor/signin" className="inline-block w-full bg-jozi-forest text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl hover:bg-jozi-dark transition-all">Return to Cockpit</Link>
+                <Link href="/vendor/signin" className="inline-block w-full bg-jozi-forest text-white py-6 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl hover:bg-jozi-dark transition-all">Return to Cockpit</Link>
               </motion.div>
             )}
           </AnimatePresence>

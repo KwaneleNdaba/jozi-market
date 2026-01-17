@@ -24,7 +24,7 @@ const TierProgress: React.FC<TierProgressProps> = ({ user }) => {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
         {/* Left: Current Tier Badge */}
         <div className="flex items-center space-x-6">
-          <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center ${currentTierData.bg} ${currentTierData.color} shadow-inner`}>
+          <div className={`w-24 h-24 rounded-4xl flex items-center justify-center ${currentTierData.bg} ${currentTierData.color} shadow-inner`}>
             <currentTierData.icon className="w-12 h-12" />
           </div>
           <div className="space-y-1">
@@ -38,7 +38,7 @@ const TierProgress: React.FC<TierProgressProps> = ({ user }) => {
         </div>
 
         {/* Center: Ladder */}
-        <div className="flex-grow w-full max-w-2xl px-4">
+        <div className="grow w-full max-w-2xl px-4">
           <div className="relative">
             <div className="h-2 bg-gray-50 rounded-full w-full overflow-hidden">
               <motion.div 
@@ -67,7 +67,7 @@ const TierProgress: React.FC<TierProgressProps> = ({ user }) => {
         </div>
 
         {/* Right: Next Level Goal */}
-        <div className="bg-jozi-cream rounded-[2.5rem] p-8 border border-jozi-forest/5 min-w-[280px]">
+        <div className="bg-jozi-cream rounded-4xl p-8 border border-jozi-forest/5 min-w-[280px]">
            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target</p>
            <h4 className="text-xl font-black text-jozi-forest leading-tight">Road to {user.nextTier}</h4>
            <p className="text-2xl font-black text-jozi-gold mt-4">{user.pointsToNext.toLocaleString()} <span className="text-xs font-bold text-gray-400 uppercase">Pts Needed</span></p>

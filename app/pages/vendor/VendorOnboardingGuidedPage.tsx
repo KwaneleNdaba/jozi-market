@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams, Link } from 'next/link';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
   CheckCircle2, 
   ChevronRight, 
@@ -26,7 +27,7 @@ import OnboardingAIWizard from '../../components/vendor/onboarding/OnboardingAIW
 export type OnboardingPlan = 'Free' | 'Starter' | 'Growth' | 'Pro';
 
 const VendorOnboardingGuidedPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const selectedPlan = (searchParams.get('plan') as OnboardingPlan) || 'Free';
   
   const [currentStep, setCurrentStep] = useState<'registration' | 'suppliers' | 'launch' | 'wizard'>('registration');
@@ -66,11 +67,11 @@ const VendorOnboardingGuidedPage: React.FC = () => {
                 <h1 className="text-4xl lg:text-5xl font-black text-jozi-forest tracking-tighter uppercase leading-none">
                   Workshop <br /><span className="text-jozi-gold">Initialization.</span>
                 </h1>
-                <p className="text-gray-400 font-medium italic">Setting up your artisan presence on the <span className="text-jozi-forest font-black font-normal">{selectedPlan}</span> Tier.</p>
+                <p className="text-gray-400 font-medium italic">Setting up your artisan presence on the <span className="text-jozi-forest font-bold">{selectedPlan}</span> Tier.</p>
              </div>
           </div>
 
-          <div className="bg-white p-6 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 flex items-center space-x-6 min-w-[300px]">
+          <div className="bg-white p-6 rounded-4xl shadow-soft border border-jozi-forest/5 flex items-center space-x-6 min-w-[300px]">
              <div className="w-16 h-16 bg-jozi-gold/10 rounded-2xl flex items-center justify-center text-jozi-gold">
                 <Zap className="w-8 h-8 fill-current" />
              </div>
@@ -91,7 +92,7 @@ const VendorOnboardingGuidedPage: React.FC = () => {
                <button
                  key={step.id}
                  onClick={() => setCurrentStep(step.id as any)}
-                 className={`w-full p-6 rounded-[2rem] border-2 transition-all flex items-center space-x-5 text-left ${
+                 className={`w-full p-6 rounded-3xl border-2 transition-all flex items-center space-x-5 text-left ${
                    currentStep === step.id 
                     ? 'bg-white border-jozi-forest shadow-xl scale-105 z-10' 
                     : 'bg-white/50 border-transparent text-gray-400 hover:bg-white hover:border-jozi-forest/10'
@@ -102,7 +103,7 @@ const VendorOnboardingGuidedPage: React.FC = () => {
                  }`}>
                    <step.icon className="w-6 h-6" />
                  </div>
-                 <div className="flex-grow">
+                 <div className="grow">
                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Step</p>
                    <p className="font-black text-sm">{step.label}</p>
                  </div>
@@ -112,7 +113,7 @@ const VendorOnboardingGuidedPage: React.FC = () => {
                </button>
              ))}
 
-             <div className="p-8 bg-jozi-dark rounded-[2.5rem] text-white space-y-4 relative overflow-hidden group shadow-2xl mt-8">
+             <div className="p-8 bg-jozi-dark rounded-4xl text-white space-y-4 relative overflow-hidden group shadow-2xl mt-8">
                 <Lock className="absolute -bottom-6 -right-6 w-32 h-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
                 <h4 className="text-xl font-black relative z-10">Data Integrity</h4>
                 <p className="text-xs text-jozi-cream/50 font-medium leading-relaxed relative z-10">All information is encrypted under POPIA guidelines. We only share delivery data with verified riders.</p>
@@ -120,7 +121,7 @@ const VendorOnboardingGuidedPage: React.FC = () => {
           </aside>
 
           {/* Main Content Area */}
-          <main className="flex-grow">
+          <main className="grow">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}

@@ -11,7 +11,7 @@ const BADGES = [
 
 const AchievementsSection: React.FC = () => {
   return (
-    <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-jozi-forest/5 text-left space-y-8">
+    <div className="bg-white p-10 rounded-5xl shadow-soft border border-jozi-forest/5 text-left space-y-8">
       <div className="flex items-center justify-between">
         <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight">Artisan Badges</h3>
         <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full uppercase">2 / 4 Unlocked</span>
@@ -20,7 +20,7 @@ const AchievementsSection: React.FC = () => {
       <div className="grid grid-cols-2 gap-6">
         {BADGES.map((badge, i) => (
           <div key={badge.id} className="flex flex-col items-center text-center space-y-3 group">
-            <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center relative transition-all ${
+            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center relative transition-all ${
               badge.unlocked ? 'bg-jozi-gold text-white shadow-xl shadow-jozi-gold/20' : 'bg-gray-100 text-gray-300 opacity-60'
             }`}>
               <badge.icon className="w-8 h-8" />

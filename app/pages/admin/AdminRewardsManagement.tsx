@@ -198,7 +198,7 @@ const AdminRewardsManagement: React.FC = () => {
       <section className="container mx-auto px-4 -mt-10 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Chart Card */}
-          <div className="lg:col-span-2 bg-white rounded-[3rem] p-8 lg:p-12 shadow-soft border border-jozi-forest/5 text-left">
+          <div className="lg:col-span-2 bg-white rounded-5xl p-8 lg:p-12 shadow-soft border border-jozi-forest/5 text-left">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight">Threshold Distribution</h3>
               <div className="p-3 bg-jozi-cream rounded-xl text-jozi-gold"><BarChart3 className="w-5 h-5" /></div>
@@ -221,7 +221,7 @@ const AdminRewardsManagement: React.FC = () => {
           </div>
 
           {/* Quick Actions / Filters */}
-          <div className="bg-jozi-forest p-10 rounded-[3rem] text-white flex flex-col justify-between shadow-2xl relative overflow-hidden group">
+          <div className="bg-jozi-forest p-10 rounded-5xl text-white flex flex-col justify-between shadow-2xl relative overflow-hidden group">
             <div className="relative z-10 space-y-6 text-left">
               <div className="flex items-center space-x-3">
                  <div className="p-3 bg-white/10 rounded-2xl"><Settings className="w-6 h-6 text-jozi-gold" /></div>
@@ -289,7 +289,7 @@ const AdminRewardsManagement: React.FC = () => {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8"
             >
               {filteredRewards.map((reward) => (
-                <div key={reward.id} className={`bg-white rounded-[2.5rem] p-8 border-2 transition-all group relative flex flex-col h-full ${reward.status === 'Active' ? 'border-jozi-forest/5 hover:border-jozi-forest/20 shadow-soft' : 'border-transparent grayscale opacity-60'}`}>
+                <div key={reward.id} className={`bg-white rounded-4xl p-8 border-2 transition-all group relative flex flex-col h-full ${reward.status === 'Active' ? 'border-jozi-forest/5 hover:border-jozi-forest/20 shadow-soft' : 'border-transparent grayscale opacity-60'}`}>
                   <div className="flex items-center justify-between mb-6">
                     <div className={`p-4 rounded-2xl ${reward.status === 'Active' ? 'bg-jozi-forest/5 text-jozi-forest' : 'bg-gray-100 text-gray-400'}`}>
                        {reward.type === 'Coupon' ? <Tag className="w-6 h-6" /> : reward.type === 'Free Product' ? <PackageIcon className="w-6 h-6" /> : reward.type === 'Discount' ? <CreditCard className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
@@ -302,7 +302,7 @@ const AdminRewardsManagement: React.FC = () => {
                     </button>
                   </div>
                   
-                  <div className="flex-grow space-y-4">
+                  <div className="grow space-y-4">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-jozi-gold">{reward.type}</p>
                       <h4 className="text-xl font-black text-jozi-dark tracking-tight leading-tight">{reward.name}</h4>
@@ -329,7 +329,7 @@ const AdminRewardsManagement: React.FC = () => {
               {/* Add New Placeholder */}
               <button 
                 onClick={() => handleOpenModal()}
-                className="rounded-[2.5rem] border-4 border-dashed border-gray-100 hover:border-jozi-gold/20 transition-all flex flex-col items-center justify-center p-12 text-center group min-h-[300px]"
+                className="rounded-4xl border-4 border-dashed border-gray-100 hover:border-jozi-gold/20 transition-all flex flex-col items-center justify-center p-12 text-center group min-h-[300px]"
               >
                 <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 group-hover:bg-jozi-gold group-hover:text-white transition-all mb-4">
                   <Plus className="w-8 h-8" />
@@ -344,7 +344,7 @@ const AdminRewardsManagement: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-[3rem] p-10 shadow-soft border border-gray-100 overflow-hidden text-left"
+              className="bg-white rounded-5xl p-10 shadow-soft border border-gray-100 overflow-hidden text-left"
             >
               <table className="w-full">
                 <thead>
@@ -386,7 +386,7 @@ const AdminRewardsManagement: React.FC = () => {
         </AnimatePresence>
 
         {/* Global Action Footer */}
-        <div className="mt-20 p-12 bg-white rounded-[4rem] border border-jozi-forest/5 shadow-soft flex flex-col md:flex-row items-center justify-between gap-12 text-left relative overflow-hidden group">
+        <div className="mt-20 p-12 bg-white rounded-5xl border border-jozi-forest/5 shadow-soft flex flex-col md:flex-row items-center justify-between gap-12 text-left relative overflow-hidden group">
            <div className="flex items-start space-x-6 max-w-2xl relative z-10">
              <div className="w-16 h-16 bg-jozi-gold/10 rounded-3xl flex items-center justify-center text-jozi-gold shrink-0">
                <AlertCircle className="w-8 h-8" />
@@ -413,13 +413,13 @@ const AdminRewardsManagement: React.FC = () => {
       {/* Configuration Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-md" />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
+              className="bg-white rounded-5xl p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
             >
               <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
               
@@ -522,8 +522,8 @@ const AdminRewardsManagement: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Abort Changes</button>
-                  <button type="submit" className="flex-grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Abort Changes</button>
+                  <button type="submit" className="grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
                     <Save className="w-4 h-4 mr-2" /> Commit Redemptions
                   </button>
                 </div>

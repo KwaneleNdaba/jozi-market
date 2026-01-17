@@ -25,7 +25,7 @@ const VendorCreditMonitor: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Credit Registry */}
-        <div className="lg:col-span-2 bg-white rounded-[3.5rem] p-10 lg:p-12 shadow-soft border border-gray-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-gray-100 overflow-hidden">
            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
               <div className="relative w-full md:max-w-md">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -93,7 +93,7 @@ const VendorCreditMonitor: React.FC = () => {
 
         {/* Global Policy Control */}
         <div className="space-y-8">
-           <div className="bg-jozi-dark p-10 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group">
+           <div className="bg-jozi-dark p-10 rounded-5xl text-white shadow-2xl relative overflow-hidden group">
               <div className="relative z-10 space-y-6">
                  <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-jozi-gold shadow-xl">
                     <RefreshCw className="w-7 h-7" />
@@ -105,7 +105,7 @@ const VendorCreditMonitor: React.FC = () => {
               <Zap className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-12 transition-transform duration-1000" />
            </div>
 
-           <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 space-y-6 text-left">
+           <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 space-y-6 text-left">
               <div className="flex items-center space-x-3 mb-4">
                  <div className="p-2 bg-jozi-gold/10 rounded-xl text-jozi-gold"><AlertTriangle className="w-5 h-5" /></div>
                  <h4 className="text-sm font-black uppercase text-jozi-dark">Limit Exceptions</h4>

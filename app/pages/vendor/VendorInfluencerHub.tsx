@@ -45,7 +45,7 @@ const VendorInfluencerHub: React.FC = () => {
       />
 
       {/* Global AI Status Alert */}
-      <div className="bg-jozi-dark rounded-[2.5rem] p-6 text-white flex items-center justify-between overflow-hidden relative group">
+      <div className="bg-jozi-dark rounded-4xl p-6 text-white flex items-center justify-between overflow-hidden relative group">
          <div className="flex items-center space-x-4 relative z-10 text-left">
             <div className="w-12 h-12 bg-jozi-gold/20 rounded-xl flex items-center justify-center text-jozi-gold border border-jozi-gold/30">
                <Sparkles className="w-6 h-6 animate-pulse" />
@@ -112,8 +112,8 @@ const VendorInfluencerHub: React.FC = () => {
 
             {/* General Discovery Section */}
             <section className="space-y-6">
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-soft border border-gray-100 flex flex-col lg:flex-row items-center gap-6">
-                <div className="relative flex-grow w-full">
+              <div className="bg-white p-6 rounded-4xl shadow-soft border border-gray-100 flex flex-col lg:flex-row items-center gap-6">
+                <div className="relative grow w-full">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input 
                     type="text"
@@ -165,7 +165,7 @@ const VendorInfluencerHub: React.FC = () => {
             key="payouts"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-[3rem] p-12 shadow-soft border border-gray-100 text-center space-y-6"
+            className="bg-white rounded-5xl p-12 shadow-soft border border-gray-100 text-center space-y-6"
           >
             <div className="w-20 h-20 bg-jozi-cream rounded-full flex items-center justify-center mx-auto text-jozi-forest">
               <Wallet className="w-10 h-10 opacity-30" />

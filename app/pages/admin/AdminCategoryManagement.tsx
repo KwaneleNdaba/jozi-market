@@ -1247,7 +1247,7 @@ const AdminCategoryManagement: React.FC = () => {
                       <tr key={cat.id} className="group hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-2">
                           <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-jozi-cream to-white border border-gray-200 overflow-hidden relative shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-linear-to-br from-jozi-cream to-white border border-gray-200 overflow-hidden relative shrink-0">
                               {cat.icon ? (
                                 <Image
                                   src={cat.icon}
@@ -1586,57 +1586,57 @@ const AdminCategoryManagement: React.FC = () => {
                                 
                                 return (
                                   <div key={subId} className="space-y-2">
-                                    <motion.div
-                                      initial={{ opacity: 0, x: -10 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      className={`flex items-center justify-between p-3 rounded-lg border transition-all group ${
-                                        isNew 
-                                          ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100' 
-                                          : 'bg-gray-50 border-gray-200 hover:bg-white'
-                                      }`}
-                                    >
-                                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <ListTree className={`w-4 h-4 shrink-0 ${isNew ? 'text-emerald-600' : 'text-jozi-gold'}`} />
-                                        <div className="min-w-0 flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">{sub.name}</p>
-                                            {isNew && (
-                                              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-100 px-1.5 py-0.5 rounded">
-                                                New
-                                              </span>
-                                            )}
+                                  <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className={`flex items-center justify-between p-3 rounded-lg border transition-all group ${
+                                      isNew 
+                                        ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100' 
+                                        : 'bg-gray-50 border-gray-200 hover:bg-white'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <ListTree className={`w-4 h-4 shrink-0 ${isNew ? 'text-emerald-600' : 'text-jozi-gold'}`} />
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                          <p className="text-sm font-semibold text-gray-900 truncate">{sub.name}</p>
+                                          {isNew && (
+                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-100 px-1.5 py-0.5 rounded">
+                                              New
+                                            </span>
+                                          )}
                                             {!isNew && (linkedAttrs.length > 0 || selectedAttrs.length > 0) && (
                                               <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider bg-blue-100 px-1.5 py-0.5 rounded">
                                                 {linkedAttrs.length + selectedAttrs.length} {linkedAttrs.length + selectedAttrs.length === 1 ? 'attr' : 'attrs'}
                                               </span>
                                             )}
-                                          </div>
-                                          <p className="text-xs text-gray-500 truncate">{sub.description}</p>
                                         </div>
-                                        <StatusBadge status={sub.status} />
+                                        <p className="text-xs text-gray-500 truncate">{sub.description}</p>
                                       </div>
-                                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                                        {isNew ? (
-                                          <>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleEditNewSubcategory(index)}
-                                              className="p-1.5 text-gray-400 hover:text-jozi-forest transition-all"
-                                              title="Edit subcategory"
-                                            >
-                                              <Edit3 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleRemoveNewSubcategory(index)}
-                                              className="p-1.5 text-gray-400 hover:text-red-600 transition-all"
-                                              title="Remove subcategory"
-                                            >
-                                              <Trash2 className="w-4 h-4" />
-                                            </button>
-                                          </>
-                                        ) : (
-                                          <>
+                                      <StatusBadge status={sub.status} />
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                                      {isNew ? (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleEditNewSubcategory(index)}
+                                            className="p-1.5 text-gray-400 hover:text-jozi-forest transition-all"
+                                            title="Edit subcategory"
+                                          >
+                                            <Edit3 className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveNewSubcategory(index)}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 transition-all"
+                                            title="Remove subcategory"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <>
                                             <button
                                               type="button"
                                               onClick={() => 'id' in sub && toggleSubcategoryAttributeManagement(sub.id)}
@@ -1649,29 +1649,29 @@ const AdminCategoryManagement: React.FC = () => {
                                             >
                                               <Layers className="w-4 h-4" />
                                             </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setIsModalOpen(false);
-                                                handleOpenModal('subcategory', sub, editingItem.data?.id);
-                                              }}
-                                              className="p-1.5 text-gray-400 hover:text-jozi-forest opacity-0 group-hover:opacity-100 transition-all"
-                                              title="Edit subcategory"
-                                            >
-                                              <Edit3 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={() => 'id' in sub && handleDeleteSubcategory(sub.id, editingItem.data?.id || '')}
-                                              className="p-1.5 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
-                                              title="Delete subcategory"
-                                            >
-                                              <Trash2 className="w-4 h-4" />
-                                            </button>
-                                          </>
-                                        )}
-                                      </div>
-                                    </motion.div>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setIsModalOpen(false);
+                                              handleOpenModal('subcategory', sub, editingItem.data?.id);
+                                            }}
+                                            className="p-1.5 text-gray-400 hover:text-jozi-forest opacity-0 group-hover:opacity-100 transition-all"
+                                            title="Edit subcategory"
+                                          >
+                                            <Edit3 className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => 'id' in sub && handleDeleteSubcategory(sub.id, editingItem.data?.id || '')}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
+                                            title="Delete subcategory"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </motion.div>
                                     
                                     {/* Inline Attribute Management */}
                                     {!isNew && 'id' in sub && isExpanded && (
@@ -1681,59 +1681,59 @@ const AdminCategoryManagement: React.FC = () => {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="ml-4 pl-4 border-l-2 border-blue-200 space-y-4 bg-blue-50/30 rounded-lg p-4"
                                       >
-                                        <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between">
                                           <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                                             Manage Attributes
                                           </h4>
-                                          <button
-                                            type="button"
-                                            onClick={() => setIsCreateAttributeModalOpen(true)}
-                                            className="text-xs font-semibold text-gray-600 hover:text-jozi-forest transition-colors flex items-center gap-1"
-                                          >
-                                            <Plus className="w-3 h-3" />
-                                            New Attribute
-                                          </button>
-                                        </div>
-
+                              <button 
+                                type="button"
+                                onClick={() => setIsCreateAttributeModalOpen(true)}
+                                className="text-xs font-semibold text-gray-600 hover:text-jozi-forest transition-colors flex items-center gap-1"
+                              >
+                                <Plus className="w-3 h-3" />
+                                New Attribute
+                              </button>
+                          </div>
+                          
                                         {/* Add Attribute Form */}
                                         <div className="space-y-3 p-3 bg-white rounded-lg border border-gray-200">
-                                          <div className="space-y-2">
-                                            <label className="text-xs font-semibold text-gray-700">Select Global Attribute *</label>
-                                            <select
+                                <div className="space-y-2">
+                                  <label className="text-xs font-semibold text-gray-700">Select Global Attribute *</label>
+                                  <select
                                               value={form.selectedAttributeId}
-                                              onChange={(e) => {
-                                                const attr = globalAttributes.find(a => a.id === e.target.value);
+                                    onChange={(e) => {
+                                      const attr = globalAttributes.find(a => a.id === e.target.value);
                                                 setSubcategoryAttributeForms(prev => ({
                                                   ...prev,
                                                   [subId]: {
                                                     ...prev[subId],
                                                     selectedAttributeId: e.target.value,
                                                     options: attr?.type === AttributeType.SELECT ? [] : prev[subId]?.options || []
-                                                  }
+                                      }
                                                 }));
-                                              }}
+                                    }}
                                               className="w-full bg-gray-50 border border-gray-300 focus:border-jozi-gold focus:ring-2 focus:ring-jozi-gold/10 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 outline-none transition-all"
-                                            >
-                                              <option value="">Choose an attribute...</option>
-                                              {globalAttributes
+                                  >
+                                    <option value="">Choose an attribute...</option>
+                                    {globalAttributes
                                                 .filter(attr => {
                                                   const linked = linkedAttrs.some(la => la.attributeId === attr.id);
                                                   const selected = selectedAttrs.some(sa => sa.attributeId === attr.id);
                                                   return !linked && !selected;
                                                 })
-                                                .map(attr => (
-                                                  <option key={attr.id} value={attr.id}>
-                                                    {attr.name} ({attr.type}{attr.unit ? `, ${attr.unit}` : ''})
-                                                  </option>
-                                                ))}
-                                            </select>
-                                          </div>
+                                      .map(attr => (
+                                        <option key={attr.id} value={attr.id}>
+                                          {attr.name} ({attr.type}{attr.unit ? `, ${attr.unit}` : ''})
+                                        </option>
+                                      ))}
+                                  </select>
+                                </div>
 
                                           {form.selectedAttributeId && (
-                                            <>
-                                              <div className="flex items-center gap-2">
-                                                <input
-                                                  type="checkbox"
+                                  <>
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
                                                   checked={form.isRequired}
                                                   onChange={(e) => {
                                                     setSubcategoryAttributeForms(prev => ({
@@ -1741,21 +1741,21 @@ const AdminCategoryManagement: React.FC = () => {
                                                       [subId]: { ...prev[subId], isRequired: e.target.checked }
                                                     }));
                                                   }}
-                                                  className="w-4 h-4 text-jozi-forest border-gray-300 rounded focus:ring-jozi-gold"
-                                                />
+                                        className="w-4 h-4 text-jozi-forest border-gray-300 rounded focus:ring-jozi-gold"
+                                      />
                                                 <label className="text-xs font-semibold text-gray-700">
-                                                  Required field
-                                                </label>
-                                              </div>
+                                        Required field
+                                      </label>
+                                    </div>
 
                                               {/* Options for Select type */}
                                               {globalAttributes.find(a => a.id === form.selectedAttributeId)?.type === AttributeType.SELECT && (
-                                                <div className="space-y-2">
+                                      <div className="space-y-2">
                                                   <label className="text-xs font-semibold text-gray-700">Options</label>
-                                                  <div className="flex gap-2">
-                                                    <input
-                                                      type="text"
-                                                      placeholder="Add option value"
+                                        <div className="flex gap-2">
+                                          <input
+                                            type="text"
+                                            placeholder="Add option value"
                                                       value={form.newOption}
                                                       onChange={(e) => {
                                                         setSubcategoryAttributeForms(prev => ({
@@ -1763,56 +1763,56 @@ const AdminCategoryManagement: React.FC = () => {
                                                           [subId]: { ...prev[subId], newOption: e.target.value }
                                                         }));
                                                       }}
-                                                      onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                          e.preventDefault();
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
                                                           handleAddSubcategoryAttributeOption(subId);
-                                                        }
-                                                      }}
+                                              }
+                                            }}
                                                       className="flex-1 bg-gray-50 border border-gray-300 focus:border-jozi-gold focus:ring-2 focus:ring-jozi-gold/10 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 placeholder-gray-400 outline-none transition-all"
-                                                    />
-                                                    <button
-                                                      type="button"
+                                          />
+                                          <button
+                                            type="button"
                                                       onClick={() => handleAddSubcategoryAttributeOption(subId)}
                                                       disabled={!form.newOption?.trim()}
                                                       className="px-3 py-2 bg-jozi-forest text-white rounded-lg font-semibold text-xs hover:bg-jozi-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
+                                          >
                                                       <Plus className="w-3 h-3" />
-                                                    </button>
-                                                  </div>
+                                          </button>
+                                        </div>
                                                   {form.options.length > 0 && (
                                                     <div className="flex flex-wrap gap-2">
                                                       {form.options.map((option, idx) => (
-                                                        <span
-                                                          key={idx}
+                                              <span
+                                                key={idx}
                                                           className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700"
-                                                        >
-                                                          {option}
-                                                          <button
-                                                            type="button"
+                                              >
+                                                {option}
+                                                <button
+                                                  type="button"
                                                             onClick={() => handleRemoveSubcategoryAttributeOption(subId, option)}
-                                                            className="text-red-500 hover:text-red-700"
-                                                          >
-                                                            <X className="w-3 h-3" />
-                                                          </button>
-                                                        </span>
-                                                      ))}
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              )}
+                                                  className="text-red-500 hover:text-red-700"
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
 
-                                              <button
-                                                type="button"
+                                    <button
+                                      type="button"
                                                 onClick={() => handleAddSubcategoryAttribute(subId)}
                                                 className="w-full px-3 py-2 bg-jozi-forest text-white rounded-lg font-semibold text-xs hover:bg-jozi-dark transition-all flex items-center justify-center gap-2"
-                                              >
+                                    >
                                                 <Plus className="w-3 h-3" />
                                                 Add to Selection
-                                              </button>
-                                            </>
-                                          )}
-                                        </div>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
 
                                         {/* Selected Attributes (to be linked) */}
                                         {selectedAttrs.length > 0 && (
@@ -1820,36 +1820,36 @@ const AdminCategoryManagement: React.FC = () => {
                                             <p className="text-xs font-semibold text-gray-700">Selected Attributes ({selectedAttrs.length})</p>
                                             <div className="space-y-1">
                                               {selectedAttrs.map((selected) => {
-                                                const attr = globalAttributes.find(a => a.id === selected.attributeId);
-                                                if (!attr) return null;
-                                                return (
+                                  const attr = globalAttributes.find(a => a.id === selected.attributeId);
+                                  if (!attr) return null;
+                                  return (
                                                   <div
-                                                    key={selected.attributeId}
+                                      key={selected.attributeId}
                                                     className="flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-lg"
-                                                  >
-                                                    <div className="flex items-center gap-2">
+                                    >
+                                          <div className="flex items-center gap-2">
                                                       <span className="text-xs font-semibold text-gray-900">{attr.name}</span>
-                                                      {selected.isRequired && (
-                                                        <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
-                                                          Required
-                                                        </span>
-                                                      )}
-                                                      {selected.options && selected.options.length > 0 && (
+                                            {selected.isRequired && (
+                                              <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
+                                                Required
+                                              </span>
+                                            )}
+                                          {selected.options && selected.options.length > 0 && (
                                                         <span className="text-[10px] text-gray-500">
                                                           ({selected.options.length} options)
                                                         </span>
-                                                      )}
-                                                    </div>
-                                                    <button
-                                                      type="button"
+                                          )}
+                                      </div>
+                                      <button
+                                        type="button"
                                                       onClick={() => handleRemoveSubcategorySelectedAttribute(subId, selected.attributeId)}
                                                       className="p-1 text-gray-400 hover:text-red-600 transition-all"
-                                                    >
+                                      >
                                                       <X className="w-3 h-3" />
-                                                    </button>
+                                      </button>
                                                   </div>
-                                                );
-                                              })}
+                                  );
+                                })}
                                             </div>
                                             <button
                                               type="button"
@@ -1873,37 +1873,37 @@ const AdminCategoryManagement: React.FC = () => {
                                             <p className="text-xs font-semibold text-gray-700">Linked Attributes ({linkedAttrs.length})</p>
                                             <div className="space-y-1">
                                               {linkedAttrs.map((linked) => {
-                                                const attr = linked.attribute || globalAttributes.find(a => a.id === linked.attributeId);
-                                                if (!attr) return null;
-                                                return (
+                                  const attr = linked.attribute || globalAttributes.find(a => a.id === linked.attributeId);
+                                  if (!attr) return null;
+                                  return (
                                                   <div
-                                                    key={linked.id}
+                                      key={linked.id}
                                                     className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded-lg"
-                                                  >
-                                                    <div className="flex items-center gap-2">
+                                    >
+                                          <div className="flex items-center gap-2">
                                                       <span className="text-xs font-semibold text-gray-900">{attr.name}</span>
-                                                      {linked.isRequired && (
-                                                        <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
-                                                          Required
-                                                        </span>
-                                                      )}
-                                                      {linked.options && linked.options.length > 0 && (
+                                            {linked.isRequired && (
+                                              <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
+                                                Required
+                                              </span>
+                                            )}
+                                          {linked.options && linked.options.length > 0 && (
                                                         <span className="text-[10px] text-gray-500">
                                                           ({linked.options.length} options)
                                                         </span>
-                                                      )}
-                                                    </div>
-                                                    <button
-                                                      type="button"
+                                          )}
+                                      </div>
+                                      <button
+                                        type="button"
                                                       onClick={() => handleUnlinkSubcategoryAttribute(subId, linked.id)}
                                                       className="p-1 text-gray-400 hover:text-red-600 transition-all"
-                                                      title="Unlink attribute"
-                                                    >
+                                        title="Unlink attribute"
+                                      >
                                                       <Trash2 className="w-3 h-3" />
-                                                    </button>
+                                      </button>
                                                   </div>
-                                                );
-                                              })}
+                                  );
+                                })}
                                             </div>
                                           </div>
                                         ) : (

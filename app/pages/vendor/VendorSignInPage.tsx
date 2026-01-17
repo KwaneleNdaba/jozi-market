@@ -30,11 +30,11 @@ const VendorSignInPage: React.FC = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-6xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[750px] border border-jozi-forest/5"
+        className="max-w-6xl w-full bg-white rounded-5xl shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[750px] border border-jozi-forest/5"
       >
         <div className="lg:w-1/2 bg-jozi-forest relative overflow-hidden hidden lg:block">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-br from-jozi-forest via-jozi-forest/90 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-br from-jozi-forest via-jozi-forest/90 to-transparent" />
           
           <div className="relative z-10 h-full p-16 flex flex-col justify-between text-white text-left">
             <Link href="/" className="inline-block -ml-10">

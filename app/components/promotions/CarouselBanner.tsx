@@ -67,7 +67,7 @@ const CarouselBanner: React.FC = () => {
 
   return (
     <div 
-      className="relative h-[500px] md:h-[650px] w-full overflow-hidden rounded-[3rem] shadow-2xl bg-jozi-dark group"
+      className="relative h-[500px] md:h-[650px] w-full overflow-hidden rounded-5xl shadow-2xl bg-jozi-dark group"
       onMouseEnter={() => setIsAutoPlaying(false)}
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
@@ -95,8 +95,8 @@ const CarouselBanner: React.FC = () => {
           </motion.div>
           
           {/* Gradients for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-jozi-dark/80 via-jozi-dark/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-jozi-dark/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-jozi-dark/80 via-jozi-dark/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-jozi-dark/60 via-transparent to-transparent" />
 
           {/* Content Wrapper */}
           <div className="relative h-full container mx-auto px-8 md:px-20 flex flex-col justify-center items-start text-left">
@@ -145,7 +145,7 @@ const CarouselBanner: React.FC = () => {
               transition={{ delay: 0.6 }}
             >
               <Link 
-                to={MOCK_SLIDES[currentSlide].link}
+                href={MOCK_SLIDES[currentSlide].link}
                 className="bg-white text-jozi-dark px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center hover:bg-jozi-gold transition-all shadow-2xl group/btn"
               >
                 {MOCK_SLIDES[currentSlide].ctaText}

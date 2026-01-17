@@ -27,7 +27,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 2.5, ease: "easeOut" }}
             className="w-full h-full bg-[url('https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-jozi-dark via-jozi-dark/60 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-jozi-dark via-jozi-dark/60 to-transparent" />
         </div>
 
         {/* Content */}
@@ -69,7 +69,7 @@ const LandingPage: React.FC = () => {
           >
             <Link 
               href="/marketplace" 
-              className="group bg-white text-jozi-dark px-12 py-6 rounded-[2rem] font-black text-xl uppercase tracking-widest shadow-2xl hover:bg-jozi-gold transition-all flex items-center"
+              className="group bg-white text-jozi-dark px-12 py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl hover:bg-jozi-gold transition-all flex items-center"
             >
               <ShoppingBag className="w-6 h-6 mr-3 text-jozi-forest" />
               Shop Treasures
@@ -78,7 +78,7 @@ const LandingPage: React.FC = () => {
             
             <Link 
               href="/vendor/pricing" 
-              className="group border-2 border-white/20 backdrop-blur-md text-white px-12 py-6 rounded-[2rem] font-black text-xl uppercase tracking-widest hover:bg-white/10 transition-all flex items-center"
+              className="group border-2 border-white/20 backdrop-blur-md text-white px-12 py-6 rounded-3xl font-black text-xl uppercase tracking-widest hover:bg-white/10 transition-all flex items-center"
             >
               <Store className="w-6 h-6 mr-3 text-jozi-gold" />
               Become a Partner
@@ -158,9 +158,9 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="relative"
           >
-             <div className="aspect-[4/5] rounded-[4rem] overflow-hidden shadow-2xl border-8 border-white bg-white">
+             <div className="aspect-4/5 rounded-5xl overflow-hidden shadow-2xl border-8 border-white bg-white">
                 <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-jozi-dark/60 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-jozi-dark/60 to-transparent" />
                 <div className="absolute bottom-10 left-10 text-white text-left">
                   <p className="text-[10px] font-black uppercase text-jozi-gold tracking-widest mb-1">Featured Artifact</p>
                   <h3 className="text-3xl font-black uppercase">Hand-Dyed Indigo Shweshwe</h3>

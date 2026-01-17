@@ -133,7 +133,7 @@ const AdminPlatformAnalytics: React.FC = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
-               <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+               <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                   <h3 className="text-2xl font-black text-jozi-dark mb-10">Revenue Velocity</h3>
                   <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">

@@ -50,7 +50,7 @@ const VendorOrdersPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
             key={i}
-            className="bg-white p-6 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 text-left group hover:shadow-lg transition-all"
+            className="bg-white p-6 rounded-4xl shadow-soft border border-jozi-forest/5 text-left group hover:shadow-lg transition-all"
           >
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
@@ -65,7 +65,7 @@ const VendorOrdersPage: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
+      <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}

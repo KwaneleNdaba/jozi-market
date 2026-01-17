@@ -71,7 +71,7 @@ const ExposureQueue: React.FC = () => {
                  {f}
                </button>
              ))}
-             <div className="h-10 w-[1px] bg-gray-100 mx-2" />
+             <div className="h-10 w-px bg-gray-100 mx-2" />
              <button className="p-4 bg-gray-50 text-gray-400 rounded-xl hover:text-jozi-forest">
                 <Filter className="w-5 h-5" />
              </button>

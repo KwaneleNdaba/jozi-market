@@ -232,7 +232,7 @@ const AdminContentManagement: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id as any); setSelectedIds([]); }}
-                className={`flex-grow md:flex-none px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center space-x-3 transition-all ${
+                className={`row md:flex-none px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center space-x-3 transition-all ${
                   activeTab === tab.id ? 'bg-jozi-forest text-white shadow-lg' : 'text-gray-400 hover:bg-white'
                 }`}
               >
@@ -243,7 +243,7 @@ const AdminContentManagement: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 w-full md:w-auto px-2">
-            <div className="relative flex-grow">
+            <div className="relative grow">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
@@ -296,10 +296,10 @@ const AdminContentManagement: React.FC = () => {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
               {(filteredContent as Banner[]).map((banner: Banner) => (
-                <div key={banner.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-soft group hover:shadow-xl transition-all flex flex-col text-left">
+                <div key={banner.id} className="bg-white rounded-4xl overflow-hidden border border-gray-100 shadow-soft group hover:shadow-xl transition-all flex flex-col text-left">
                   <div className="relative aspect-video overflow-hidden">
                     <img src={banner.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={banner.title} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-jozi-dark/60 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-jozi-dark/60 to-transparent" />
                     <div className="absolute top-4 right-4">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border-2 shadow-lg ${banner.status === 'Active' ? 'bg-emerald-50 border-white text-white' : 'bg-gray-100 border-gray-200 text-gray-400'}`}>
                         {banner.status}
@@ -310,7 +310,7 @@ const AdminContentManagement: React.FC = () => {
                        <h3 className="text-lg font-black text-white leading-tight mt-1">{banner.title}</h3>
                     </div>
                   </div>
-                  <div className="p-8 space-y-6 flex-grow">
+                  <div className="p-8 space-y-6 grow">
                      <div className="flex justify-between items-center text-xs font-bold text-gray-400">
                         <div className="flex items-center"><Calendar className="w-3 h-3 mr-2" /> {banner.startDate}</div>
                         <ChevronRight className="w-3 h-3" />
@@ -323,7 +323,7 @@ const AdminContentManagement: React.FC = () => {
                      <div className="flex gap-3 pt-2">
                         <button 
                           onClick={() => handleToggleStatus(banner.id)}
-                          className={`flex-grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${banner.status === 'Active' ? 'bg-gray-100 text-gray-400 hover:bg-gray-200' : 'bg-jozi-forest text-white'}`}
+                          className={`grow py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${banner.status === 'Active' ? 'bg-gray-100 text-gray-400 hover:bg-gray-200' : 'bg-jozi-forest text-white'}`}
                         >
                           {banner.status === 'Active' ? 'Deactivate' : 'Activate'}
                         </button>
@@ -334,7 +334,7 @@ const AdminContentManagement: React.FC = () => {
                 </div>
               ))}
               
-              <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="rounded-[2.5rem] border-4 border-dashed border-gray-100 p-12 flex flex-col items-center justify-center text-center group hover:border-jozi-gold/20 transition-all min-h-[350px]">
+              <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="rounded-[ border-4 border-dashed border-gray-100 p-12 flex flex-col items-center justify-center text-center group hover:border-jozi-gold/20 transition-all min-h-[350px]">
                 <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 group-hover:bg-jozi-gold group-hover:text-white transition-all mb-4">
                   <Plus className="w-8 h-8" />
                 </div>
@@ -352,7 +352,7 @@ const AdminContentManagement: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100 overflow-hidden text-left">
+              <div className="bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-gray-100 overflow-hidden text-left">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-gray-50">
@@ -433,8 +433,8 @@ const AdminContentManagement: React.FC = () => {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {(filteredContent as VideoContent[]).map((video: VideoContent) => (
-                  <div key={video.id} className="bg-white rounded-[2.5rem] p-6 border border-gray-100 shadow-soft group hover:shadow-xl transition-all text-left flex flex-col">
-                    <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden mb-6 bg-jozi-dark">
+                  <div key={video.id} className="bg-white rounded-4xl p-6 border border-gray-100 shadow-soft group hover:shadow-xl transition-all text-left flex flex-col">4xl
+                    <div className="relative aspect-4/5 rounded-3xl overflow-hidden mb-6 bg-jozi-dark">
                       <img src={video.thumbnail} className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" alt={video.title} />
                       <div className="absolute inset-0 flex items-center justify-center">
                          <button 
@@ -454,13 +454,13 @@ const AdminContentManagement: React.FC = () => {
                          </span>
                       </div>
                     </div>
-                    <div className="space-y-4 flex-grow">
+                    <div className="space-y-4 grow">
                        <div>
                           <h4 className="font-black text-jozi-dark text-sm truncate">{video.title}</h4>
                           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ref: {video.association}</p>
                        </div>
                        <div className="flex gap-2">
-                          <button onClick={() => setPreviewVideo(video)} className="flex-grow py-3 bg-jozi-cream rounded-xl text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:bg-jozi-gold transition-all">Preview</button>
+                          <button onClick={() => setPreviewVideo(video)} className="grow py-3 bg-jozi-cream rounded-xl text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:bg-jozi-gold transition-all">Preview</button>
                           <button onClick={() => handleEdit(video)} className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-jozi-forest transition-all shadow-sm"><Settings className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(video.id)} className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-red-500 transition-all shadow-sm"><Trash2 className="w-4 h-4" /></button>
                        </div>
@@ -468,7 +468,7 @@ const AdminContentManagement: React.FC = () => {
                   </div>
                 ))}
 
-                <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="rounded-[2.5rem] border-4 border-dashed border-gray-100 flex flex-col items-center justify-center p-12 text-center group hover:border-jozi-gold/20 transition-all min-h-[400px]">
+                <button onClick={() => { setEditingItem(null); setIsModalOpen(true); }} className="rounded-4xl border-4 border-dashed border-gray-100 flex flex-col items-center justify-center p-12 text-center group hover:border-jozi-gold/20 transition-all min-h-[400px]">
                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 group-hover:bg-jozi-gold group-hover:text-white transition-all mb-4">
                      <Video className="w-8 h-8" />
                    </div>
@@ -517,13 +517,13 @@ const AdminContentManagement: React.FC = () => {
       {/* --- MODAL FOR CONTENT CREATION / EDITING --- */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-md" />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
+              className="bg-white rounded-5xl p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
             >
               <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
               
@@ -609,7 +609,7 @@ const AdminContentManagement: React.FC = () => {
 
                       <div className="md:col-span-2 space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Media Payload (Drag & Drop)</label>
-                        <div className="w-full aspect-[21/9] bg-jozi-cream rounded-[2rem] border-2 border-dashed border-jozi-gold/20 flex flex-col items-center justify-center group hover:bg-jozi-gold/5 transition-all cursor-pointer relative overflow-hidden">
+                        <div className="w-full aspect-21/9 bg-jozi-cream rounded-3xl border-2 border-dashed border-jozi-gold/20 flex flex-col items-center justify-center group hover:bg-jozi-gold/5 transition-all cursor-pointer relative overflow-hidden">
                            {editingItem?.image || editingItem?.thumbnail ? (
                              <>
                                <img src={editingItem.image || editingItem.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-20" />
@@ -629,8 +629,8 @@ const AdminContentManagement: React.FC = () => {
                    </div>
 
                    <div className="flex gap-4 pt-4">
-                      <button type="button" onClick={() => setIsModalOpen(false)} className="flex-grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Abort Deployment</button>
-                      <button type="submit" className="flex-grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                      <button type="button" onClick={() => setIsModalOpen(false)} className="grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Abort Deployment</button>
+                      <button type="submit" className="grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
                         <Save className="w-4 h-4 mr-2" /> Synchronize CMS
                       </button>
                    </div>
@@ -644,13 +644,13 @@ const AdminContentManagement: React.FC = () => {
       {/* VIDEO PREVIEW MODAL */}
       <AnimatePresence>
         {previewVideo && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setPreviewVideo(null)} className="absolute inset-0 bg-jozi-dark/90 backdrop-blur-md" />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-lg aspect-[9/16] rounded-[3rem] overflow-hidden shadow-2xl bg-black flex items-center justify-center"
+              className="relative w-full max-w-lg aspect-9/16 rounded-5xl overflow-hidden shadow-2xl bg-black flex items-center justify-center"
             >
               <button onClick={() => setPreviewVideo(null)} className="absolute top-8 right-8 z-20 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
                 <X className="w-6 h-6" />

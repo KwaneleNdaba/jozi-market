@@ -28,7 +28,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-8">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 lg:p-8">
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }} 
@@ -40,7 +40,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
         initial={{ scale: 0.9, opacity: 0, x: 50 }} 
         animate={{ scale: 1, opacity: 1, x: 0 }} 
         exit={{ scale: 0.9, opacity: 0, x: 50 }}
-        className="relative bg-white w-full max-w-6xl h-full lg:h-auto lg:max-h-[90vh] rounded-[3rem] lg:rounded-[4rem] shadow-2xl flex flex-col overflow-hidden text-left"
+        className="relative bg-white w-full max-w-6xl h-full lg:h-auto lg:max-h-[90vh] rounded-5xl lg:rounded-[4rem] shadow-2xl flex flex-col overflow-hidden text-left"
       >
         {/* Modal Header */}
         <div className="bg-jozi-forest p-10 lg:p-12 text-white relative shrink-0">
@@ -67,14 +67,14 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
         </div>
 
         {/* Content Body */}
-        <div className="flex-grow overflow-y-auto p-10 lg:p-16 space-y-16">
+        <div className="grow overflow-y-auto p-10 lg:p-16 space-y-16">
            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
               
               {/* Left: Profiles & Matchmaking */}
               <div className="lg:col-span-7 space-y-12">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Vendor Profile */}
-                    <div className="bg-gray-50 p-8 rounded-[3rem] border border-gray-100 space-y-6 text-left relative overflow-hidden group">
+                    <div className="bg-gray-50 p-8 rounded-5xl border border-gray-100 space-y-6 text-left relative overflow-hidden group">
                        <div className="relative z-10 flex items-center space-x-4">
                           <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-white shadow-lg">
                              <img src={campaign.vendorLogo} className="w-full h-full object-cover" />
@@ -93,7 +93,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
                     </div>
 
                     {/* Influencer Profile */}
-                    <div className="bg-jozi-dark p-8 rounded-[3rem] text-white space-y-6 text-left relative overflow-hidden group shadow-xl">
+                    <div className="bg-jozi-dark p-8 rounded-5xl text-white space-y-6 text-left relative overflow-hidden group shadow-xl">
                        <div className="relative z-10 flex items-center space-x-4">
                           <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-white/20 shadow-lg">
                              <img src={campaign.influencerAvatar} className="w-full h-full object-cover" />
@@ -122,7 +122,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
                        <Package className="w-5 h-5 mr-3 text-jozi-gold" /> Promotion Payload
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div className="p-8 bg-jozi-cream/30 rounded-[3rem] border border-jozi-forest/5 flex flex-col justify-between">
+                       <div className="p-8 bg-jozi-cream/30 rounded-5xl border border-jozi-forest/5 flex flex-col justify-between">
                           <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Featured Piece(s)</p>
                             <h4 className="text-lg font-black text-jozi-forest leading-tight mb-2">{campaign.products}</h4>
@@ -132,7 +132,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
                              Audit Inventory Registry <ArrowUpRight className="w-3 h-3 ml-1" />
                           </button>
                        </div>
-                       <div className="bg-gray-50 rounded-[3rem] overflow-hidden relative group aspect-video">
+                       <div className="bg-gray-50 rounded-5xl overflow-hidden relative group aspect-video">
                           <img src={campaign.mediaUrl} className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                              <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-jozi-forest shadow-xl scale-90 group-hover:scale-100 transition-transform">
@@ -150,7 +150,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
                     <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight flex items-center">
                        <MessageSquare className="w-5 h-5 mr-3 text-jozi-gold" /> Creator Directives
                     </h3>
-                    <div className="p-8 bg-gray-50 rounded-[3rem] border border-gray-100 text-sm font-medium text-gray-500 leading-relaxed italic">
+                    <div className="p-8 bg-gray-50 rounded-5xl border border-gray-100 text-sm font-medium text-gray-500 leading-relaxed italic">
                        "{campaign.notes}"
                     </div>
                  </div>
@@ -158,7 +158,7 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
 
               {/* Right: Commercials & Actions */}
               <div className="lg:col-span-5 space-y-12">
-                 <div className="bg-white rounded-[3rem] border border-gray-100 p-10 space-y-10 shadow-soft text-left">
+                 <div className="bg-white rounded-5xl border border-gray-100 p-10 space-y-10 shadow-soft text-left">
                     <div className="space-y-8">
                        <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight border-b border-gray-100 pb-6">Commercial Audit</h3>
                        
@@ -195,11 +195,11 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
                         value={adminComment}
                         onChange={(e) => setAdminComment(e.target.value)}
                         placeholder="Add internal notes or feedback for the vendor..."
-                        className="w-full bg-gray-50 rounded-[2rem] p-6 text-sm font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none"
+                        className="w-full bg-gray-50 rounded-3xl p-6 text-sm font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none"
                        />
                     </div>
 
-                    <div className="flex items-start space-x-4 p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
+                    <div className="flex items-start space-x-4 p-6 bg-blue-50 rounded-3xl border border-blue-100">
                        <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                        <p className="text-[10px] text-blue-800 font-medium leading-relaxed italic">"Approval will trigger the Escrow Protocol and lock {campaign.budget} for this collaboration."</p>
                     </div>
@@ -216,13 +216,13 @@ const CampaignApprovalModal: React.FC<CampaignApprovalModalProps> = ({ campaign,
                     <div className="grid grid-cols-2 gap-4">
                        <button 
                         onClick={() => onAction(campaign.id, 'Rejected')}
-                        className="py-5 bg-white border-2 border-rose-100 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all flex items-center justify-center"
+                        className="py-5 bg-white border-2 border-rose-100 text-rose-500 rounded-3xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all flex items-center justify-center"
                        >
                           <XCircle className="w-4 h-4 mr-2" /> Decommission
                        </button>
                        <button 
                         onClick={() => alert('Change request dispatched.')}
-                        className="py-5 bg-white border-2 border-jozi-forest/10 text-jozi-forest rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-jozi-cream transition-all flex items-center justify-center"
+                        className="py-5 bg-white border-2 border-jozi-forest/10 text-jozi-forest rounded-3xl font-black text-[10px] uppercase tracking-widest hover:bg-jozi-cream transition-all flex items-center justify-center"
                        >
                           <Edit3Icon className="w-4 h-4 mr-2" /> Request Edits
                        </button>

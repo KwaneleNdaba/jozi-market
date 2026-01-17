@@ -86,10 +86,10 @@ const AboutPage: React.FC = () => {
             </div>
           </div>
           <div className="relative">
-             <div className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-8 border-jozi-cream">
+             <div className="aspect-square rounded-5xl overflow-hidden shadow-2xl border-8 border-jozi-cream">
                 <img src="https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover" alt="Artisan Workspace" />
              </div>
-             <div className="absolute -bottom-8 -left-8 bg-jozi-gold p-8 rounded-[2.5rem] shadow-xl text-jozi-dark">
+             <div className="absolute -bottom-8 -left-8 bg-jozi-gold p-8 rounded-4xl shadow-xl text-jozi-dark">
                 <p className="text-3xl font-black leading-none">140+</p>
                 <p className="text-[10px] font-black uppercase tracking-widest mt-1">Verified Artisans</p>
              </div>
@@ -105,7 +105,7 @@ const AboutPage: React.FC = () => {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {customerBenefits.map((benefit, i) => (
-            <div key={i} className="bg-white p-8 rounded-[3rem] border border-jozi-forest/5 shadow-soft text-left hover:border-jozi-gold transition-all group">
+            <div key={i} className="bg-white p-8 rounded-5xl border border-jozi-forest/5 shadow-soft text-left hover:border-jozi-gold transition-all group">
               <div className="w-12 h-12 bg-jozi-cream rounded-2xl flex items-center justify-center text-jozi-forest mb-6 group-hover:bg-jozi-forest group-hover:text-white transition-all">
                 <benefit.icon className="w-6 h-6" />
               </div>
@@ -147,10 +147,10 @@ const AboutPage: React.FC = () => {
               </Link>
             </div>
             <div className="hidden lg:block relative">
-               <div className="aspect-[4/5] rounded-[4rem] overflow-hidden border-8 border-white/10">
+               <div className="aspect-4/5 rounded-[4rem] overflow-hidden border-8 border-white/10">
                   <img src="https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover grayscale opacity-50" alt="Vendor App Preview" />
                </div>
-               <div className="absolute inset-0 bg-gradient-to-t from-jozi-dark via-transparent to-transparent" />
+               <div className="absolute inset-0 bg-linear-to-t from-jozi-dark via-transparent to-transparent" />
             </div>
           </div>
         </div>
@@ -164,12 +164,12 @@ const AboutPage: React.FC = () => {
             <p className="text-gray-400 font-medium italic">We don't just process transactions; we curate an experience built on mutual respect and visibility.</p>
           </div>
           <div className="lg:col-span-2 grid md:grid-cols-2 gap-10">
-             <div className="space-y-4 p-8 bg-white rounded-[2.5rem] shadow-soft border border-jozi-forest/5">
+             <div className="space-y-4 p-8 bg-white rounded-4xl shadow-soft border border-jozi-forest/5">
                 <div className="w-10 h-10 bg-jozi-forest/5 rounded-xl flex items-center justify-center text-jozi-forest"><Target className="w-5 h-5" /></div>
                 <h5 className="font-black text-lg uppercase tracking-tight">No House Competition</h5>
                 <p className="text-sm text-gray-500 leading-relaxed">Unlike global marketplaces, we don't track your best sellers just to release our own "Platform Basics" version. Your data is your secret weapon.</p>
              </div>
-             <div className="space-y-4 p-8 bg-white rounded-[2.5rem] shadow-soft border border-jozi-forest/5">
+             <div className="space-y-4 p-8 bg-white rounded-4xl shadow-soft border border-jozi-forest/5">
                 <div className="w-10 h-10 bg-jozi-forest/5 rounded-xl flex items-center justify-center text-jozi-forest"><BadgeCheck className="w-5 h-5" /></div>
                 <h5 className="font-black text-lg uppercase tracking-tight">Growth Over Listings</h5>
                 <p className="text-sm text-gray-500 leading-relaxed">Simply listing products isn't enough. We provide the social exposure engine and influencer network needed to actually move inventory.</p>
@@ -182,7 +182,7 @@ const AboutPage: React.FC = () => {
       <section className="container mx-auto px-6 mt-40">
         <div className="bg-jozi-forest rounded-[4rem] p-12 lg:p-24 text-white relative overflow-hidden shadow-2xl">
            <div className="relative z-10 text-center space-y-10 max-w-3xl mx-auto">
-              <div className="w-20 h-20 bg-jozi-gold rounded-[2rem] flex items-center justify-center text-jozi-dark mx-auto shadow-2xl">
+              <div className="w-20 h-20 bg-jozi-gold rounded-3xl flex items-center justify-center text-jozi-dark mx-auto shadow-2xl">
                  <Heart className="w-10 h-10 fill-current" />
               </div>
               <div className="space-y-4">
@@ -199,17 +199,17 @@ const AboutPage: React.FC = () => {
       {/* 7. Call to Action Grid */}
       <section className="container mx-auto px-6 mt-32">
          <div className="grid md:grid-cols-3 gap-6">
-            <Link href="/vendor/register" className="p-10 bg-jozi-gold rounded-[3rem] text-jozi-dark text-center group transition-all hover:-translate-y-2">
+            <Link href="/vendor/register" className="p-10 bg-jozi-gold rounded-5xl text-jozi-dark text-center group transition-all hover:-translate-y-2">
                <Store className="w-10 h-10 mx-auto mb-4" />
                <h4 className="text-2xl font-black uppercase tracking-tight">Start Selling</h4>
                <p className="text-xs font-bold mt-2 opacity-60">Join the collective as an artisan</p>
             </Link>
-            <Link href="/marketplace" className="p-10 bg-white rounded-[3rem] border border-jozi-forest/5 shadow-soft text-jozi-forest text-center transition-all hover:-translate-y-2">
+            <Link href="/marketplace" className="p-10 bg-white rounded-5xl border border-jozi-forest/5 shadow-soft text-jozi-forest text-center transition-all hover:-translate-y-2">
                <ShoppingBag className="w-10 h-10 mx-auto mb-4" />
                <h4 className="text-2xl font-black uppercase tracking-tight">Browse Gallery</h4>
                <p className="text-xs font-bold mt-2 opacity-60">Discover unique local treasures</p>
             </Link>
-            <Link href="/signup" className="p-10 bg-jozi-dark rounded-[3rem] text-white text-center transition-all hover:-translate-y-2">
+            <Link href="/signup" className="p-10 bg-jozi-dark rounded-5xl text-white text-center transition-all hover:-translate-y-2">
                <Users className="w-10 h-10 mx-auto mb-4 text-jozi-gold" />
                <h4 className="text-2xl font-black uppercase tracking-tight">Join Neighbors</h4>
                <p className="text-xs font-bold mt-2 opacity-40">Earn loyalty points and rewards</p>

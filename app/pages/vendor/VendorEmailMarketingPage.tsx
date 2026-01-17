@@ -40,7 +40,7 @@ const VendorEmailMarketingPage: React.FC = () => {
       />
 
       {/* Monthly Allowance Bar */}
-      <div className="bg-white p-8 rounded-[2.5rem] border border-jozi-forest/5 shadow-soft flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative text-left">
+      <div className="bg-white p-8 rounded-4xl border border-jozi-forest/5 shadow-soft flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative text-left">
          <div className="space-y-4 relative z-10">
             <div className="flex items-center space-x-3 text-jozi-gold">
               <Mail className="w-5 h-5" />
@@ -72,7 +72,7 @@ const VendorEmailMarketingPage: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
+      <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}

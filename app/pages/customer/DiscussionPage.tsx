@@ -146,7 +146,7 @@ const DiscussionPage: React.FC = () => {
           
           {/* Discovery Sidebar */}
           <aside className="lg:w-96 shrink-0 space-y-8 text-left">
-            <div className="bg-white rounded-[3rem] p-8 shadow-soft border border-jozi-forest/5 space-y-8">
+            <div className="bg-white rounded-5xl p-8 shadow-soft border border-jozi-forest/5 space-y-8">
               <div className="space-y-4">
                  <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest flex items-center">
                     <Search className="w-4 h-4 mr-2 text-jozi-gold" /> Search Conversations
@@ -191,7 +191,7 @@ const DiscussionPage: React.FC = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="bg-jozi-dark p-8 rounded-[3rem] text-white space-y-6 relative overflow-hidden shadow-2xl group">
+            <div className="bg-jozi-dark p-8 rounded-5xl text-white space-y-6 relative overflow-hidden shadow-2xl group">
                <div className="relative z-10 space-y-4">
                   <div className="flex items-center space-x-3 text-jozi-gold">
                     <Sparkles className="w-5 h-5 fill-current" />
@@ -213,7 +213,7 @@ const DiscussionPage: React.FC = () => {
           </aside>
 
           {/* Discussion Feed */}
-          <main className="flex-grow space-y-6 text-left">
+          <main className="grow space-y-6 text-left">
             <AnimatePresence mode="popLayout">
               {filteredThreads.map((thread) => (
                 <motion.div 
@@ -221,7 +221,7 @@ const DiscussionPage: React.FC = () => {
                   layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`bg-white rounded-[3rem] shadow-soft border border-jozi-forest/5 overflow-hidden transition-all ${expandedThreadId === thread.id ? 'ring-2 ring-jozi-gold/20' : ''}`}
+                  className={`bg-white rounded-5xl shadow-soft border border-jozi-forest/5 overflow-hidden transition-all ${expandedThreadId === thread.id ? 'ring-2 ring-jozi-gold/20' : ''}`}
                 >
                   {/* Thread Summary Header */}
                   <div className="p-8 lg:p-10 cursor-pointer hover:bg-gray-50/50 transition-colors" onClick={() => setExpandedThreadId(expandedThreadId === thread.id ? null : thread.id)}>
@@ -299,7 +299,7 @@ const DiscussionPage: React.FC = () => {
                                       <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border-2 border-white shadow-sm">
                                         <img src={comment.avatar} className="w-full h-full object-cover" />
                                       </div>
-                                      <div className="flex-grow space-y-2">
+                                      <div className="grow space-y-2">
                                          <div className="flex justify-between items-center">
                                             <div className="flex items-center space-x-2">
                                               <span className="font-black text-jozi-forest text-sm">{comment.author}</span>
@@ -380,7 +380,7 @@ const DiscussionPage: React.FC = () => {
       {/* NEW THREAD MODAL */}
       <AnimatePresence>
         {isNewThreadModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsNewThreadModalOpen(false)} className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-md" />
             <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative bg-white rounded-[4rem] p-10 lg:p-12 w-full max-w-2xl shadow-2xl overflow-hidden text-left">
                <button onClick={() => setIsNewThreadModalOpen(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
@@ -418,7 +418,7 @@ const DiscussionPage: React.FC = () => {
 
                      <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Narrative Detail</label>
-                        <textarea rows={4} placeholder="Detailed explanation of your topic..." className="w-full bg-gray-50 rounded-[2.5rem] px-8 py-6 font-medium text-sm text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none" />
+                        <textarea rows={4} placeholder="Detailed explanation of your topic..." className="w-full bg-gray-50 rounded-4xl px-8 py-6 font-medium text-sm text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none" />
                      </div>
 
                      <div className="p-6 bg-jozi-gold/5 rounded-3xl border border-jozi-gold/20 flex items-start space-x-4">
@@ -427,8 +427,8 @@ const DiscussionPage: React.FC = () => {
                      </div>
 
                      <div className="flex gap-4 pt-4">
-                        <button type="button" onClick={() => setIsNewThreadModalOpen(false)} className="flex-grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100">Abort</button>
-                        <button type="submit" className="flex-grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                        <button type="button" onClick={() => setIsNewThreadModalOpen(false)} className="grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100">Abort</button>
+                        <button type="submit" className="grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
                            <Send className="w-4 h-4 mr-2" /> Dispatch Topic
                         </button>
                      </div>

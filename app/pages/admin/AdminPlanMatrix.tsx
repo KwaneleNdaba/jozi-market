@@ -261,49 +261,49 @@ const AdminPlanMatrix: React.FC = () => {
               <p className="text-xs text-gray-400 mt-2">Please create plans and features first</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="bg-gray-50/50">
-                    <th className="px-10 py-10 sticky left-0 z-10 bg-gray-50/50 w-[350px] border-r border-gray-100">
-                      <p className="text-[10px] font-black uppercase text-gray-300 tracking-[0.2em]">Platform Toolset</p>
-                    </th>
-                    {plans.map(plan => (
-                      <th key={plan.id} className="px-10 py-10 text-center border-b border-gray-100">
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Tier</p>
-                        <p className="text-3xl font-black text-jozi-forest">{plan.name}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-10 py-10 sticky left-0 z-10 bg-gray-50/50 w-[350px] border-r border-gray-100">
+                    <p className="text-[10px] font-black uppercase text-gray-300 tracking-[0.2em]">Platform Toolset</p>
+                  </th>
+                  {plans.map(plan => (
+                    <th key={plan.id} className="px-10 py-10 text-center border-b border-gray-100">
+                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Tier</p>
+                      <p className="text-3xl font-black text-jozi-forest">{plan.name}</p>
                         <p className="text-xs font-bold text-jozi-gold mt-1">R{plan.price}/{plan.duration === 'monthly' ? 'mo' : 'yr'}</p>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {features.map(feat => (
-                    <tr key={feat.id} className="hover:bg-jozi-cream/20 transition-colors">
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {features.map(feat => (
+                  <tr key={feat.id} className="hover:bg-jozi-cream/20 transition-colors">
                       <td className="px-10 py-8 sticky left-0 z-10 bg-white border-r border-gray-100 shadow-xl shadow-black/2">
-                        <div className="space-y-1">
-                          <p className="font-black text-jozi-dark text-sm leading-tight">{feat.name}</p>
+                      <div className="space-y-1">
+                        <p className="font-black text-jozi-dark text-sm leading-tight">{feat.name}</p>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest line-clamp-2">{feat.description}</p>
-                        </div>
-                      </td>
-                      {plans.map(plan => {
+                      </div>
+                    </td>
+                    {plans.map(plan => {
                         const planId = plan.id || '';
                         const featureId = feat.id || '';
                         const isEnabled = matrix[planId]?.includes(featureId) || false;
                         const updateKey = `${planId}-${featureId}`;
                         const isUpdating = updatingFeature === updateKey;
                         
-                        return (
+                      return (
                           <td key={planId} className="px-10 py-8 text-center">
-                            <button 
+                          <button 
                               onClick={() => updateMatrix(planId, featureId)}
                               disabled={isUpdating}
-                              className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto transition-all ${
-                                isEnabled 
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto transition-all ${
+                              isEnabled 
                                   ? 'bg-jozi-forest text-white shadow-lg hover:bg-jozi-dark' 
-                                  : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
+                                : 'bg-gray-100 text-gray-300 hover:bg-gray-200'
                               } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
+                          >
                               {isUpdating ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
                               ) : isEnabled ? (
@@ -311,15 +311,15 @@ const AdminPlanMatrix: React.FC = () => {
                               ) : (
                                 <X className="w-5 h-5" />
                               )}
-                            </button>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           )}
         </div>
       </section>

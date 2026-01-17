@@ -40,7 +40,7 @@ const VendorExposurePage: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-8 rounded-[2.5rem] border border-jozi-forest/5 shadow-soft flex items-center justify-between group overflow-hidden relative text-left">
+        <div className="bg-white p-8 rounded-4xl border border-jozi-forest/5 shadow-soft flex items-center justify-between group overflow-hidden relative text-left">
           <div className="space-y-4 relative z-10">
             <div className="flex items-center space-x-3 text-jozi-gold">
               <Share2 className="w-5 h-5" />
@@ -60,7 +60,7 @@ const VendorExposurePage: React.FC = () => {
           <Smartphone className="absolute bottom-6 right-8 w-16 h-16 text-jozi-forest/5 group-hover:rotate-12 transition-transform duration-500" />
         </div>
 
-        <div className="bg-jozi-dark p-8 rounded-[3rem] text-white flex items-center justify-between relative overflow-hidden group shadow-2xl">
+        <div className="bg-jozi-dark p-8 rounded-5xl text-white flex items-center justify-between relative overflow-hidden group shadow-2xl">
           <div className="relative z-10 space-y-4 text-left">
             <div className="flex items-center space-x-3 text-jozi-gold">
               <TrendingUp className="w-5 h-5" />
@@ -73,7 +73,7 @@ const VendorExposurePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
+      <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}

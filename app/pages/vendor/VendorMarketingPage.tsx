@@ -60,7 +60,7 @@ const VendorMarketingPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
             key={i}
-            className="bg-white p-6 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 text-left group hover:shadow-lg transition-all"
+            className="bg-white p-6 rounded-4xl shadow-soft border border-jozi-forest/5 text-left group hover:shadow-lg transition-all"
           >
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
@@ -75,10 +75,10 @@ const VendorMarketingPage: React.FC = () => {
       </div>
 
       {/* AI Notification Card */}
-      <div className="bg-jozi-dark rounded-[3rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-jozi-dark via-transparent to-jozi-gold/5" />
+      <div className="bg-jozi-dark rounded-5xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 bg-linear-to-r from-jozi-dark via-transparent to-jozi-gold/5" />
         <div className="relative z-10 flex items-center space-x-6">
-          <div className="w-16 h-16 bg-jozi-gold rounded-[1.5rem] flex items-center justify-center text-jozi-dark">
+          <div className="w-16 h-16 bg-jozi-gold rounded-2xl flex items-center justify-center text-jozi-dark">
             <Sparkles className="w-8 h-8 animate-pulse" />
           </div>
           <div className="text-left">
@@ -97,7 +97,7 @@ const VendorMarketingPage: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide">
+      <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.id}

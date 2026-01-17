@@ -455,7 +455,7 @@ export async function vendorSignInAction(
 
       // User has active subscription, redirect to dashboard
       logger.info('[Vendor Sign In] Active subscription found, redirecting to dashboard');
-      redirect('/vendor/dashboard');
+    redirect('/vendor/dashboard');
     } catch (subscriptionError: unknown) {
       // Re-throw redirect errors (they need to propagate)
       if (

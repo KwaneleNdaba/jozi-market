@@ -24,7 +24,7 @@ const ContactPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-12 max-w-6xl mx-auto">
           {/* Info Panel */}
           <div className="lg:w-1/3 space-y-8">
-            <div className="bg-white p-10 rounded-[3rem] border border-jozi-forest/5 shadow-soft space-y-10">
+            <div className="bg-white p-10 rounded-5xl border border-jozi-forest/5 shadow-soft space-y-10">
               <h3 className="text-2xl font-black text-jozi-forest">The Hub</h3>
               <div className="space-y-8">
                 <div className="flex items-start space-x-6">
@@ -57,7 +57,7 @@ const ContactPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-jozi-dark p-10 rounded-[3rem] text-white space-y-6 shadow-2xl relative overflow-hidden group">
+            <div className="bg-jozi-dark p-10 rounded-5xl text-white space-y-6 shadow-2xl relative overflow-hidden group">
               <div className="relative z-10">
                 <h4 className="text-xl font-black">Workshop Hours</h4>
                 <div className="mt-6 space-y-3">
@@ -80,7 +80,7 @@ const ContactPage: React.FC = () => {
           </div>
 
           {/* Contact Form */}
-          <div className="lg:flex-grow bg-white p-10 lg:p-20 rounded-[4rem] border border-jozi-forest/5 shadow-soft">
+          <div className="lg:grow bg-white p-10 lg:p-20 rounded-[4rem] border border-jozi-forest/5 shadow-soft">
             <div className="space-y-12">
               <div className="space-y-4">
                 <h2 className="text-4xl font-black text-jozi-forest tracking-tight">Send a Message</h2>
@@ -111,7 +111,7 @@ const ContactPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Message</label>
-                  <textarea rows={5} placeholder="How can we help your local journey?" className="w-full bg-jozi-cream rounded-[2rem] px-8 py-6 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none" />
+                  <textarea rows={5} placeholder="How can we help your local journey?" className="w-full bg-jozi-cream rounded-3xl px-8 py-6 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none" />
                 </div>
 
                 <button type="submit" className="w-full bg-jozi-forest text-white py-6 rounded-3xl font-black text-xl flex items-center justify-center shadow-2xl shadow-jozi-forest/30 hover:bg-jozi-dark transition-all group">

@@ -101,12 +101,12 @@ const VendorRegistrationPage: React.FC = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-6xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[850px] border border-jozi-forest/5"
+        className="max-w-6xl w-full bg-white rounded-5xl shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[850px] border border-jozi-forest/5"
       >
         {/* Left Sidebar */}
         <div className="lg:w-1/3 bg-jozi-forest relative overflow-hidden hidden lg:block">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-20" />
-          <div className="absolute inset-0 bg-gradient-to-br from-jozi-forest via-jozi-forest/80 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-br from-jozi-forest via-jozi-forest/80 to-transparent" />
           
           <div className="relative z-10 h-full p-12 flex flex-col justify-between text-white">
             <Link href="/" className="inline-block">
@@ -139,7 +139,7 @@ const VendorRegistrationPage: React.FC = () => {
         </div>
 
         {/* Right Content */}
-        <div className="flex-grow p-8 md:p-12 lg:p-16 bg-white relative">
+        <div className="grow p-8 md:p-12 lg:p-16 bg-white relative">
           <AnimatePresence mode="wait">
             {!isSuccess ? (
               <motion.div 
@@ -151,7 +151,7 @@ const VendorRegistrationPage: React.FC = () => {
               >
                 {/* Stepper Header */}
                 <div className="flex items-center justify-between mb-12 relative">
-                  <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-100 -translate-y-1/2 z-0" />
+                  <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-100 -translate-y-1/2 z-0" />
                   {steps.map((step) => (
                     <div key={step.id} className="relative z-10 flex flex-col items-center">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 border-2 ${
@@ -165,7 +165,7 @@ const VendorRegistrationPage: React.FC = () => {
                 </div>
 
                 {/* Step Contents */}
-                <div className="flex-grow space-y-8">
+                <div className="grow space-y-8">
                   {currentStep === 1 && (
                     <motion.div key="step1" className="space-y-8">
                       <div className="space-y-6">
@@ -187,7 +187,7 @@ const VendorRegistrationPage: React.FC = () => {
                                 <button 
                                   key={type}
                                   onClick={() => setFormData({...formData, businessType: type})}
-                                  className={`flex-grow py-4 rounded-xl text-xs font-black transition-all border-2 ${formData.businessType === type ? 'bg-jozi-forest text-white border-jozi-forest' : 'bg-white text-gray-400 border-gray-100'}`}
+                                  className={`grow py-4 rounded-xl text-xs font-black transition-all border-2 ${formData.businessType === type ? 'bg-jozi-forest text-white border-jozi-forest' : 'bg-white text-gray-400 border-gray-100'}`}
                                 >
                                   {type}
                                 </button>
@@ -336,7 +336,7 @@ const VendorRegistrationPage: React.FC = () => {
                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Select ID Type</label>
                             <div className="flex gap-4">
                               {['South African ID', 'Passport'].map(type => (
-                                <button key={type} onClick={() => setFormData({...formData, idType: type})} className={`flex-grow py-4 rounded-xl text-xs font-black transition-all border-2 ${formData.idType === type ? 'bg-jozi-forest text-white border-jozi-forest' : 'bg-white text-gray-400 border-gray-100'}`}>
+                                <button key={type} onClick={() => setFormData({...formData, idType: type})} className={`grow py-4 rounded-xl text-xs font-black transition-all border-2 ${formData.idType === type ? 'bg-jozi-forest text-white border-jozi-forest' : 'bg-white text-gray-400 border-gray-100'}`}>
                                   {type}
                                 </button>
                               ))}
@@ -346,14 +346,14 @@ const VendorRegistrationPage: React.FC = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Upload ID Document (PDF/IMG)</label>
-                              <div className="w-full aspect-square bg-jozi-cream rounded-[2rem] border-2 border-dashed border-jozi-gold/20 flex flex-col items-center justify-center group hover:bg-jozi-gold/5 cursor-pointer">
+                              <div className="w-full aspect-square bg-jozi-cream rounded-3xl border-2 border-dashed border-jozi-gold/20 flex flex-col items-center justify-center group hover:bg-jozi-gold/5 cursor-pointer">
                                 <FileText className="w-8 h-8 text-jozi-gold/40 mb-2" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Drop ID here</span>
                               </div>
                             </div>
                             <div className="space-y-2">
                               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Business Registration (Optional for Individuals)</label>
-                              <div className="w-full aspect-square bg-jozi-cream rounded-[2rem] border-2 border-dashed border-jozi-gold/20 flex flex-col items-center justify-center group hover:bg-jozi-gold/5 cursor-pointer">
+                              <div className="w-full aspect-square bg-jozi-cream rounded-3xl border-2 border-dashed border-jozi-gold/20 flex flex-col items-center justify-center group hover:bg-jozi-gold/5 cursor-pointer">
                                 <ImageIcon className="w-8 h-8 text-jozi-gold/40 mb-2" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">CIPC Document</span>
                               </div>
@@ -395,7 +395,7 @@ const VendorRegistrationPage: React.FC = () => {
                             <input 
                               type="text" 
                               placeholder="Type your full name to sign" 
-                              className="w-full bg-jozi-cream rounded-[2rem] p-8 pl-16 font-black text-3xl italic tracking-tight text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20"
+                              className="w-full bg-jozi-cream rounded-3xl p-8 pl-16 font-black text-3xl italic tracking-tight text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20"
                               onChange={(e) => setFormData({...formData, signature: e.target.value})}
                             />
                           </div>
@@ -438,7 +438,7 @@ const VendorRegistrationPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="h-full flex flex-col items-center justify-center text-center space-y-10"
               >
-                <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-200">
+                <div className="w-24 h-24 bg-emerald-500 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-200">
                   <CheckCircle2 className="w-12 h-12" />
                 </div>
                 <div className="space-y-4 max-w-lg">

@@ -114,7 +114,7 @@ const ReferralPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[3rem] p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden group">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-5xl p-8 md:p-12 w-full max-w-md shadow-2xl relative overflow-hidden group">
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-jozi-gold opacity-10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
               <div className="space-y-8 relative z-10">
                 <div className="flex items-center justify-between">
@@ -147,7 +147,7 @@ const ReferralPage: React.FC = () => {
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${(referralStats.verified / 12) * 100}%` }}
-                      className="h-full bg-gradient-to-r from-jozi-gold to-jozi-bright"
+                      className="h-full bg-linear-to-r from-jozi-gold to-jozi-bright"
                     />
                   </div>
                 </div>
@@ -159,14 +159,14 @@ const ReferralPage: React.FC = () => {
 
       {/* Share Actions Section */}
       <section className="container mx-auto px-4 -mt-10 relative z-30">
-        <div className="bg-white rounded-[3rem] p-10 md:p-16 shadow-2xl border border-jozi-forest/5 space-y-12">
+        <div className="bg-white rounded-5xl p-10 md:p-16 shadow-2xl border border-jozi-forest/5 space-y-12">
           <div className="flex flex-col md:flex-row items-center gap-10">
-            <div className="flex-grow space-y-4 text-center md:text-left">
+            <div className="grow space-y-4 text-center md:text-left">
               <h2 className="text-3xl font-black text-jozi-forest">Start Referring Today</h2>
               <p className="text-gray-500 font-medium">When friends register and make their first purchase, you move up the leaderboard.</p>
             </div>
             <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="flex-grow bg-jozi-cream rounded-2xl px-6 py-4 border-2 border-dashed border-jozi-forest/10 flex items-center justify-between min-w-[300px]">
+              <div className="grow bg-jozi-cream rounded-2xl px-6 py-4 border-2 border-dashed border-jozi-forest/10 flex items-center justify-between min-w-[300px]">
                 <span className="font-black text-jozi-forest text-sm truncate mr-4">{referralCode}</span>
                 <button 
                   onClick={handleCopy}
@@ -254,19 +254,19 @@ const ReferralPage: React.FC = () => {
                   }`}
                 >
                   {reward.slot === 1 && (
-                    <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-jozi-gold via-jozi-bright to-jozi-gold" />
+                    <div className="absolute top-0 inset-x-0 h-2 bg-linear-to-r from-jozi-gold via-jozi-bright to-jozi-gold" />
                   )}
                   
-                  <div className={`w-24 h-24 bg-gradient-to-br ${reward.color} rounded-[2rem] flex items-center justify-center text-white mb-8 shadow-2xl group-hover:scale-110 transition-transform duration-500`}>
+                  <div className={`w-24 h-24 bg-linear-to-br ${reward.color} rounded-3xl flex items-center justify-center text-white mb-8 shadow-2xl group-hover:scale-110 transition-transform duration-500`}>
                     <reward.icon className="w-12 h-12" />
                   </div>
 
-                  <div className="space-y-4 flex-grow">
+                  <div className="space-y-4 grow">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-jozi-gold mb-1">{reward.name}</p>
                       <h3 className="text-3xl font-black text-jozi-forest tracking-tighter leading-tight">{reward.product}</h3>
                     </div>
-                    <div className="aspect-[4/3] rounded-[2rem] overflow-hidden my-6 border-4 border-jozi-cream shadow-inner">
+                    <div className="aspect-4/3 rounded-3xl overflow-hidden my-6 border-4 border-jozi-cream shadow-inner">
                       <img src={reward.image} alt={reward.product} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     </div>
                     <p className="text-gray-400 font-medium text-sm leading-relaxed">{reward.description}</p>
@@ -292,7 +292,7 @@ const ReferralPage: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               className="max-w-4xl mx-auto space-y-6"
             >
-              <div className="bg-white rounded-[3rem] p-10 shadow-soft border border-jozi-forest/5 overflow-hidden">
+              <div className="bg-white rounded-5xl p-10 shadow-soft border border-jozi-forest/5 overflow-hidden">
                 <div className="flex items-center justify-between mb-10 px-4">
                   <h3 className="text-2xl font-black text-jozi-forest">Top Referrers</h3>
                   <div className="flex items-center space-x-2 text-jozi-gold font-bold text-sm">
@@ -305,7 +305,7 @@ const ReferralPage: React.FC = () => {
                   {leaderboard.map((user) => (
                     <div 
                       key={user.rank}
-                      className={`flex items-center justify-between p-6 rounded-[2rem] transition-all group ${
+                      className={`flex items-center justify-between p-6 rounded-3xl transition-all group ${
                         user.rank <= 3 ? 'bg-jozi-cream/50' : 'hover:bg-jozi-cream/30'
                       }`}
                     >
@@ -334,7 +334,7 @@ const ReferralPage: React.FC = () => {
                 </div>
 
                 {/* Current User Row - Sticky feel */}
-                <div className="mt-12 p-8 bg-jozi-forest rounded-[2.5rem] text-white flex items-center justify-between shadow-2xl">
+                <div className="mt-12 p-8 bg-jozi-forest rounded-4xl text-white flex items-center justify-between shadow-2xl">
                   <div className="flex items-center space-x-8">
                     <div className="w-12 h-12 flex items-center justify-center font-black text-xl italic text-jozi-gold">
                       #{referralStats.rank}

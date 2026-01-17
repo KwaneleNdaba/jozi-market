@@ -158,7 +158,7 @@ const CustomerNotificationsPage: React.FC = () => {
           
           <CustomerSidebar user={MOCK_USER} />
 
-          <main className="flex-grow space-y-8">
+          <main className="grow space-y-8">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="text-left space-y-2">
@@ -239,7 +239,7 @@ const CustomerNotificationsPage: React.FC = () => {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.05 }}
                           key={notif.id}
-                          className={`group bg-white p-8 rounded-[2.5rem] border-2 transition-all flex items-start space-x-6 relative overflow-hidden ${
+                          className={`group bg-white p-8 rounded-4xl border-2 transition-all flex items-start space-x-6 relative overflow-hidden ${
                             notif.isRead ? 'border-transparent opacity-75' : 'border-jozi-forest/10 shadow-soft'
                           }`}
                         >
@@ -251,7 +251,7 @@ const CustomerNotificationsPage: React.FC = () => {
                             {getIcon(notif.category)}
                           </div>
 
-                          <div className="flex-grow text-left space-y-2">
+                          <div className="grow text-left space-y-2">
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-jozi-gold">{notif.category}</span>
@@ -317,7 +317,7 @@ const CustomerNotificationsPage: React.FC = () => {
                   className="grid grid-cols-1 lg:grid-cols-2 gap-8"
                 >
                   {/* Notification Types */}
-                  <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-jozi-forest/5 space-y-10 text-left">
+                  <div className="bg-white p-10 rounded-5xl shadow-soft border border-jozi-forest/5 space-y-10 text-left">
                      <div className="space-y-1">
                         <h3 className="text-2xl font-black text-jozi-forest uppercase tracking-tight">Alert Streams</h3>
                         <p className="text-xs text-gray-400 font-medium">Select which categories trigger notifications.</p>
@@ -348,7 +348,7 @@ const CustomerNotificationsPage: React.FC = () => {
                   </div>
 
                   {/* Delivery Channels */}
-                  <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-jozi-forest/5 space-y-10 text-left">
+                  <div className="bg-white p-10 rounded-5xl shadow-soft border border-jozi-forest/5 space-y-10 text-left">
                      <div className="space-y-1">
                         <h3 className="text-2xl font-black text-jozi-forest uppercase tracking-tight">Delivery Hubs</h3>
                         <p className="text-xs text-gray-400 font-medium">Control where your alerts are dispatched.</p>

@@ -25,10 +25,10 @@ const WaysToEarn: React.FC = () => {
           <motion.div 
             key={i}
             whileHover={{ y: -5 }}
-            className="bg-white p-6 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 flex items-center justify-between group transition-all"
+            className="bg-white p-6 rounded-4xl shadow-soft border border-jozi-forest/5 flex items-center justify-between group transition-all"
           >
             <div className="flex items-center space-x-5">
-              <div className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center ${action.color} bg-current/10`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${action.color} bg-current/10`}>
                 <action.icon className="w-6 h-6" />
               </div>
               <div className="space-y-1">
@@ -51,7 +51,7 @@ const WaysToEarn: React.FC = () => {
       </div>
 
       {/* Featured Social Promo */}
-      <div className="p-8 bg-jozi-gold/5 rounded-[3rem] border border-jozi-gold/20 flex flex-col sm:flex-row items-center justify-between gap-8">
+      <div className="p-8 bg-jozi-gold/5 rounded-5xl border border-jozi-gold/20 flex flex-col sm:flex-row items-center justify-between gap-8">
         <div className="flex items-center space-x-6">
            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-jozi-gold shadow-sm">
              <Megaphone className="w-8 h-8" />

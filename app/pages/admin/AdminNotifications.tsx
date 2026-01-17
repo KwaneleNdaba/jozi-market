@@ -234,7 +234,7 @@ const AdminNotifications: React.FC = () => {
               className="space-y-8"
             >
               {/* Filter Bar */}
-              <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-soft border border-gray-100 text-left">
+              <div className="bg-white rounded-4xl p-8 lg:p-12 shadow-soft border border-gray-100 text-left">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -361,7 +361,7 @@ const AdminNotifications: React.FC = () => {
             >
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Delivery Over Time */}
-                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="lg:col-span-2 bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                   <div className="flex justify-between items-center mb-10">
                     <div>
                       <h3 className="text-2xl font-black text-jozi-dark">Dispatch Velocity</h3>
@@ -394,7 +394,7 @@ const AdminNotifications: React.FC = () => {
                 </div>
 
                 {/* Channel Mix */}
-                <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                    <h3 className="text-2xl font-black text-jozi-dark mb-2">Channel Mix</h3>
                    <p className="text-xs text-gray-400 font-medium mb-10">Distribution by medium.</p>
                    <div className="h-[250px]">
@@ -456,7 +456,7 @@ const AdminNotifications: React.FC = () => {
       {/* CREATE NOTIFICATION MODAL */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -468,7 +468,7 @@ const AdminNotifications: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
+              className="bg-white rounded-5xl p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
             >
               <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
               
@@ -501,7 +501,7 @@ const AdminNotifications: React.FC = () => {
                       <textarea 
                         required
                         rows={4}
-                        className="w-full bg-gray-50 rounded-[2rem] px-6 py-5 font-bold text-jozi-forest outline-none resize-none border-2 border-transparent focus:border-jozi-gold/20"
+                        className="w-full bg-gray-50 rounded-3xl px-6 py-5 font-bold text-jozi-forest outline-none resize-none border-2 border-transparent focus:border-jozi-gold/20"
                         placeholder="Detail the message context..."
                         value={formData.body}
                         onChange={(e) => setFormData({...formData, body: e.target.value})}
@@ -538,7 +538,7 @@ const AdminNotifications: React.FC = () => {
                    {(formData.recipientType === 'Specific User' || formData.recipientType === 'Specific Vendor') && (
                       <div className="md:col-span-2 space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Target Individuals</label>
-                        <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 flex flex-wrap gap-2">
+                        <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-wrap gap-2">
                           {MOCK_RECIPIENTS.filter(r => (formData.recipientType === 'Specific User' ? r.type === 'User' : r.type === 'Vendor')).map(rec => (
                             <button key={rec.id} type="button" className="px-4 py-2 bg-white rounded-xl border border-jozi-forest/10 text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:bg-jozi-gold hover:text-white transition-all">
                               {rec.name}
@@ -559,7 +559,7 @@ const AdminNotifications: React.FC = () => {
                             key={p} 
                             type="button" 
                             onClick={() => setFormData({...formData, priority: p as any})}
-                            className={`flex-grow py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+                            className={`grow py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
                               formData.priority === p ? 'bg-jozi-forest border-jozi-forest text-white' : 'bg-white border-gray-100 text-gray-400'
                             }`}
                           >
@@ -587,8 +587,8 @@ const AdminNotifications: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Discard Draft</button>
-                  <button type="submit" className="flex-grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Discard Draft</button>
+                  <button type="submit" className="grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
                     <Send className="w-4 h-4 mr-2" /> Execute Dispatch
                   </button>
                 </div>

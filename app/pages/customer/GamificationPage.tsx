@@ -68,7 +68,7 @@ const GamificationPage: React.FC = () => {
                 <p className="text-xl font-black text-jozi-forest">{points.toLocaleString()} <span className="text-sm font-bold text-jozi-gold">PTS</span></p>
               </div>
             </div>
-            <div className="h-10 w-[1px] bg-gray-100 hidden sm:block" />
+            <div className="h-10 w-px bg-gray-100 hidden sm:block" />
             <div className="hidden sm:flex items-center space-x-3">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
                 <Flame className="w-5 h-5 fill-current" />
@@ -99,10 +99,10 @@ const GamificationPage: React.FC = () => {
       <div className="container mx-auto px-4 pt-12">
         {/* New Referral Program Entry Banner */}
         <section className="mb-12">
-          <div className="bg-gradient-to-r from-jozi-dark to-jozi-forest p-10 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden group">
+          <div className="bg-linear-to-r from-jozi-dark to-jozi-forest p-10 rounded-5xl text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
             <div className="relative z-10 flex items-center space-x-6">
-              <div className="w-20 h-20 bg-jozi-gold rounded-[1.5rem] flex items-center justify-center text-jozi-forest group-hover:scale-110 transition-transform">
+              <div className="w-20 h-20 bg-jozi-gold rounded-2xl flex items-center justify-center text-jozi-forest group-hover:scale-110 transition-transform">
                 <Users className="w-10 h-10" />
               </div>
               <div>
@@ -126,7 +126,7 @@ const GamificationPage: React.FC = () => {
               className="space-y-12"
             >
               {/* Featured Game: Spin the Wheel */}
-              <div className="bg-jozi-forest rounded-[3rem] p-12 lg:p-20 overflow-hidden relative text-white">
+              <div className="bg-jozi-forest rounded-5xl p-12 lg:p-20 overflow-hidden relative text-white">
                 <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
                   <div className="space-y-8">
                     <div className="inline-flex items-center bg-white/10 border border-white/20 px-4 py-2 rounded-full">
@@ -168,7 +168,7 @@ const GamificationPage: React.FC = () => {
                     <motion.div 
                       animate={isSpinning ? { rotate: 360 * 5 } : { rotate: 0 }}
                       transition={isSpinning ? { duration: 3, ease: "easeOut" } : { duration: 0 }}
-                      className="w-80 h-80 lg:w-[450px] lg:h-[450px] rounded-full border-[12px] border-white/10 relative shadow-2xl overflow-hidden"
+                      className="w-80 h-80 lg:w-[450px] lg:h-[450px] rounded-full border-12 border-white/10 relative shadow-2xl overflow-hidden"
                       style={{ background: 'conic-gradient(#C7A16E 0deg 45deg, #1B5E52 45deg 90deg, #C7A16E 90deg 135deg, #1B5E52 135deg 180deg, #C7A16E 180deg 225deg, #1B5E52 225deg 270deg, #C7A16E 270deg 315deg, #1B5E52 315deg 360deg)' }}
                     >
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -195,7 +195,7 @@ const GamificationPage: React.FC = () => {
                   { title: 'Market Trivia', icon: Target, desc: 'Test your knowledge of South African heritage.', points: 'Win: 150 Pts', level: 'Expert' },
                   { title: 'Vendor Hunt', icon: Map, desc: 'Explore 5 stores to find hidden voucher codes.', points: 'Win: 500 Pts', level: 'Master', locked: true },
                 ].map((game, i) => (
-                  <div key={i} className="group bg-white p-8 rounded-[2.5rem] border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all relative overflow-hidden">
+                  <div key={i} className="group bg-white p-8 rounded-4xl border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all relative overflow-hidden">
                     {game.locked && (
                       <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center">
                         <div className="w-12 h-12 bg-jozi-forest text-white rounded-full flex items-center justify-center mb-2 shadow-lg">
@@ -232,7 +232,7 @@ const GamificationPage: React.FC = () => {
             >
               {/* Daily Streak Section */}
               <div className="lg:col-span-1 space-y-8">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-jozi-forest/5 shadow-soft">
+                <div className="bg-white p-8 rounded-4xl border border-jozi-forest/5 shadow-soft">
                   <h3 className="text-xl font-black text-jozi-forest mb-6 flex items-center">
                     <Clock className="w-5 h-5 mr-2 text-jozi-gold" />
                     Daily Streak
@@ -254,7 +254,7 @@ const GamificationPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-jozi-gold p-8 rounded-[2.5rem] text-jozi-forest relative overflow-hidden group">
+                <div className="bg-jozi-gold p-8 rounded-4xl text-jozi-forest relative overflow-hidden group">
                   <Sparkles className="absolute top-4 right-4 w-12 h-12 opacity-20 group-hover:rotate-12 transition-transform" />
                   <h3 className="text-xl font-black mb-2">Double XP Weekend</h3>
                   <p className="text-sm font-medium opacity-80 leading-relaxed">Every purchase this weekend earns 2x points for your level progression.</p>
@@ -280,7 +280,7 @@ const GamificationPage: React.FC = () => {
                     <div className="w-14 h-14 bg-jozi-forest/5 rounded-2xl flex items-center justify-center shrink-0">
                       <Ticket className="w-6 h-6 text-jozi-forest" />
                     </div>
-                    <div className="flex-grow space-y-3">
+                    <div className="grow space-y-3">
                       <div className="flex justify-between items-start">
                         <div>
                           <span className="text-[10px] font-black uppercase tracking-widest text-jozi-gold">{q.category}</span>
@@ -334,7 +334,7 @@ const GamificationPage: React.FC = () => {
                   { title: 'R500 Mega Voucher', points: 15000, type: 'Savings', rarity: 'Mythic' },
                   { title: 'VIP Market Pass', points: 25000, type: 'Event', rarity: 'Limited' },
                 ].map((reward, i) => (
-                  <div key={i} className="group bg-white rounded-[2.5rem] border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all flex flex-col items-center p-8 text-center relative">
+                  <div key={i} className="group bg-white rounded-4xl border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all flex flex-col items-center p-8 text-center relative">
                     <div className="absolute top-6 right-6">
                       <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${
                         reward.rarity === 'Legendary' ? 'bg-jozi-gold text-white' : 'bg-gray-100 text-gray-400'
@@ -379,7 +379,7 @@ const GamificationPage: React.FC = () => {
             </svg>
             <div className="absolute inset-0 flex items-center justify-center font-black text-lg">7</div>
           </div>
-          <div className="flex-grow">
+          <div className="grow">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Level Progression</p>
             <p className="font-bold text-sm">Jozi Explorer</p>
             <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">

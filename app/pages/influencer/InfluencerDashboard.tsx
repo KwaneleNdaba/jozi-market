@@ -57,7 +57,7 @@ const InfluencerDashboard: React.FC<InfluencerDashboardProps> = ({ tab = 'overvi
             onTabChange={(t: any) => setActiveTab(t)} 
           />
 
-          <main className="flex-grow space-y-10 text-left">
+          <main className="grow space-y-10 text-left">
             <InfluencerHeader 
               title={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} 
               profile={INFLUENCER_PROFILE} 
@@ -70,10 +70,10 @@ const InfluencerDashboard: React.FC<InfluencerDashboardProps> = ({ tab = 'overvi
                 className="space-y-12"
               >
                 {/* AI Oracle Banner */}
-                <div className="bg-jozi-dark rounded-[3rem] p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-jozi-dark via-transparent to-jozi-gold/5" />
+                <div className="bg-jozi-dark rounded-5xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-2xl group">
+                  <div className="absolute inset-0 bg-linear-to-r from-jozi-dark via-transparent to-jozi-gold/5" />
                   <div className="relative z-10 flex items-center space-x-6">
-                    <div className="w-16 h-16 bg-jozi-gold rounded-[1.5rem] flex items-center justify-center text-jozi-dark shadow-xl">
+                    <div className="w-16 h-16 bg-jozi-gold rounded-2xl flex items-center justify-center text-jozi-dark shadow-xl">
                       <Sparkles className="w-8 h-8 animate-pulse" />
                     </div>
                     <div>
@@ -134,8 +134,8 @@ const InfluencerDashboard: React.FC<InfluencerDashboardProps> = ({ tab = 'overvi
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-8"
               >
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100 flex flex-col md:flex-row items-center gap-6">
-                   <div className="relative flex-grow w-full">
+                <div className="bg-white p-8 rounded-4xl shadow-soft border border-gray-100 flex flex-col md:flex-row items-center gap-6">
+                   <div className="relative grow w-full">
                       <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input 
                         type="text" 
@@ -184,7 +184,7 @@ const InfluencerDashboard: React.FC<InfluencerDashboardProps> = ({ tab = 'overvi
                       <PayoutTable payouts={INFLUENCER_PAYOUTS} />
                    </div>
                    <div className="space-y-8 text-left">
-                      <div className="bg-jozi-dark p-10 rounded-[3rem] text-white space-y-8 relative overflow-hidden shadow-2xl group">
+                      <div className="bg-jozi-dark p-10 rounded-5xl text-white space-y-8 relative overflow-hidden shadow-2xl group">
                          <div className="relative z-10 space-y-6">
                             <div className="flex items-center space-x-3 text-jozi-gold">
                                <Wallet className="w-8 h-8" />
@@ -201,7 +201,7 @@ const InfluencerDashboard: React.FC<InfluencerDashboardProps> = ({ tab = 'overvi
                          <TrendingUp className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:scale-110 transition-transform duration-700" />
                       </div>
 
-                      <div className="p-8 bg-jozi-cream/50 rounded-[2.5rem] border border-jozi-forest/5 space-y-4">
+                      <div className="p-8 bg-jozi-cream/50 rounded-4xl border border-jozi-forest/5 space-y-4">
                          <h4 className="text-[10px] font-black text-jozi-gold uppercase tracking-widest">Payout Protocol</h4>
                          <div className="flex items-center space-x-4">
                             <CheckCircle2 className="w-5 h-5 text-emerald-500" />

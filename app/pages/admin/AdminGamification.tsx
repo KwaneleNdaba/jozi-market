@@ -210,7 +210,7 @@ const AdminGamification: React.FC = () => {
               className="space-y-8"
             >
               {/* Activity List & Filters */}
-              <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100 text-left">
+              <div className="bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-gray-100 text-left">
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mb-12">
                   <div className="space-y-1">
                     <h3 className="text-2xl font-black text-jozi-dark uppercase tracking-tight">Activity Governance</h3>
@@ -233,7 +233,7 @@ const AdminGamification: React.FC = () => {
                     <motion.div 
                       layout
                       key={activity.id}
-                      className={`p-8 rounded-[2.5rem] border-2 transition-all group ${activity.status === 'Active' ? 'bg-white border-jozi-forest/5 hover:border-jozi-forest/20 shadow-soft hover:shadow-xl' : 'bg-gray-50 border-transparent grayscale opacity-60'}`}
+                      className={`p-8 rounded-4xl border-2 transition-all group ${activity.status === 'Active' ? 'bg-white border-jozi-forest/5 hover:border-jozi-forest/20 shadow-soft hover:shadow-xl' : 'bg-gray-50 border-transparent grayscale opacity-60'}`}
                     >
                       <div className="flex items-center justify-between mb-8">
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${activity.status === 'Active' ? 'bg-jozi-forest/5 text-jozi-forest' : 'bg-gray-200 text-gray-400'}`}>
@@ -283,7 +283,7 @@ const AdminGamification: React.FC = () => {
                   ))}
                   
                   {/* Add Placeholder Card */}
-                  <button className="rounded-[2.5rem] border-4 border-dashed border-gray-100 p-12 flex flex-col items-center justify-center text-center group hover:border-jozi-gold/20 transition-all min-h-[350px]">
+                  <button className="rounded-4xl border-4 border-dashed border-gray-100 p-12 flex flex-col items-center justify-center text-center group hover:border-jozi-gold/20 transition-all min-h-[350px]">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 group-hover:bg-jozi-gold group-hover:text-white transition-all mb-4">
                       <Plus className="w-8 h-8" />
                     </div>
@@ -295,7 +295,7 @@ const AdminGamification: React.FC = () => {
 
               {/* Quick Actions Footer */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="bg-jozi-forest p-10 rounded-[3rem] text-white space-y-6 relative overflow-hidden group shadow-2xl">
+                 <div className="bg-jozi-forest p-10 rounded-5xl text-white space-y-6 relative overflow-hidden group shadow-2xl">
                     <div className="relative z-10 space-y-6">
                        <h4 className="text-2xl font-black tracking-tight leading-none uppercase">Global Point <br /><span className="text-jozi-gold">Reset Protocol.</span></h4>
                        <p className="text-jozi-cream/60 text-sm font-medium leading-relaxed">Wipes current balances for all users. Intended for seasonal resets or critical economy adjustments. Requires level 4 admin auth.</p>
@@ -306,7 +306,7 @@ const AdminGamification: React.FC = () => {
                     <RotateCcw className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 group-hover:rotate-180 transition-transform duration-1000" />
                  </div>
                  
-                 <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 flex flex-col justify-center items-center text-center space-y-4">
+                 <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 flex flex-col justify-center items-center text-center space-y-4">
                     <div className="w-16 h-16 bg-jozi-gold/10 rounded-2xl flex items-center justify-center text-jozi-gold">
                        <RefreshCw className="w-8 h-8" />
                     </div>
@@ -328,7 +328,7 @@ const AdminGamification: React.FC = () => {
             >
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Engagement Line Chart */}
-                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="lg:col-span-2 bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                   <div className="flex justify-between items-center mb-10">
                     <div>
                       <h3 className="text-2xl font-black text-jozi-dark">Economy Velocity</h3>
@@ -366,9 +366,9 @@ const AdminGamification: React.FC = () => {
                 </div>
 
                 {/* Activity Breakdown */}
-                <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left flex flex-col">
+                <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left flex flex-col">
                   <h3 className="text-2xl font-black text-jozi-dark mb-10">Revenue Verticals</h3>
-                  <div className="flex-grow">
+                  <div className="grow">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={POINTS_PER_ACTIVITY} layout="vertical">
                         <XAxis type="number" hide />
@@ -399,7 +399,7 @@ const AdminGamification: React.FC = () => {
               {/* Leaderboard & Redemptions Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                  {/* Top Earners */}
-                 <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                 <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                     <div className="flex items-center justify-between mb-10">
                        <div className="flex items-center space-x-3">
                           <Trophy className="w-6 h-6 text-jozi-gold" />
@@ -432,7 +432,7 @@ const AdminGamification: React.FC = () => {
                  </div>
 
                  {/* Recent Behavior Feed */}
-                 <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left flex flex-col">
+                 <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left flex flex-col">
                     <div className="flex items-center justify-between mb-10">
                        <h3 className="text-2xl font-black text-jozi-dark">Reward Pulse</h3>
                        <span className="text-[10px] font-black uppercase text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full">Live Redemptions</span>
@@ -449,7 +449,7 @@ const AdminGamification: React.FC = () => {
                             <div className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0 ${item.color}`}>
                                <item.icon className="w-5 h-5" />
                             </div>
-                            <div className="flex-grow pb-6 border-b border-gray-50">
+                            <div className="grow pb-6 border-b border-gray-50">
                                <p className="text-sm font-black text-jozi-dark leading-none">{item.user}</p>
                                <p className="text-sm text-gray-500 font-medium mt-1">{item.action}</p>
                                <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mt-2">{item.time}</p>
@@ -470,13 +470,13 @@ const AdminGamification: React.FC = () => {
       {/* Edit Modal */}
       <AnimatePresence>
         {isEditModalOpen && selectedActivity && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsEditModalOpen(false)} className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-md" />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 lg:p-12 w-full max-w-2xl relative shadow-2xl overflow-hidden"
+              className="bg-white rounded-5xl p-10 lg:p-12 w-full max-w-2xl relative shadow-2xl overflow-hidden"
             >
               <button onClick={() => setIsEditModalOpen(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full"><X className="w-6 h-6 text-gray-400" /></button>
               
@@ -546,8 +546,8 @@ const AdminGamification: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Cancel Changes</button>
-                  <button type="submit" className="flex-grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                  <button type="button" onClick={() => setIsEditModalOpen(false)} className="grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Cancel Changes</button>
+                  <button type="submit" className="grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
                     <Save className="w-4 h-4 mr-2" /> Commit New Rules
                   </button>
                 </div>

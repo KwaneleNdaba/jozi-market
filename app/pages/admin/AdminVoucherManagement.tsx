@@ -246,7 +246,7 @@ const AdminVoucherManagement: React.FC = () => {
               className="space-y-8"
             >
               {/* Filter Section */}
-              <div className="bg-white rounded-[3rem] p-8 lg:p-12 shadow-soft border border-gray-100 text-left">
+              <div className="bg-white rounded-5xl p-8 lg:p-12 shadow-soft border border-gray-100 text-left">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -362,7 +362,7 @@ const AdminVoucherManagement: React.FC = () => {
             >
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Redemption Over Time */}
-                <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="lg:col-span-2 bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                   <div className="flex justify-between items-center mb-10">
                     <div>
                       <h3 className="text-2xl font-black text-jozi-dark">Redemption Velocity</h3>
@@ -395,7 +395,7 @@ const AdminVoucherManagement: React.FC = () => {
                 </div>
 
                 {/* Status Mix */}
-                <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 text-left">
+                <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 text-left">
                    <h3 className="text-2xl font-black text-jozi-dark mb-2">Campaign Distribution</h3>
                    <p className="text-xs text-gray-400 font-medium mb-10">Voucher breakdown by state.</p>
                    <div className="h-[250px]">
@@ -455,7 +455,7 @@ const AdminVoucherManagement: React.FC = () => {
       {/* CREATE/EDIT VOUCHER MODAL */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
@@ -467,7 +467,7 @@ const AdminVoucherManagement: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
+              className="bg-white rounded-5xl p-10 lg:p-12 w-full max-w-3xl relative shadow-2xl overflow-hidden text-left"
             >
               <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors"><X className="w-6 h-6 text-gray-400" /></button>
               
@@ -515,7 +515,7 @@ const AdminVoucherManagement: React.FC = () => {
                             key={type}
                             type="button"
                             onClick={() => setFormData({...formData, type: type as any})}
-                            className={`flex-grow py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+                            className={`grow py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
                               formData.type === type ? 'bg-jozi-forest border-jozi-forest text-white shadow-md' : 'bg-white border-gray-100 text-gray-400'
                             }`}
                           >
@@ -593,7 +593,7 @@ const AdminVoucherManagement: React.FC = () => {
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Asset Description</label>
                       <textarea 
                         rows={3}
-                        className="w-full bg-gray-50 rounded-[2rem] px-6 py-4 font-bold text-jozi-forest outline-none resize-none border-2 border-transparent focus:border-jozi-gold/20"
+                        className="w-full bg-gray-50 rounded-3xl px-6 py-4 font-bold text-jozi-forest outline-none resize-none border-2 border-transparent focus:border-jozi-gold/20"
                         value={formData.description}
                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                         placeholder="Internal notes or public description of the incentive..."
@@ -607,8 +607,8 @@ const AdminVoucherManagement: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Discard Draft</button>
-                  <button type="submit" className="flex-grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="grow py-5 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all">Discard Draft</button>
+                  <button type="submit" className="grow py-5 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
                     <Save className="w-4 h-4 mr-2" /> Commit Asset
                   </button>
                 </div>

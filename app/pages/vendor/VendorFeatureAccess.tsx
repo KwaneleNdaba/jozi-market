@@ -13,7 +13,7 @@ const VendorFeatureAccess: React.FC = () => {
   return (
     <div className="min-h-screen bg-jozi-cream/30 pb-32">
       <section className="bg-jozi-forest pt-12 pb-24 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-jozi-dark via-transparent to-jozi-gold/10" />
+        <div className="absolute inset-0 bg-linear-to-br from-jozi-dark via-transparent to-jozi-gold/10" />
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-12">
             <div className="space-y-6 text-center md:text-left">
@@ -29,8 +29,8 @@ const VendorFeatureAccess: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-white p-10 rounded-[3rem] shadow-2xl text-jozi-forest text-center space-y-6 min-w-[320px] relative">
-              <div className="w-20 h-20 bg-jozi-gold/10 rounded-[2rem] flex items-center justify-center text-jozi-gold mx-auto">
+            <div className="bg-white p-10 rounded-5xl shadow-2xl text-jozi-forest text-center space-y-6 min-w-[320px] relative">
+              <div className="w-20 h-20 bg-jozi-gold/10 rounded-3xl flex items-center justify-center text-jozi-gold mx-auto">
                 <Gem className="w-10 h-10" />
               </div>
               <div>
@@ -55,7 +55,7 @@ const VendorFeatureAccess: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className={`bg-white rounded-[3rem] p-10 border transition-all flex flex-col h-full relative group ${
+                className={`bg-white rounded-5xl p-10 border transition-all flex flex-col h-full relative group ${
                   isUnlocked ? 'border-jozi-forest/10 shadow-soft' : 'border-gray-100 opacity-80'
                 }`}
               >
@@ -70,7 +70,7 @@ const VendorFeatureAccess: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex-grow space-y-4">
+                <div className="grow space-y-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-jozi-gold">{feat.category}</p>
                   <h4 className="text-2xl font-black text-jozi-forest leading-tight pr-12">{feat.name}</h4>
                   <div className="relative group/tip inline-block">

@@ -139,7 +139,7 @@ const AdminOverview: React.FC = () => {
                 { label: 'Order Velocity', val: '1.2/min', trend: 'Peak', icon: Zap, color: 'text-blue-500' },
                 { label: 'Neighbor Count', val: '18.4k', trend: '+2.1k', icon: Users, color: 'text-purple-500' },
               ].map((kpi, i) => (
-                <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-soft border border-gray-100 text-left relative overflow-hidden group">
+                <div key={i} className="bg-white p-8 rounded-4xl shadow-soft border border-gray-100 text-left relative overflow-hidden group">
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-4">
                       <div className="p-3 bg-gray-50 rounded-2xl"><kpi.icon className="w-6 h-6 text-jozi-dark" /></div>
@@ -154,7 +154,7 @@ const AdminOverview: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
               {/* Revenue velocity */}
-              <div className="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100">
+              <div className="lg:col-span-2 bg-white p-10 rounded-5xl shadow-soft border border-gray-100">
                 <div className="flex justify-between items-center mb-10">
                    <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight">Revenue Trajectory</h3>
                    <div className="flex space-x-4">
@@ -184,7 +184,7 @@ const AdminOverview: React.FC = () => {
               </div>
 
               {/* Status Mix */}
-              <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100 flex flex-col justify-between">
+              <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100 flex flex-col justify-between">
                 <div>
                   <h3 className="text-xl font-black text-jozi-dark mb-2 uppercase tracking-tight">Cycle Health</h3>
                   <p className="text-xs text-gray-400 font-medium mb-10">Real-time status distribution.</p>
@@ -227,14 +227,14 @@ const AdminOverview: React.FC = () => {
             >
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
                  {/* Trust Leaders */}
-                 <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100">
+                 <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100">
                     <div className="flex items-center space-x-3 mb-10">
                       <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600"><ThumbsUp className="w-5 h-5" /></div>
                       <h3 className="text-2xl font-black text-jozi-dark uppercase tracking-tight">Trust Leaders</h3>
                     </div>
                     <div className="space-y-6">
                       {TOP_RATED_VENDORS.map((v, i) => (
-                        <div key={i} className="flex items-center justify-between p-5 bg-gray-50/50 rounded-[2rem] border border-transparent hover:border-emerald-500/20 transition-all">
+                        <div key={i} className="flex items-center justify-between p-5 bg-gray-50/50 rounded-3xl border border-transparent hover:border-emerald-500/20 transition-all">
                            <div className="flex items-center space-x-4">
                               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-emerald-600 border-2 border-emerald-50 uppercase">
                                 {v.name[0]}
@@ -253,14 +253,14 @@ const AdminOverview: React.FC = () => {
                  </div>
 
                  {/* Governance Alerts */}
-                 <div className="bg-white p-10 rounded-[3rem] shadow-soft border border-gray-100">
+                 <div className="bg-white p-10 rounded-5xl shadow-soft border border-gray-100">
                     <div className="flex items-center space-x-3 mb-10">
                       <div className="p-3 bg-red-50 rounded-2xl text-red-600"><ThumbsDown className="w-5 h-5" /></div>
                       <h3 className="text-2xl font-black text-jozi-dark uppercase tracking-tight">Governance Alerts</h3>
                     </div>
                     <div className="space-y-6">
                       {LOW_RATED_VENDORS.map((v, i) => (
-                        <div key={i} className="flex items-center justify-between p-5 bg-red-50/30 rounded-[2.5rem] border border-red-100/50 group">
+                        <div key={i} className="flex items-center justify-between p-5 bg-red-50/30 rounded-4xl border border-red-100/50 group">
                            <div className="flex items-center space-x-4">
                               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-red-500 border-2 border-red-50 uppercase">
                                 {v.name[0]}

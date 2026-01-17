@@ -50,14 +50,14 @@ export default function VendorLayout({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsSidebarOpen(false)}
-                className="fixed inset-0 bg-jozi-dark/60 backdrop-blur-sm z-[100] lg:hidden"
+                className="fixed inset-0 bg-jozi-dark/60 backdrop-blur-sm z-100 lg:hidden"
               />
               <motion.div
                 initial={{ x: '-100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed left-0 top-0 bottom-0 w-80 bg-white z-[101] lg:hidden shadow-2xl p-4 overflow-y-auto"
+                className="fixed left-0 top-0 bottom-0 w-80 bg-white z-101 lg:hidden shadow-2xl p-4 overflow-y-auto"
               >
                 <div className="flex justify-end mb-4">
                   <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-gray-400 hover:text-jozi-forest">
@@ -72,7 +72,7 @@ export default function VendorLayout({
       )}
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col h-screen overflow-hidden">
+      <div className="grow flex flex-col h-screen overflow-hidden">
         {/* Vendor Top Bar - Hidden on auth and subscription pages */}
         {!hideSidebar && (
           <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 lg:px-10 shrink-0 z-40">
@@ -95,7 +95,7 @@ export default function VendorLayout({
                 <span className="absolute top-2 right-2 w-2 h-2 bg-jozi-gold rounded-full border-2 border-white" />
               </button>
               
-              <div className="h-8 w-[1px] bg-gray-100 hidden md:block" />
+              <div className="h-8 w-px bg-gray-100 hidden md:block" />
               
               <button className="flex items-center space-x-3 pl-2 group">
                  <div className="text-right hidden sm:block">
@@ -111,7 +111,7 @@ export default function VendorLayout({
         )}
 
         {/* Scrollable Page Content */}
-        <main className={`flex-grow overflow-y-auto custom-scrollbar ${hideSidebar ? '' : 'bg-[#FDFCFB] p-6 lg:p-10'}`}>
+        <main className={`grow overflow-y-auto custom-scrollbar ${hideSidebar ? '' : 'bg-[#FDFCFB] p-6 lg:p-10'}`}>
            {children}
         </main>
       </div>

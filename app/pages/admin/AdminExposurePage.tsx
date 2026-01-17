@@ -37,7 +37,7 @@ const AdminExposurePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
-      <div className="flex-grow p-8 lg:p-12 space-y-10 overflow-x-hidden">
+      <div className="grow p-8 lg:p-12 space-y-10 overflow-x-hidden">
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 text-left">
           <div className="space-y-4">
@@ -64,7 +64,7 @@ const AdminExposurePage: React.FC = () => {
         </header>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-2 bg-white p-2 rounded-[2.5rem] shadow-soft border border-jozi-forest/5 w-fit">
+        <div className="flex space-x-2 bg-white p-2 rounded-4xl shadow-soft border border-jozi-forest/5 w-fit">
           {tabs.map((tab) => (
             <button
               key={tab.id}

@@ -30,14 +30,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-jozi-dark/60 backdrop-blur-sm z-[100] lg:hidden"
+              className="fixed inset-0 bg-jozi-dark/60 backdrop-blur-sm z-100 lg:hidden"
             />
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-80 bg-jozi-dark z-[101] lg:hidden"
+              className="fixed left-0 top-0 bottom-0 w-80 bg-jozi-dark z-101 lg:hidden"
             >
               <AdminSidebar onClose={() => setIsSidebarOpen(false)} />
             </motion.div>
@@ -46,7 +46,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col h-screen overflow-hidden">
+      <div className="grow flex flex-col h-screen overflow-hidden">
         {/* Admin Top Bar */}
         <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 lg:px-12 shrink-0">
           <div className="flex items-center gap-4">
@@ -74,7 +74,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-jozi-gold rounded-full border-2 border-white" />
             </button>
             
-            <div className="h-8 w-[1px] bg-gray-100 hidden md:block" />
+            <div className="h-8 w-px bg-gray-100 hidden md:block" />
             
             <button className="flex items-center space-x-3 pl-2 group">
                <div className="text-right hidden sm:block">
@@ -89,7 +89,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         {/* Dynamic Route Content */}
-        <main className="flex-grow overflow-y-auto bg-gray-50 custom-scrollbar">
+        <main className="grow overflow-y-auto bg-gray-50 custom-scrollbar">
            {children}
         </main>
       </div>

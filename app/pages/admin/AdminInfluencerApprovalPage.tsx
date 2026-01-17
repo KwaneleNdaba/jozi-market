@@ -65,7 +65,7 @@ const AdminInfluencerApprovalPage: React.FC = () => {
 
       {/* Main Panel */}
       <section className="container mx-auto px-4 -mt-12 relative z-20">
-        <div className="bg-white rounded-[3rem] p-8 lg:p-12 shadow-soft border border-jozi-forest/5">
+        <div className="bg-white rounded-5xl p-8 lg:p-12 shadow-soft border border-jozi-forest/5">
           
           {/* Controls */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-12">

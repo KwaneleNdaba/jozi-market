@@ -56,7 +56,7 @@ const FormSelect = ({ label, options, required, ...props }: any) => (
 const FileUploadCard = ({ label, description, file, onUpload, onRemove, accept }: any) => (
   <div className="space-y-2 text-left">
     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">{label}</label>
-    <div className={`relative border-2 border-dashed rounded-[2rem] p-6 transition-all flex flex-col items-center justify-center text-center min-h-[160px] ${
+    <div className={`relative border-2 border-dashed rounded-3xl p-6 transition-all flex flex-col items-center justify-center text-center min-h-[160px] ${
       file ? 'border-emerald-500/30 bg-emerald-50/10' : 'border-gray-200 bg-gray-50 hover:border-jozi-gold/20'
     }`}>
       {!file ? (
@@ -345,7 +345,7 @@ const VendorApplicationPage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-2xl w-full bg-white rounded-[4rem] p-12 lg:p-20 shadow-2xl text-center space-y-8 border border-jozi-forest/5"
         >
-          <div className="w-24 h-24 bg-emerald-500 text-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-200">
+          <div className="w-24 h-24 bg-emerald-500 text-white rounded-4xl flex items-center justify-center mx-auto shadow-2xl shadow-emerald-200">
             <CheckCircle2 className="w-12 h-12" />
           </div>
           <div className="space-y-4">
@@ -366,8 +366,8 @@ const VendorApplicationPage: React.FC = () => {
              </p>
           </div>
           <div className="pt-8 flex flex-col sm:flex-row gap-4">
-            <Link href="/" className="flex-grow bg-jozi-forest text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl">Market Home</Link>
-            <Link href="/shop" className="flex-grow bg-jozi-cream text-jozi-forest py-5 rounded-2xl font-black uppercase tracking-widest">Explore Treasures</Link>
+            <Link href="/" className="grow bg-jozi-forest text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl">Market Home</Link>
+            <Link href="/shop" className="grow bg-jozi-cream text-jozi-forest py-5 rounded-2xl font-black uppercase tracking-widest">Explore Treasures</Link>
           </div>
         </motion.div>
       </div>
@@ -380,7 +380,7 @@ const VendorApplicationPage: React.FC = () => {
         
         {/* Sidebar Stepper */}
         <aside className="lg:w-80 shrink-0 space-y-8">
-           <div className="bg-white rounded-[3rem] p-8 shadow-soft border border-jozi-forest/5 text-left sticky top-24">
+           <div className="bg-white rounded-5xl p-8 shadow-soft border border-jozi-forest/5 text-left sticky top-24">
               <Link href="/vendor/pricing" className="inline-flex items-center text-gray-400 font-black text-[10px] uppercase tracking-widest mb-10 hover:text-jozi-forest transition-colors">
                 <ChevronLeft className="w-4 h-4 mr-1" /> All Plans
               </Link>
@@ -411,7 +411,7 @@ const VendorApplicationPage: React.FC = () => {
         </aside>
 
         {/* Main Form Body */}
-        <main className="flex-grow">
+        <main className="grow">
           <div className="bg-white rounded-[4rem] p-8 md:p-12 lg:p-16 shadow-soft border border-jozi-forest/5 min-h-[700px] flex flex-col">
             <AnimatePresence mode="wait">
               
@@ -514,7 +514,7 @@ const VendorApplicationPage: React.FC = () => {
                         <textarea 
                           rows={5} 
                           placeholder="Tell us about your craft, the materials you use, and your workshop's heritage..." 
-                          className="w-full bg-gray-50 border-2 border-transparent focus:border-jozi-gold/20 rounded-[2rem] px-8 py-6 font-bold text-sm text-jozi-forest outline-none transition-all resize-none"
+                          className="w-full bg-gray-50 border-2 border-transparent focus:border-jozi-gold/20 rounded-3xl px-8 py-6 font-bold text-sm text-jozi-forest outline-none transition-all resize-none"
                           value={formData.description}
                           onChange={(e) => updateFormData({ description: e.target.value })}
                         />
@@ -565,7 +565,7 @@ const VendorApplicationPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="p-8 bg-jozi-forest/5 rounded-[2.5rem] border border-jozi-forest/10 flex items-start space-x-6 text-left">
+                  <div className="p-8 bg-jozi-forest/5 rounded-4xl border border-jozi-forest/10 flex items-start space-x-6 text-left">
                      <div className="p-3 bg-white rounded-2xl shadow-sm text-jozi-gold"><Truck className="w-6 h-6" /></div>
                      <div className="space-y-1">
                         <h4 className="font-black text-sm text-jozi-forest uppercase tracking-tight">Logistics Verification</h4>
@@ -622,7 +622,7 @@ const VendorApplicationPage: React.FC = () => {
                       />
                   </div>
 
-                  <div className="bg-jozi-dark p-8 rounded-[3rem] text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group shadow-2xl">
+                  <div className="bg-jozi-dark p-8 rounded-5xl text-white flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden group shadow-2xl">
                      <div className="relative z-10 space-y-2 text-left">
                         <div className="flex items-center space-x-3 text-jozi-gold">
                            <ShieldCheck className="w-6 h-6" />
@@ -649,11 +649,11 @@ const VendorApplicationPage: React.FC = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Review Section */}
                     <div className="space-y-8">
-                       <div className="bg-gray-50 rounded-[3rem] p-10 space-y-10 relative overflow-hidden border border-gray-100 group">
+                       <div className="bg-gray-50 rounded-5xl p-10 space-y-10 relative overflow-hidden border border-gray-100 group">
                           <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000"><Logo className="w-32 h-32" /></div>
                           
                           <div className="flex items-center space-x-6 relative z-10">
-                             <div className="w-20 h-20 bg-white rounded-[2rem] border-4 border-white shadow-xl overflow-hidden shrink-0">
+                             <div className="w-20 h-20 bg-white rounded-3xl border-4 border-white shadow-xl overflow-hidden shrink-0">
                                 {files.logo ? <img src={URL.createObjectURL(files.logo)} className="w-full h-full object-cover" /> : <Store className="w-10 h-10 text-jozi-gold m-5" />}
                              </div>
                              <div>
@@ -698,7 +698,7 @@ const VendorApplicationPage: React.FC = () => {
                             { id: 'popia', label: 'POPIA Compliance Consent', desc: 'Authorization to process sensitive business artifacts.' },
                             { id: 'policies', label: 'Dispute Resolution Policy', desc: 'Agreement to our mediation framework for returns.' }
                           ].map((legal) => (
-                            <label key={legal.id} className="flex items-start space-x-4 p-6 bg-white rounded-[2rem] border-2 border-transparent hover:bg-gray-50 cursor-pointer transition-all">
+                            <label key={legal.id} className="flex items-start space-x-4 p-6 bg-white rounded-3xl border-2 border-transparent hover:bg-gray-50 cursor-pointer transition-all">
                                <div className="pt-1">
                                   <input 
                                     type="checkbox" 

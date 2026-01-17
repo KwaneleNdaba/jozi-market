@@ -42,12 +42,12 @@ const SignUpPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-6xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col lg:flex-row-reverse min-h-[700px] border border-jozi-forest/5"
+        className="max-w-6xl w-full bg-white rounded-5xl shadow-2xl overflow-hidden flex flex-col lg:flex-row-reverse min-h-[700px] border border-jozi-forest/5"
       >
         {/* Right Side: Features/Benefits */}
         <div className="lg:w-1/2 bg-jozi-gold relative overflow-hidden hidden lg:block">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1574634534894-89d7576c8259?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-bl from-jozi-gold via-jozi-gold/80 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-bl from-jozi-gold via-jozi-gold/80 to-transparent" />
 
           <div className="relative z-10 h-full p-16 flex flex-col justify-between text-jozi-forest">
             <Link href="/" className="inline-block -ml-10">
@@ -224,7 +224,7 @@ const SignUpPage: React.FC = () => {
 
           <div className="mt-8">
             <div className="relative flex items-center justify-center mb-6">
-              <div className="absolute inset-x-0 h-[1px] bg-gray-100" />
+              <div className="absolute inset-x-0 h-px bg-gray-100" />
               <span className="relative bg-white px-4 text-[10px] font-black text-gray-300 uppercase tracking-widest">
                 Or sign up with
               </span>

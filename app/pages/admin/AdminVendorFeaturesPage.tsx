@@ -203,7 +203,7 @@ Active Overrides: ${Object.keys(overrides).length}`);
           
           {/* Plan Management Sidebar */}
           <div className="space-y-8">
-            <div className="bg-white rounded-[2.5rem] p-10 shadow-soft border border-gray-100 space-y-8">
+            <div className="bg-white rounded-4xl p-10 shadow-soft border border-gray-100 space-y-8">
               <div className="space-y-2">
                 <h3 className="text-xl font-black text-jozi-dark">Subscription Management</h3>
                 <p className="text-gray-400 text-xs font-medium leading-relaxed">Update the artisan's base tier to automatically adjust their platform feature set.</p>
@@ -248,7 +248,7 @@ Active Overrides: ${Object.keys(overrides).length}`);
               </button>
             </div>
 
-            <div className="bg-jozi-forest p-10 rounded-[2.5rem] text-white space-y-6 relative overflow-hidden group">
+            <div className="bg-jozi-forest p-10 rounded-4xl text-white space-y-6 relative overflow-hidden group">
               <Sparkles className="absolute -bottom-6 -right-6 w-32 h-32 opacity-10 group-hover:rotate-12 transition-transform duration-700" />
               <h4 className="text-xl font-black">Plan Insights</h4>
               <p className="text-xs text-jozi-cream/60 leading-relaxed font-medium">Upgrading to the <span className="text-jozi-gold font-bold">Pro Tier</span> would reduce their commission by 40% and unlock dedicated account management.</p>
@@ -260,7 +260,7 @@ Active Overrides: ${Object.keys(overrides).length}`);
 
           {/* Feature Grid */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100">
+            <div className="bg-white rounded-5xl p-10 lg:p-12 shadow-soft border border-gray-100">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-12">
                 <div>
                   <h2 className="text-3xl font-black text-jozi-dark tracking-tight">Feature Matrix</h2>
@@ -357,7 +357,7 @@ Active Overrides: ${Object.keys(overrides).length}`);
                 );
               })}
 
-              <div className="mt-12 p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 flex items-start space-x-6">
+              <div className="mt-12 p-8 bg-amber-50 rounded-4xl border border-amber-100 flex items-start space-x-6">
                 <AlertCircle className="w-8 h-8 text-amber-600 shrink-0 mt-1" />
                 <div className="space-y-2">
                   <h4 className="font-black text-amber-900 text-sm">Policy Confirmation</h4>

@@ -10,7 +10,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation 
   return (
     <motion.div
       whileHover={{ x: 5 }}
-      className="relative bg-white rounded-[2.5rem] p-1 border-2 border-transparent hover:border-jozi-gold transition-all duration-500 shadow-soft group"
+      className="relative bg-white rounded-4xl p-1 border-2 border-transparent hover:border-jozi-gold transition-all duration-500 shadow-soft group"
     >
       <div className="p-8 space-y-6">
         <div className="flex justify-between items-start">

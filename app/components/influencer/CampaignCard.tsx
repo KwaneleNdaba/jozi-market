@@ -15,7 +15,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, detailed = false 
   return (
     <motion.div
       whileHover={{ y: -5 }}
-      className={`bg-white rounded-[2.5rem] p-8 border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all group text-left ${detailed ? 'h-full flex flex-col justify-between' : ''}`}
+      className={`bg-white rounded-4xl p-8 border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all group text-left ${detailed ? 'h-full flex flex-col justify-between' : ''}`}
     >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -69,7 +69,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, detailed = false 
       <div className={`flex items-center gap-3 ${detailed ? 'mt-8' : 'pt-6 border-t border-gray-50 mt-6'}`}>
          {campaign.status === 'Active' ? (
            <>
-              <button className="flex-grow py-4 bg-jozi-forest text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/10 flex items-center justify-center">
+              <button className="grow py-4 bg-jozi-forest text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/10 flex items-center justify-center">
                  <Upload className="w-4 h-4 mr-2 text-jozi-gold" /> Upload Proof
               </button>
               <button className="p-4 bg-gray-50 text-gray-400 rounded-2xl hover:text-jozi-forest transition-colors shadow-sm">
@@ -78,7 +78,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, detailed = false 
            </>
          ) : campaign.status === 'Pending' ? (
            <>
-              <button className="flex-grow py-4 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center">
+              <button className="grow py-4 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center">
                  <CheckCircle2 className="w-4 h-4 mr-2" /> Accept Collab
               </button>
               <button className="px-6 py-4 bg-white border border-gray-100 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 transition-all">

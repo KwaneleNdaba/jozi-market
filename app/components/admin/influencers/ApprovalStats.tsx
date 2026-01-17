@@ -22,7 +22,7 @@ const ApprovalStats: React.FC<ApprovalStatsProps> = ({ campaigns }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.05 }}
           key={i}
-          className={`${s.bg} backdrop-blur-md p-6 rounded-[2.5rem] border border-white/10 text-left group hover:bg-white/15 transition-all cursor-default`}
+          className={`${s.bg} backdrop-blur-md p-6 rounded-4xl border border-white/10 text-left group hover:bg-white/15 transition-all cursor-default`}
         >
           <div className="flex items-center justify-between mb-2">
             <s.icon className={`w-5 h-5 ${s.color}`} />

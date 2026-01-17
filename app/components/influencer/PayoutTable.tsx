@@ -82,7 +82,7 @@ const PayoutTable: React.FC<PayoutTableProps> = ({ payouts }) => {
         </table>
       </div>
       
-      <div className="mt-12 p-8 bg-jozi-cream/50 rounded-[2.5rem] border border-jozi-forest/5 flex items-center justify-between">
+      <div className="mt-12 p-8 bg-jozi-cream/50 rounded-4xl border border-jozi-forest/5 flex items-center justify-between">
          <div className="flex items-start space-x-5 text-left">
             <div className="p-3 bg-white rounded-2xl text-jozi-gold shadow-sm"><Info className="w-5 h-5" /></div>
             <div>

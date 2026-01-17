@@ -20,10 +20,10 @@ const PromotionSlot: React.FC<PromotionSlotProps> = ({
   return (
     <motion.div
       whileHover={{ y: -12 }}
-      className="bg-white rounded-[2.5rem] overflow-hidden border border-jozi-forest/5 shadow-soft hover:shadow-2xl transition-all duration-500 flex flex-col h-full group"
+      className="bg-white rounded-4xl overflow-hidden border border-jozi-forest/5 shadow-soft hover:shadow-2xl transition-all duration-500 flex flex-col h-full group"
     >
       {/* Visual Header */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-jozi-cream">
+      <div className="relative aspect-4/3 overflow-hidden bg-jozi-cream">
         <motion.img 
           src={image} 
           alt={name}
@@ -52,7 +52,7 @@ const PromotionSlot: React.FC<PromotionSlotProps> = ({
         {/* Action Overlay */}
         <div className="absolute inset-0 bg-jozi-dark/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <Link 
-            to={`/product/${id}`}
+            href={id ? `/product/${id}` : '#'}
             className="bg-white text-jozi-dark px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform"
           >
             Claim Deal
@@ -61,7 +61,7 @@ const PromotionSlot: React.FC<PromotionSlotProps> = ({
       </div>
 
       {/* Content Section */}
-      <div className="p-8 flex-grow flex flex-col text-left">
+      <div className="p-8 grow flex flex-col text-left">
         <div className="flex items-center space-x-2 text-jozi-gold mb-3">
           <Tag className="w-4 h-4" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Offer</span>
@@ -84,7 +84,7 @@ const PromotionSlot: React.FC<PromotionSlotProps> = ({
             </div>
           </div>
           <Link 
-            to={`/product/${id}`}
+            href={id ? `/product/${id}` : '#'}
             className="w-12 h-12 bg-jozi-forest rounded-2xl flex items-center justify-center text-white hover:bg-jozi-gold hover:scale-105 transition-all shadow-lg shadow-jozi-forest/20"
           >
             <ArrowUpRight className="w-6 h-6" />
