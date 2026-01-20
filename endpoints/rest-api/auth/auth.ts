@@ -279,6 +279,38 @@ export const AUTH_API = {
         error: true,
       };
     }
+  },
+
+  ACTIVATE_STORE: async (userId: string): Promise<CustomResponse<IUser>> => {
+    try {
+      logger.info(`[AUTH_API] Activating store for user ${userId}`);
+      const response = await PUT(`${AuthbaseURL}/${userId}/store/activate`, {});
+      logger.info(`[AUTH_API] Store activated successfully`);
+      return response;
+    } catch (err) {
+      logger.error("[AUTH_API] Error activating store:", err);
+      return {
+        data: null as any,
+        message: err instanceof Error ? err.message : "Failed to activate store",
+        error: true,
+      };
+    }
+  },
+
+  DEACTIVATE_STORE: async (userId: string): Promise<CustomResponse<IUser>> => {
+    try {
+      logger.info(`[AUTH_API] Deactivating store for user ${userId}`);
+      const response = await PUT(`${AuthbaseURL}/${userId}/store/deactivate`, {});
+      logger.info(`[AUTH_API] Store deactivated successfully`);
+      return response;
+    } catch (err) {
+      logger.error("[AUTH_API] Error deactivating store:", err);
+      return {
+        data: null as any,
+        message: err instanceof Error ? err.message : "Failed to deactivate store",
+        error: true,
+      };
+    }
   }
 
 };

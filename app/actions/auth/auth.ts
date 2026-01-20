@@ -4,15 +4,18 @@ import { jwtDecode } from 'jwt-decode';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { IDecodedJWT, IUser, IUserLogin, Role, TokenData } from '@/interfaces/auth/auth';
-import { serverPOST } from '@/lib/server-client';
+import { serverPOST, serverPUT, serverGET } from '@/lib/server-client';
 import { baseUrl } from '@/endpoints/url';
 import { logger } from '@/lib/log';
 import { getMyActiveSubscriptionAction } from '@/app/actions/subscription';
+import { decodeServerAccessToken } from '@/lib/server-auth';
+import { CustomResponse } from '@/interfaces/response';
 
 export interface AuthResult {
   success: boolean;
   message?: string;
   error?: boolean;
+  data?: any;
 }
 
 /**
@@ -455,6 +458,7 @@ export async function vendorSignInAction(
 
       // User has active subscription, redirect to dashboard
       logger.info('[Vendor Sign In] Active subscription found, redirecting to dashboard');
+      console.log('[Vendor Sign In] Active subscription data:', JSON.stringify(subscriptionResponse.data, null, 2));
     redirect('/vendor/dashboard');
     } catch (subscriptionError: unknown) {
       // Re-throw redirect errors (they need to propagate)
@@ -861,6 +865,203 @@ export async function signUpAction(
       success: false,
       error: true,
       message: err instanceof Error ? err.message : 'An error occurred. Please try again.',
+    };
+  }
+}
+
+/**
+ * Server action to activate store
+ */
+export async function activateStoreAction(): Promise<AuthResult> {
+  try {
+    // Get userId from token
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser || !decodedUser.id) {
+      return {
+        success: false,
+        error: true,
+        message: 'User not authenticated',
+      };
+    }
+
+    const userId = decodedUser.id;
+    const response = await serverPUT(`${baseUrl}/auth/${userId}/store/activate`);
+
+    if (response.error || !response.data) {
+      return {
+        success: false,
+        error: true,
+        message: response.message || 'Failed to activate store',
+      };
+    }
+
+    // The backend should return the updated user object with store status
+    // Backend returns isStoreActive as 0 or 1 (number), convert to boolean
+    const userData = response.data as any;
+    const isStoreActiveValue = userData?.isStoreActive ?? userData?.storeActive ?? 1;
+    const isStoreActive = isStoreActiveValue === 1 || isStoreActiveValue === true;
+
+    return {
+      success: true,
+      message: 'Store activated successfully',
+      data: { isStoreActive },
+    };
+  } catch (err: unknown) {
+    logger.error('Activate store error:', err);
+    return {
+      success: false,
+      error: true,
+      message: err instanceof Error ? err.message : 'Failed to activate store',
+    };
+  }
+}
+
+/**
+ * Server action to deactivate store
+ */
+export async function deactivateStoreAction(): Promise<AuthResult> {
+  try {
+    // Get userId from token
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser || !decodedUser.id) {
+      return {
+        success: false,
+        error: true,
+        message: 'User not authenticated',
+      };
+    }
+
+    const userId = decodedUser.id;
+    const response = await serverPUT(`${baseUrl}/auth/${userId}/store/deactivate`);
+
+    if (response.error || !response.data) {
+      return {
+        success: false,
+        error: true,
+        message: response.message || 'Failed to deactivate store',
+      };
+    }
+
+    // The backend should return the updated user object with store status
+    // Backend returns isStoreActive as 0 or 1 (number), convert to boolean
+    const userData = response.data as any;
+    const isStoreActiveValue = userData?.isStoreActive ?? userData?.storeActive ?? 0;
+    const isStoreActive = isStoreActiveValue === 1 || isStoreActiveValue === true;
+
+    return {
+      success: true,
+      message: 'Store deactivated successfully',
+      data: { isStoreActive },
+    };
+  } catch (err: unknown) {
+    logger.error('Deactivate store error:', err);
+    return {
+      success: false,
+      error: true,
+      message: err instanceof Error ? err.message : 'Failed to deactivate store',
+    };
+  }
+}
+
+/**
+ * Server action to get current user's store status
+ */
+export async function getCurrentUserStoreStatusAction(): Promise<{ success: boolean; isStoreActive?: boolean; error?: boolean; message?: string }> {
+  try {
+    // Get userId from token
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser || !decodedUser.id) {
+      return {
+        success: false,
+        error: true,
+        message: 'User not authenticated',
+      };
+    }
+
+    const userId = decodedUser.id;
+    const response = await serverGET(`${baseUrl}/auth/getUser/${userId}`);
+
+    if (response.error || !response.data) {
+      return {
+        success: false,
+        error: true,
+        message: response.message || 'Failed to get user data',
+      };
+    }
+
+    // Backend returns isStoreActive as 0 or 1 (number), convert to boolean
+    const userData = response.data as any;
+    const isStoreActiveValue = userData?.isStoreActive ?? 1;
+    const isStoreActive = isStoreActiveValue === 1 || isStoreActiveValue === true;
+
+    return {
+      success: true,
+      isStoreActive,
+    };
+  } catch (err: unknown) {
+    logger.error('Get store status error:', err);
+    return {
+      success: false,
+      error: true,
+      message: err instanceof Error ? err.message : 'Failed to get store status',
+    };
+  }
+}
+
+/**
+ * Server action to get current user data
+ */
+export async function getCurrentUserAction(): Promise<CustomResponse<IUser>> {
+  try {
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser?.id) {
+      return {
+        data: null as any,
+        message: 'Authentication required. Please log in.',
+        error: true,
+      };
+    }
+
+    const userId = decodedUser.id;
+    logger.info('[Auth Action] Getting user data for:', userId);
+    const response = await serverGET(`${baseUrl}/auth/getUser/${userId}`);
+    logger.info('[Auth Action] User data retrieved successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error getting user data:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to get user data',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to update user address
+ */
+export async function updateUserAddressAction(address: string): Promise<CustomResponse<IUser>> {
+  try {
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser?.id) {
+      return {
+        data: null as any,
+        message: 'Authentication required. Please log in.',
+        error: true,
+      };
+    }
+
+    const userId = decodedUser.id;
+    logger.info('[Auth Action] Updating address for user:', userId);
+    const response = await serverPUT(`${baseUrl}/auth/updateUser`, { id: userId, address });
+    logger.info('[Auth Action] Address updated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error updating address:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to update address',
+      error: true,
     };
   }
 }

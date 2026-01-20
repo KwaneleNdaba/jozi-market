@@ -42,6 +42,7 @@ export interface ITechnicalDetails {
   subcategoryId?: string;
   regularPrice: number;
   discountPrice?: number;
+  initialStock?: number; // Stock for products without variants
   attributes?: IProductAttribute[];
 }
 
@@ -59,6 +60,9 @@ export interface IProduct {
   images: IProductImage[];
   video?: IProductVideo;
   variants?: IProductVariant[];
+  vendorName?: string; // Shop name from approved vendor application
+  vendorDescription?: string; // Description from vendor application
+  vendorLogo?: string; // Logo URL from vendor application
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

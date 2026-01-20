@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -16,19 +16,141 @@ import {
   ChevronDown,
   ArrowRight,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import { MARKET_CATEGORIES } from '../data/mockData';
+import { getAllCategoriesAction } from '../actions/category/index';
+import { ICategory, ICategoryWithSubcategories } from '@/interfaces/category/category';
+import { decodeAccessToken } from '@/lib/ecryptUser';
+import { IDecodedJWT } from '@/interfaces/auth/auth';
+import Cookies from 'universal-cookie';
+
+interface CategoryGroup {
+  name: string;
+  slug: string;
+  subcategories: string[];
+}
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryGroup[]>(MARKET_CATEGORIES);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<IDecodedJWT | null>(null);
   const { totalItems, setIsCartOpen } = useCart();
   const router = useRouter();
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const decodedUser = decodeAccessToken();
+        if (decodedUser) {
+          setIsLoggedIn(true);
+          setUser(decodedUser);
+        } else {
+          setIsLoggedIn(false);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('[Header] Error checking auth:', error);
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
+    // Check auth on mount and periodically (every 30 seconds)
+    const interval = setInterval(checkAuth, 30000);
+    
+    // Also check on route changes
+    const handleRouteChange = () => {
+      checkAuth();
+    };
+    
+    // Listen for storage changes (when token is set/removed in other tabs)
+    window.addEventListener('storage', checkAuth);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkAuth);
+    };
+  }, []);
+
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getAllCategoriesAction('Active');
+        
+        console.log('[Header] Categories response:', response);
+        
+        if (!response.error && response.data && response.data.length > 0) {
+          // Transform backend categories into the format expected by Header
+          // Backend returns categories with nested subcategories array
+          const transformedCategories: CategoryGroup[] = response.data
+            .filter(cat => !cat.categoryId || cat.categoryId === null) // Only top-level categories
+            .map(category => {
+              // Use the subcategories array if it exists, otherwise empty array
+              const categoryWithSubs = category as ICategoryWithSubcategories;
+              const categorySubcategories = categoryWithSubs.subcategories 
+                ? categoryWithSubs.subcategories.map((sub: ICategory) => sub.name)
+                : [];
+              
+              console.log(`[Header] Category "${category.name}" has ${categorySubcategories.length} subcategories:`, categorySubcategories);
+              
+              return {
+                name: category.name,
+                slug: category.name.toLowerCase().replace(/\s+/g, '-'),
+                subcategories: categorySubcategories,
+              };
+            });
+          
+          console.log('[Header] Transformed categories:', transformedCategories);
+          
+          if (transformedCategories.length > 0) {
+            setCategories(transformedCategories);
+          } else {
+            console.warn('[Header] No categories transformed, keeping mock data');
+          }
+        } else {
+          console.warn('[Header] No categories data received, keeping mock data');
+        }
+      } catch (error) {
+        console.error('[Header] Error fetching categories:', error);
+        // Keep using mock data on error
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleLogout = () => {
+    // Clear cookies
+    const cookieInstance = new Cookies();
+    cookieInstance.remove('userToken', { 
+      path: '/',
+      secure: true,
+      sameSite: 'lax'
+    });
+    
+    // Reset state
+    setIsLoggedIn(false);
+    setUser(null);
+    setIsUserMenuOpen(false);
+    setIsMenuOpen(false);
+    
+    // Redirect to home
+    router.push('/');
+    router.refresh();
+  };
 
   const navLinks = [
     { label: 'Shop', path: '/marketplace', type: 'dropdown' },
@@ -101,7 +223,7 @@ const Header: React.FC = () => {
                         </div>
 
                         <div className="col-span-3 grid grid-cols-3 gap-6">
-                          {MARKET_CATEGORIES.map((cat) => (
+                          {categories.map((cat) => (
                             <div key={cat.name} className="space-y-3">
                               <button 
                                 onClick={() => handleCategoryClick(cat.name)}
@@ -134,17 +256,101 @@ const Header: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center space-x-1.5 md:space-x-3 lg:space-x-4">
-          <div className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-1 lg:mr-2 text-left">
-            <Link href="/signin" className="text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:text-jozi-gold transition-colors whitespace-nowrap">
-              Sign In
-            </Link>
-            <Link href="/signup" className="bg-jozi-gold/10 text-jozi-gold border border-jozi-gold/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-jozi-gold hover:text-white transition-all whitespace-nowrap">
-              Join
-            </Link>
-          </div>
+          {!isLoggedIn ? (
+            <div className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-1 lg:mr-2 text-left">
+              <Link href="/signin" className="text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:text-jozi-gold transition-colors whitespace-nowrap">
+                Sign In
+              </Link>
+              <Link href="/signup" className="bg-jozi-gold/10 text-jozi-gold border border-jozi-gold/20 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-jozi-gold hover:text-white transition-all whitespace-nowrap">
+                Join Jozi
+              </Link>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-1 lg:mr-2 text-left">
+              <div 
+                className="relative"
+                onMouseEnter={() => setIsUserMenuOpen(true)}
+                onMouseLeave={() => setIsUserMenuOpen(false)}
+              >
+                <button className="flex items-center space-x-2 p-1.5 hover:bg-jozi-forest/5 rounded-full text-jozi-forest transition-colors">
+                  <div className="w-8 h-8 bg-jozi-gold/10 rounded-full flex items-center justify-center border border-jozi-gold/20">
+                    <User className="w-4 h-4 text-jozi-forest" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-jozi-forest">
+                    {user?.fullName?.split(' ')[0] || 'Account'}
+                  </span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* User Menu Dropdown */}
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-jozi-forest/5 p-2 z-50"
+                    >
+                      <div className="px-4 py-3 border-b border-jozi-forest/5">
+                        <p className="text-xs font-black text-jozi-forest uppercase tracking-widest">
+                          {user?.fullName || 'User'}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-1">{user?.email}</p>
+                      </div>
+                      <div className="py-2">
+                        <Link 
+                          href="/profile" 
+                          className="flex items-center space-x-3 px-4 py-2 text-sm font-bold text-jozi-forest hover:bg-jozi-cream rounded-xl transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <User className="w-4 h-4" />
+                          <span>My Profile</span>
+                        </Link>
+                        <Link 
+                          href="/profile?tab=settings" 
+                          className="flex items-center space-x-3 px-4 py-2 text-sm font-bold text-jozi-forest hover:bg-jozi-cream rounded-xl transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>Settings</span>
+                        </Link>
+                        {user?.role?.toLowerCase() === 'vendor' && (
+                          <Link 
+                            href="/vendor/dashboard" 
+                            className="flex items-center space-x-3 px-4 py-2 text-sm font-bold text-jozi-forest hover:bg-jozi-cream rounded-xl transition-colors"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Store className="w-4 h-4" />
+                            <span>Vendor Dashboard</span>
+                          </Link>
+                        )}
+                        {user?.role?.toLowerCase() === 'admin' && (
+                          <Link 
+                            href="/admin/dashboard" 
+                            className="flex items-center space-x-3 px-4 py-2 text-sm font-bold text-jozi-forest hover:bg-jozi-cream rounded-xl transition-colors"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Settings className="w-4 h-4" />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors mt-2"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center space-x-1.5 lg:space-x-2">
-            <Link href="/profile" className="p-1.5 hover:bg-jozi-forest/5 rounded-full text-jozi-forest transition-colors">
+            <Link href="/profile?tab=wishlist" className="p-1.5 hover:bg-jozi-forest/5 rounded-full text-jozi-forest transition-colors">
               <Heart className="w-4 h-4" />
             </Link>
             
@@ -185,14 +391,71 @@ const Header: React.FC = () => {
             className="lg:hidden bg-white border-b border-jozi-forest/10 overflow-y-auto max-h-[85vh] text-left"
           >
             <div className="px-6 py-8 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <Link href="/signin" className="flex items-center justify-center bg-jozi-cream border border-jozi-forest/10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest">
-                  Sign In
-                </Link>
-                <Link href="/signup" className="flex items-center justify-center bg-jozi-gold text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-jozi-gold/20">
-                  Join Jozi
-                </Link>
-              </div>
+              {!isLoggedIn ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <Link 
+                    href="/signin" 
+                    className="flex items-center justify-center bg-jozi-cream border border-jozi-forest/10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    href="/signup" 
+                    className="flex items-center justify-center bg-jozi-gold text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-jozi-gold/20"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Join Jozi
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-jozi-cream p-4 rounded-2xl border border-jozi-forest/10">
+                    <p className="text-sm font-black text-jozi-forest uppercase tracking-widest">
+                      {user?.fullName || 'User'}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-1">{user?.email}</p>
+                  </div>
+                  <Link 
+                    href="/profile" 
+                    className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span>My Profile</span>
+                    <User className="w-4 h-4" />
+                  </Link>
+                  {user?.role?.toLowerCase() === 'vendor' && (
+                    <Link 
+                      href="/vendor/dashboard" 
+                      className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span>Vendor Dashboard</span>
+                      <Store className="w-4 h-4" />
+                    </Link>
+                  )}
+                  {user?.role?.toLowerCase() === 'admin' && (
+                    <Link 
+                      href="/admin/dashboard" 
+                      className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span>Admin Dashboard</span>
+                      <Settings className="w-4 h-4" />
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between bg-red-50 border border-red-200 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-red-500"
+                  >
+                    <span>Sign Out</span>
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 ml-1">Main Menu</p>
@@ -214,7 +477,7 @@ const Header: React.FC = () => {
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden pb-4 space-y-4"
                         >
-                          {MARKET_CATEGORIES.map(cat => (
+                          {categories.map(cat => (
                             <div key={cat.name} className="pl-4 space-y-3">
                               <button 
                                 onClick={() => handleCategoryClick(cat.name)}

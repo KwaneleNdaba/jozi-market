@@ -59,6 +59,7 @@ interface ProductFormData {
     attributes: Record<string, string>; // attributeId -> value
     regularPrice: number;
     discountPrice?: number;
+    initialStock?: number;
   };
   careGuidelines: string;
   packagingNarrative: string;
@@ -114,7 +115,8 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
       subcategoryId: '',
       attributes: {},
       regularPrice: 0,
-      discountPrice: undefined
+      discountPrice: undefined,
+      initialStock: undefined
     },
     careGuidelines: '',
     packagingNarrative: '',
@@ -447,6 +449,15 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
       return;
     }
 
+    // Validate initialStock if no variants
+    const hasValidVariants = variants.some(v => v.name.trim() !== '' && v.sku.trim() !== '');
+    if (!hasValidVariants) {
+      if (!formData.technicalDetails.initialStock || formData.technicalDetails.initialStock < 0) {
+        showError('Please set initial stock for products without variants');
+        return;
+      }
+    }
+
     // Check if at least one image is uploaded or exists (for editing)
     const uploadedImages = images.filter(img => img !== null && img instanceof File);
     const hasExistingImages = isEditMode && imageUrls.some(url => url && url.trim() !== '');
@@ -551,6 +562,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
             subcategoryId: selectedSubcategoryId,
             regularPrice: formData.technicalDetails.regularPrice,
             discountPrice: formData.technicalDetails.discountPrice,
+            initialStock: !hasValidVariants ? formData.technicalDetails.initialStock : undefined,
             attributes: Object.entries(attributeValues)
               .filter(([_, value]) => value.trim() !== '')
               .map(([attributeId, value]) => ({
@@ -609,6 +621,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
           subcategoryId: selectedSubcategoryId,
           regularPrice: formData.technicalDetails.regularPrice,
           discountPrice: formData.technicalDetails.discountPrice,
+          initialStock: !hasValidVariants ? formData.technicalDetails.initialStock : undefined,
           attributes: Object.entries(attributeValues)
             .filter(([_, value]) => value.trim() !== '')
             .map(([attributeId, value]) => ({
@@ -838,6 +851,30 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                                    ))}
                                  </select>
                               </div>
+                              {/* Initial Stock - Only show when no valid variants exist */}
+                              {(() => {
+                                const hasValidVariants = variants.some(v => v.name.trim() !== '' && v.sku.trim() !== '');
+                                return !hasValidVariants ? (
+                                  <div className="space-y-2 pt-4 border-t border-jozi-forest/10">
+                                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Initial Stock *</label>
+                                    <input 
+                                      type="number" 
+                                      min="0"
+                                      placeholder="0" 
+                                      className="w-full bg-white rounded-2xl px-6 py-4 font-bold text-sm text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all"
+                                      value={formData.technicalDetails.initialStock || ''}
+                                      onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        technicalDetails: {
+                                          ...prev.technicalDetails,
+                                          initialStock: e.target.value ? parseInt(e.target.value) : undefined
+                                        }
+                                      }))}
+                                    />
+                                    <p className="text-[8px] text-gray-400 font-medium italic">Required for products without variants</p>
+                                  </div>
+                                ) : null;
+                              })()}
                             </div>
                          </div>
 
@@ -1234,7 +1271,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                             {idx === 0 ? 'Master Shot' : idx === 3 ? 'Optional View' : `Detail 0${idx + 1}`}
                           </p>
                           <div 
-                            className={`relative aspect-[4/5] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center p-4 group cursor-pointer ${
+                            className={`relative aspect-4/5 rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center p-4 group cursor-pointer ${
                                 hasImage ? 'border-emerald-500 bg-emerald-50/10' : 'border-gray-200 bg-gray-50 hover:border-jozi-gold/20'
                             }`}
                           >

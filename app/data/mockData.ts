@@ -287,6 +287,104 @@ export const products: any[] = [
     reviewCount: 14,
     stock: 10,
     tags: ['Silver', 'Nature']
+  },
+  {
+    id: 'p13',
+    name: 'African Shea Butter Cream',
+    description: 'Rich, nourishing body cream infused with pure African shea butter and aloe vera. Perfect for dry, sensitive skin.',
+    price: 220,
+    originalPrice: 280,
+    category: 'Health & Beauty',
+    subcategory: 'Skincare',
+    vendor: { id: 'v4', name: 'The Jozi Apothecary', rating: 4.9 },
+    images: [
+      'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=800'
+    ],
+    rating: 4.8,
+    reviewCount: 42,
+    stock: 25,
+    tags: ['Natural', 'Moisturizing']
+  },
+  {
+    id: 'p14',
+    name: 'Rooibos & Chamomile Face Mask',
+    description: 'Soothing clay mask with antioxidant-rich rooibos and calming chamomile. Reduces inflammation and brightens skin.',
+    price: 180,
+    category: 'Health & Beauty',
+    subcategory: 'Skincare',
+    vendor: { id: 'v4', name: 'The Jozi Apothecary', rating: 4.9 },
+    images: [
+      'https://images.unsplash.com/photo-1571875257727-256c39da42af?auto=format&fit=crop&q=80&w=800'
+    ],
+    rating: 4.9,
+    reviewCount: 38,
+    stock: 18,
+    tags: ['Face Mask', 'Antioxidant']
+  },
+  {
+    id: 'p15',
+    name: 'Moringa Oil Hair Treatment',
+    description: 'Deep conditioning hair oil with moringa seed extract. Promotes hair growth and adds natural shine.',
+    price: 195,
+    category: 'Health & Beauty',
+    subcategory: 'Hair Care',
+    vendor: { id: 'v4', name: 'The Jozi Apothecary', rating: 4.9 },
+    images: [
+      'https://images.unsplash.com/photo-1608248543803-ba4f8c7a9c03?auto=format&fit=crop&q=80&w=800'
+    ],
+    rating: 4.7,
+    reviewCount: 29,
+    stock: 22,
+    tags: ['Hair Care', 'Natural']
+  },
+  {
+    id: 'p16',
+    name: 'Buchu & Mint Lip Balm',
+    description: 'Hydrating lip balm with buchu extract and peppermint. Soothes chapped lips with a refreshing tingle.',
+    price: 65,
+    category: 'Health & Beauty',
+    subcategory: 'Skincare',
+    vendor: { id: 'v4', name: 'The Jozi Apothecary', rating: 4.9 },
+    images: [
+      'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&q=80&w=800'
+    ],
+    rating: 4.6,
+    reviewCount: 51,
+    stock: 45,
+    tags: ['Lip Care', 'Hydrating']
+  },
+  {
+    id: 'p17',
+    name: 'African Black Soap Body Wash',
+    description: 'Gentle cleansing body wash with traditional African black soap. Suitable for all skin types, especially acne-prone.',
+    price: 150,
+    originalPrice: 200,
+    category: 'Health & Beauty',
+    subcategory: 'Body Care',
+    vendor: { id: 'v4', name: 'The Jozi Apothecary', rating: 4.9 },
+    images: [
+      'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&q=80&w=800'
+    ],
+    rating: 4.8,
+    reviewCount: 67,
+    stock: 30,
+    tags: ['Body Wash', 'Cleansing']
+  },
+  {
+    id: 'p18',
+    name: 'Turmeric & Honey Brightening Serum',
+    description: 'Vitamin C-rich serum with turmeric and raw honey. Reduces dark spots and evens skin tone naturally.',
+    price: 320,
+    category: 'Health & Beauty',
+    subcategory: 'Skincare',
+    vendor: { id: 'v4', name: 'The Jozi Apothecary', rating: 4.9 },
+    images: [
+      'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800'
+    ],
+    rating: 4.9,
+    reviewCount: 33,
+    stock: 15,
+    tags: ['Serum', 'Brightening']
   }
 ];
 

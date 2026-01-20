@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -20,6 +20,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../contexts/CartContext';
 import Logo from '../../components/Logo';
+import { getCurrentUserAction, updateUserAddressAction } from '../../actions/auth/auth';
+import { generatePaymentAction } from '../../actions/payfast/index';
+import { IUser } from '@/interfaces/auth/auth';
 
 const CheckoutPage: React.FC = () => {
   const { items, totalPrice, totalItems, clearCart } = useCart();
@@ -32,9 +35,59 @@ const CheckoutPage: React.FC = () => {
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // User data state
+  const [user, setUser] = useState<IUser | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  
+  // Form fields state
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [suburb, setSuburb] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [saveAddress, setSaveAddress] = useState(false);
 
   const shippingCost = shippingMethod === 'express' ? 150 : 75;
   const finalTotal = useMemo(() => totalPrice + shippingCost - appliedDiscount, [totalPrice, shippingCost, appliedDiscount]);
+
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setIsLoadingUser(true);
+      try {
+        const response = await getCurrentUserAction();
+        if (!response.error && response.data) {
+          const userData = response.data;
+          setUser(userData);
+          // Pre-fill form fields
+          setFullName(userData.fullName || '');
+          setEmail(userData.email || '');
+          setPhone(userData.phone || '');
+          
+          // Parse address if it exists (assuming format: "street, suburb, postal")
+          if (userData.address) {
+            const addressParts = userData.address.split(',').map((part: string) => part.trim());
+            if (addressParts.length >= 3) {
+              setStreetAddress(addressParts[0] || '');
+              setSuburb(addressParts[1] || '');
+              setPostalCode(addressParts[2] || '');
+            } else {
+              // If address format is different, try to extract what we can
+              setStreetAddress(userData.address);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
 
   const handleApplyCoupon = () => {
     if (!coupon) return;
@@ -51,15 +104,56 @@ const CheckoutPage: React.FC = () => {
     }, 1000);
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    // Simulate Payment
-    setTimeout(() => {
+    
+    try {
+      // Construct delivery address object
+      const deliveryAddress = {
+        street: streetAddress,
+        city: suburb,
+        postal: postalCode,
+        country: 'South Africa',
+        province: 'Gauteng', // Default province
+      };
+      
+      // Update user address if checkbox is checked
+      if (saveAddress) {
+        const addressString = `${streetAddress}, ${suburb}, ${postalCode}`;
+        const updateResponse = await updateUserAddressAction(addressString);
+        if (updateResponse.error) {
+          console.error('Error updating address:', updateResponse.message);
+          // Continue with payment even if address update fails
+        }
+      }
+      
+      // Generate PayFast payment URL
+      const paymentResponse = await generatePaymentAction({
+        email,
+        phone: phone || undefined,
+        fullName: fullName || undefined,
+        deliveryAddress,
+      });
+      
+      if (paymentResponse.error || !paymentResponse.data) {
+        alert(paymentResponse.message || 'Failed to generate payment URL. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Redirect to PayFast payment URL
+      if (paymentResponse.data.paymentUrl) {
+        window.location.href = paymentResponse.data.paymentUrl;
+      } else {
+        alert('Payment URL not received. Please try again.');
+        setIsProcessing(false);
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      alert('An error occurred while processing your payment. Please try again.');
       setIsProcessing(false);
-      setShowSuccess(true);
-      clearCart();
-    }, 2500);
+    }
   };
 
   if (items.length === 0 && !showSuccess) {
@@ -137,15 +231,36 @@ const CheckoutPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Full Name</label>
-                    <input required type="text" placeholder="Lerato Dlamini" className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" />
+                    <input 
+                      required 
+                      type="text" 
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Lerato Dlamini" 
+                      className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Mobile Number</label>
-                    <input required type="tel" placeholder="+27 82 000 0000" className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" />
+                    <input 
+                      required 
+                      type="tel" 
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+27 82 000 0000" 
+                      className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                    />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Email Address (for order updates)</label>
-                    <input required type="email" placeholder="lerato@example.co.za" className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" />
+                    <input 
+                      required 
+                      type="email" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="lerato@example.co.za" 
+                      className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                    />
                   </div>
                 </div>
               </section>
@@ -161,20 +276,47 @@ const CheckoutPage: React.FC = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Street Address</label>
-                    <input required type="text" placeholder="12 Gwigwi Mrwebi Street" className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" />
+                    <input 
+                      required 
+                      type="text" 
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                      placeholder="12 Gwigwi Mrwebi Street" 
+                      className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Suburb / Area</label>
-                      <input required type="text" placeholder="Newtown" className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none" />
+                      <input 
+                        required 
+                        type="text" 
+                        value={suburb}
+                        onChange={(e) => setSuburb(e.target.value)}
+                        placeholder="Newtown" 
+                        className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Postal Code</label>
-                      <input required type="text" placeholder="2001" className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none" />
+                      <input 
+                        required 
+                        type="text" 
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        placeholder="2001" 
+                        className="w-full bg-jozi-cream rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none" 
+                      />
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 p-4 bg-jozi-gold/5 rounded-2xl border border-jozi-gold/10">
-                    <input type="checkbox" id="save-address" className="w-5 h-5 accent-jozi-forest rounded" />
+                    <input 
+                      type="checkbox" 
+                      id="save-address" 
+                      checked={saveAddress}
+                      onChange={(e) => setSaveAddress(e.target.checked)}
+                      className="w-5 h-5 accent-jozi-forest rounded" 
+                    />
                     <label htmlFor="save-address" className="text-xs font-bold text-jozi-forest/60">Save this address to my profile for future orders</label>
                   </div>
                 </div>
@@ -266,7 +408,11 @@ const CheckoutPage: React.FC = () => {
                   {items.map((item) => (
                     <div key={item.id} className="flex space-x-4">
                       <div className="w-14 h-14 bg-white/10 rounded-xl overflow-hidden shrink-0 border border-white/10">
-                        <img src={item.images[0]} className="w-full h-full object-cover" />
+                        {item.images && item.images.length > 0 ? (
+                          <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/20 text-xs">No Image</div>
+                        )}
                       </div>
                       <div className="grow min-w-0">
                         <h4 className="font-bold text-sm truncate">{item.name}</h4>

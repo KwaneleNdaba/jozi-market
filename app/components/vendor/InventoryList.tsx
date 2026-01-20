@@ -73,8 +73,13 @@ const InventoryList: React.FC<InventoryListProps> = ({ onEdit }) => {
 
   // Transform IProduct to DisplayProduct format
   const transformProduct = (product: IProduct): DisplayProduct => {
-    // Calculate total stock from variants
-    const totalStock = product.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0;
+    // Check if product has variants
+    const hasVariants = product.variants && product.variants.length > 0;
+    
+    // Calculate total stock: from variants if they exist, otherwise from initialStock
+    const totalStock = hasVariants
+      ? product.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) || 0
+      : (product.technicalDetails.initialStock || 0);
     
     // Get first image URL
     const firstImage = product.images && product.images.length > 0 
@@ -98,7 +103,7 @@ const InventoryList: React.FC<InventoryListProps> = ({ onEdit }) => {
       sku: product.sku,
       category: product.technicalDetails.categoryId, // Will display categoryId for now
       price: product.technicalDetails.regularPrice,
-      stock: totalStock || 0,
+      stock: totalStock,
       status: product.status,
       img: firstImage,
       variants: transformedVariants

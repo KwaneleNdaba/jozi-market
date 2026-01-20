@@ -67,18 +67,41 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
               ) : (
                 items.map((item) => (
                   <div key={item.id} className="flex space-x-4 group">
-                    <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-jozi-forest/5 shadow-sm">
-                      <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+                    <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0 border border-jozi-forest/5 shadow-sm bg-jozi-cream">
+                      <img 
+                        src={item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=400'} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          // Fallback to placeholder if image fails to load
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=400';
+                        }}
+                      />
                     </div>
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-bold text-jozi-forest text-sm">{item.name}</h4>
-                          <p className="text-[10px] text-jozi-gold font-bold uppercase mt-0.5">{item.vendor.name}</p>
+                    <div className="flex-grow min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-grow min-w-0">
+                          <h4 className="font-bold text-jozi-forest text-sm leading-tight">{item.name}</h4>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            {item.vendor.logo && (
+                              <div className="w-5 h-5 rounded-full overflow-hidden border border-jozi-forest/10 shrink-0">
+                                <img 
+                                  src={item.vendor.logo} 
+                                  alt={item.vendor.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Hide logo if it fails to load
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-[10px] text-jozi-gold font-bold uppercase truncate">{item.vendor.name}</p>
+                          </div>
                         </div>
                         <button 
                           onClick={() => removeItem(item.id)}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
