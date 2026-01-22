@@ -1,6 +1,6 @@
 import { baseUrl } from "../../url";
 import { CustomResponse } from "@/interfaces/response";
-import { IOrder, ICreateOrder, IUpdateOrder } from "@/interfaces/order/order";
+import { IOrder, ICreateOrder, IUpdateOrder, IRequestReturn, IRequestCancellation, IRequestItemReturn, IVendorOrdersResponse } from "@/interfaces/order/order";
 import { POST, GET, PUT } from "@/lib/client";
 import { logger } from "@/lib/log";
 
@@ -123,6 +123,83 @@ export const ORDER_API = {
       return {
         data: null as any,
         message: err?.message || "Failed to update order",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Request return (authenticated users only)
+   */
+  REQUEST_RETURN: async (requestData: IRequestReturn): Promise<CustomResponse<IOrder>> => {
+    try {
+      logger.info(`[ORDER_API] Requesting return for order: ${requestData.orderId}`);
+      const response = await POST(`${OrderBaseURL}/return`, requestData);
+      logger.info(`[ORDER_API] Return request submitted successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error requesting return:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to request return",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Request cancellation (authenticated users only)
+   */
+  REQUEST_CANCELLATION: async (requestData: IRequestCancellation): Promise<CustomResponse<IOrder>> => {
+    try {
+      logger.info(`[ORDER_API] Requesting cancellation for order: ${requestData.orderId}`);
+      const response = await POST(`${OrderBaseURL}/cancellation`, requestData);
+      logger.info(`[ORDER_API] Cancellation request submitted successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error requesting cancellation:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to request cancellation",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Get orders by vendor ID (grouped by date) (authenticated users only)
+   */
+  GET_ORDERS_BY_VENDOR_ID: async (vendorId: string): Promise<CustomResponse<IVendorOrdersResponse>> => {
+    try {
+      logger.info(`[ORDER_API] Fetching orders for vendor: ${vendorId}`);
+      const response = await GET(`${OrderBaseURL}/vendor/${vendorId}`);
+      logger.info(`[ORDER_API] Vendor orders fetched successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error fetching vendor orders:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to fetch vendor orders",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Request item return (authenticated users only)
+   * Allows returning specific items from an order with quantity
+   */
+  REQUEST_ITEM_RETURN: async (requestData: IRequestItemReturn): Promise<CustomResponse<IOrder>> => {
+    try {
+      logger.info(`[ORDER_API] Requesting return for order item: ${requestData.orderItemId} from order: ${requestData.orderId}`);
+      const response = await POST(`${OrderBaseURL}/item/return`, requestData);
+      logger.info(`[ORDER_API] Item return request submitted successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error requesting item return:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to request item return",
         error: true,
       };
     }

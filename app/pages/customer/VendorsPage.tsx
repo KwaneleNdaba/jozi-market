@@ -1,11 +1,103 @@
+'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Star, ArrowRight, Store, Search, Filter } from 'lucide-react';
+import { MapPin, Star, ArrowRight, Store, Search, Filter, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { vendors } from '../../data/mockData';
+import { getActiveVendorsAction } from '@/app/actions/auth/auth';
+import { IVendorWithApplication } from '@/interfaces/auth/auth';
+import { useToast } from '@/app/contexts/ToastContext';
+
+interface VendorDisplay {
+  id: string;
+  name: string;
+  rating: number;
+  image: string;
+  location: string;
+  description: string;
+  productCount?: number;
+}
 
 const VendorsPage: React.FC = () => {
+  const [vendors, setVendors] = useState<VendorDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { showError } = useToast();
+
+  // Fetch active vendors
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        setLoading(true);
+        const response = await getActiveVendorsAction();
+        
+        if (response.error || !response.data) {
+          showError(response.message || 'Failed to load vendors');
+          setVendors([]);
+          return;
+        }
+
+        // Transform backend data to frontend format
+        const transformedVendors: VendorDisplay[] = response.data.map((vendor: IVendorWithApplication) => {
+          // Get vendor name (prefer shopName, fallback to fullName)
+          const vendorName = vendor.vendorApplication?.shopName || vendor.fullName || 'Unknown Vendor';
+          
+          // Get vendor image (prefer logo, fallback to profileUrl, fallback to placeholder)
+          let vendorImage = '/placeholder-vendor.jpg';
+          if (vendor.vendorApplication?.files?.logoUrl) {
+            vendorImage = vendor.vendorApplication.files.logoUrl;
+          } else if (vendor.profileUrl) {
+            vendorImage = vendor.profileUrl;
+          }
+
+          // Get location from address
+          const location = vendor.vendorApplication?.address?.city || 
+                          vendor.vendorApplication?.address?.street?.split(',')[0] || 
+                          'Johannesburg';
+
+          // Get description
+          const description = vendor.vendorApplication?.description || 
+                             vendor.vendorApplication?.tagline || 
+                             'A local artisan bringing unique products to Jozi Market.';
+
+          // Default rating (could be calculated from reviews in the future)
+          const rating = 4.5;
+
+          return {
+            id: vendor.id || '',
+            name: vendorName,
+            rating,
+            image: vendorImage,
+            location,
+            description,
+            productCount: vendor.productCount || 0,
+          };
+        });
+
+        setVendors(transformedVendors);
+      } catch (error) {
+        console.error('Error fetching vendors:', error);
+        showError('Failed to load vendors. Please try again later.');
+        setVendors([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVendors();
+  }, [showError]);
+
+  // Filter vendors based on search query
+  const filteredVendors = useMemo(() => {
+    if (!searchQuery.trim()) return vendors;
+
+    const query = searchQuery.toLowerCase();
+    return vendors.filter(vendor =>
+      vendor.name.toLowerCase().includes(query) ||
+      vendor.location.toLowerCase().includes(query) ||
+      vendor.description.toLowerCase().includes(query)
+    );
+  }, [vendors, searchQuery]);
   return (
     <div className="min-h-screen bg-jozi-cream pb-24">
       {/* Hero Header */}
@@ -46,6 +138,8 @@ const VendorsPage: React.FC = () => {
               type="text" 
               placeholder="Find an artisan or workshop..." 
               className="bg-transparent border-none outline-none text-jozi-forest font-bold w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto">
@@ -63,8 +157,24 @@ const VendorsPage: React.FC = () => {
 
       {/* Vendors Grid */}
       <section className="container mx-auto px-4 mt-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {vendors.map((vendor, index) => (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <Loader2 className="w-12 h-12 text-jozi-gold animate-spin mb-4" />
+            <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading Artisans...</p>
+          </div>
+        ) : filteredVendors.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <AlertCircle className="w-12 h-12 text-gray-300 mb-4" />
+            <p className="text-jozi-forest font-black text-lg mb-2">
+              {searchQuery ? 'No vendors found' : 'No vendors available'}
+            </p>
+            <p className="text-gray-400 text-sm font-medium">
+              {searchQuery ? 'Try adjusting your search query' : 'Check back later for new artisans'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {filteredVendors.map((vendor, index) => (
             <motion.div
               key={vendor.id}
               initial={{ opacity: 0, y: 30 }}
@@ -91,9 +201,16 @@ const VendorsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4 grow">
-                  <div className="flex items-center space-x-2 text-jozi-gold">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{vendor.location}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-jozi-gold">
+                      <MapPin className="w-4 h-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">{vendor.location}</span>
+                    </div>
+                    {vendor.productCount !== undefined && vendor.productCount > 0 && (
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                        {vendor.productCount} {vendor.productCount === 1 ? 'Product' : 'Products'}
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-3xl font-black text-jozi-forest group-hover:text-jozi-gold transition-colors">{vendor.name}</h3>
                   <p className="text-gray-500 font-medium leading-relaxed text-sm line-clamp-3">
@@ -110,8 +227,9 @@ const VendorsPage: React.FC = () => {
                 </Link>
               </div>
             </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Become a Vendor CTA */}

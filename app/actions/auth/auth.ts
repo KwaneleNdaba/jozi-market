@@ -3,7 +3,7 @@
 import { jwtDecode } from 'jwt-decode';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { IDecodedJWT, IUser, IUserLogin, Role, TokenData } from '@/interfaces/auth/auth';
+import { IDecodedJWT, IUser, IUserLogin, Role, TokenData, IVendorWithApplication } from '@/interfaces/auth/auth';
 import { serverPOST, serverPUT, serverGET } from '@/lib/server-client';
 import { baseUrl } from '@/endpoints/url';
 import { logger } from '@/lib/log';
@@ -16,6 +16,29 @@ export interface AuthResult {
   message?: string;
   error?: boolean;
   data?: any;
+}
+
+function extractApiErrorMessage(err: unknown): string | undefined {
+  if (!err || typeof err !== 'object') return undefined;
+
+  const maybeMessage = (err as any).message;
+  if (typeof maybeMessage === 'string' && maybeMessage.trim()) return maybeMessage.trim();
+
+  const fullErrorMessage = (err as any).fullError?.message;
+  if (typeof fullErrorMessage === 'string' && fullErrorMessage.trim()) return fullErrorMessage.trim();
+
+  const nestedMessage = (err as any).data?.message;
+  if (typeof nestedMessage === 'string' && nestedMessage.trim()) return nestedMessage.trim();
+
+  return undefined;
+}
+
+function getAuthErrorMessage(err: unknown, fallback: string): string {
+  return (
+    extractApiErrorMessage(err) ||
+    (err instanceof Error ? err.message : undefined) ||
+    fallback
+  );
 }
 
 /**
@@ -123,7 +146,7 @@ export async function signInAction(
     return {
       success: false,
       error: true,
-      message: err instanceof Error ? err.message : 'An error occurred. Please try again.',
+      message: getAuthErrorMessage(err, 'An error occurred. Please try again.'),
     };
   }
 }
@@ -237,7 +260,7 @@ export async function adminSignInAction(
     return {
       success: false,
       error: true,
-      message: err instanceof Error ? err.message : 'An error occurred during sign in',
+      message: getAuthErrorMessage(err, 'An error occurred during sign in'),
     };
   }
 }
@@ -351,7 +374,7 @@ export async function customerSignInAction(
     return {
       success: false,
       error: true,
-      message: err instanceof Error ? err.message : 'An error occurred during sign in',
+      message: getAuthErrorMessage(err, 'An error occurred during sign in'),
     };
   }
 }
@@ -493,7 +516,7 @@ export async function vendorSignInAction(
     return {
       success: false,
       error: true,
-      message: err instanceof Error ? err.message : 'An error occurred during sign in',
+      message: getAuthErrorMessage(err, 'An error occurred during sign in'),
     };
   }
 }
@@ -864,7 +887,7 @@ export async function signUpAction(
     return {
       success: false,
       error: true,
-      message: err instanceof Error ? err.message : 'An error occurred. Please try again.',
+      message: getAuthErrorMessage(err, 'An error occurred. Please try again.'),
     };
   }
 }
@@ -1061,6 +1084,47 @@ export async function updateUserAddressAction(address: string): Promise<CustomRe
     return {
       data: null as any,
       message: err?.message || 'Failed to update address',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to get active vendors with products
+ * This is a public endpoint (no authentication required)
+ * Returns vendors with active subscriptions and their product counts
+ */
+export async function getActiveVendorsAction(): Promise<CustomResponse<IVendorWithApplication[]>> {
+  try {
+    logger.info('[Auth Action] Fetching active vendors with products');
+    const response = await serverGET(`${baseUrl}/auth/vendors/active`);
+    logger.info('[Auth Action] Active vendors retrieved successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error fetching active vendors:', err);
+    return {
+      data: [] as IVendorWithApplication[],
+      message: err?.message || 'Failed to fetch active vendors',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to get user by ID (public endpoint)
+ * Returns user data with vendor application if user is a vendor
+ */
+export async function getUserByIdAction(userId: string): Promise<CustomResponse<IUser | IVendorWithApplication>> {
+  try {
+    logger.info('[Auth Action] Fetching user by ID:', userId);
+    const response = await serverGET(`${baseUrl}/auth/getUser/${userId}`);
+    logger.info('[Auth Action] User retrieved successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error fetching user by ID:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to fetch user',
       error: true,
     };
   }

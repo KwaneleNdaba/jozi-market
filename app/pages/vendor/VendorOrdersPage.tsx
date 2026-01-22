@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorHeader from '../../components/VendorHeader';
 import { 
@@ -12,15 +12,19 @@ import {
 } from 'lucide-react';
 import OrderList from '../../components/vendor/OrderList';
 import OrderAnalytics from '../../components/vendor/OrderAnalytics';
-
-const VENDOR_PROFILE = {
-  name: "Maboneng Textiles",
-  logo: "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&q=80&w=100",
-  tier: 'Growth'
-};
+import { getCurrentUserAction } from '@/app/actions/auth/auth';
+import { getOrdersByVendorIdAction } from '@/app/actions/order/index';
+import { IVendorOrdersResponse, IOrder, OrderStatus } from '@/interfaces/order/order';
+import { IUser } from '@/interfaces/auth/auth';
+import { useToast } from '@/app/contexts/ToastContext';
 
 const VendorOrdersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'completed' | 'analytics'>('all');
+  const [user, setUser] = useState<IUser | null>(null);
+  const [vendorOrders, setVendorOrders] = useState<IVendorOrdersResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const { showError } = useToast();
 
   const tabs = [
     { id: 'all', label: 'Master Manifest', icon: ShoppingCart },
@@ -29,21 +33,112 @@ const VendorOrdersPage: React.FC = () => {
     { id: 'analytics', label: 'Logistics Intelligence', icon: BarChart3 },
   ];
 
+  // Fetch user data to get vendor ID
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await getCurrentUserAction();
+        if (!response.error && response.data) {
+          setUser(response.data);
+        } else {
+          showError(response.message || 'Failed to load user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        showError('Failed to load user data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [showError]);
+
+  // Fetch orders by vendor ID
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoadingOrders(true);
+        const response = await getOrdersByVendorIdAction(user.id);
+        if (!response.error && response.data) {
+          setVendorOrders(response.data);
+        } else {
+          showError(response.message || 'Failed to load orders');
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        showError('Failed to load orders');
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchOrders();
+    }
+  }, [user?.id, showError]);
+
+  // Flatten grouped orders into a single array for OrderList
+  const allOrders = useMemo(() => {
+    if (!vendorOrders?.groupedOrders) return [];
+    return vendorOrders.groupedOrders.flatMap(group => group.orders);
+  }, [vendorOrders]);
+
+  // Calculate KPIs from orders
+  const kpis = useMemo(() => {
+    if (!vendorOrders) {
+      return {
+        unfulfilled: '0',
+        dispatchVelocity: '0h',
+        cycleRevenue: 'R0',
+        customerTrust: '0/5',
+      };
+    }
+
+    // Count unfulfilled orders (pending, processing)
+    const unfulfilled = allOrders.filter(
+      order => order.status === OrderStatus.PENDING || order.status === OrderStatus.PROCESSING
+    ).length;
+
+    // Calculate total revenue
+    const totalRevenue = vendorOrders.totalAmount || 0;
+    const revenueValue = typeof totalRevenue === 'string' 
+      ? parseFloat(totalRevenue) 
+      : totalRevenue;
+
+    // Calculate average dispatch time (mock for now, can be calculated from order dates)
+    const dispatchVelocity = '4.2h';
+
+    // Customer trust rating (mock for now)
+    const customerTrust = '4.9/5';
+
+    return {
+      unfulfilled: unfulfilled.toString(),
+      dispatchVelocity,
+      cycleRevenue: `R${revenueValue.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      customerTrust,
+    };
+  }, [vendorOrders, allOrders]);
+
+  // Get vendor profile name
+  const vendorName = user?.fullName || 'Vendor';
+
   return (
     <div className="space-y-8">
       <VendorHeader 
         title="Order Manifest" 
-        vendorName={VENDOR_PROFILE.name} 
+        vendorName={vendorName} 
         onUploadClick={() => alert('Opening Piece Upload...')} 
       />
 
       {/* Quick KPI Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Unfulfilled Orders', val: '12', trend: 'Urgent', icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
-          { label: 'Dispatch Velocity', val: '4.2h', trend: '-20m', icon: Truck, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Cycle Revenue', val: 'R12,450', trend: '+14%', icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-          { label: 'Customer Trust', val: '4.9/5', trend: 'Top 1%', icon: CheckCircle2, color: 'text-jozi-gold', bg: 'bg-jozi-gold/10' },
+          { label: 'Unfulfilled Orders', val: kpis.unfulfilled, trend: parseInt(kpis.unfulfilled) > 0 ? 'Urgent' : 'All Clear', icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
+          { label: 'Dispatch Velocity', val: kpis.dispatchVelocity, trend: '-20m', icon: Truck, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Cycle Revenue', val: kpis.cycleRevenue, trend: '+14%', icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+          { label: 'Customer Trust', val: kpis.customerTrust, trend: 'Top 1%', icon: CheckCircle2, color: 'text-jozi-gold', bg: 'bg-jozi-gold/10' },
         ].map((stat, i) => (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -95,7 +190,11 @@ const VendorOrdersPage: React.FC = () => {
           {activeTab === 'analytics' ? (
             <OrderAnalytics />
           ) : (
-            <OrderList filterStatus={activeTab} />
+            <OrderList 
+              filterStatus={activeTab} 
+              orders={allOrders}
+              loading={loadingOrders}
+            />
           )}
         </motion.div>
       </AnimatePresence>

@@ -20,10 +20,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       whileHover={{ y: -10 }}
-      className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-2xl border border-jozi-forest/5 transition-all duration-500 h-full flex flex-col"
+      className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-jozi-forest/5 transition-all duration-500 h-full flex flex-col"
     >
       {/* Image Section */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-jozi-cream shrink-0">
+      <div className="relative aspect-4/5 overflow-hidden bg-jozi-cream shrink-0">
         <img 
           src={product.images[0]} 
           alt={product.name} 
@@ -70,7 +70,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Content Section */}
-      <div className="p-5 flex flex-col flex-grow">
+      <div className="p-5 flex flex-col grow">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[9px] font-black text-jozi-gold uppercase tracking-[0.2em]">{product.category}</span>
           <div className="flex items-center bg-jozi-forest/5 px-2 py-0.5 rounded-lg">
@@ -79,7 +79,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </div>
         
-        <Link href={`/product/${product.id}`} className="block flex-grow">
+        <Link href={`/product/${product.id}`} className="block grow">
           <h3 className="font-black text-jozi-forest text-base line-clamp-1 group-hover:text-jozi-gold transition-colors tracking-tight leading-tight">
             {product.name}
           </h3>
@@ -98,7 +98,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           </div>
           <button 
-            className="bg-jozi-forest/5 hover:bg-jozi-forest hover:text-white p-2.5 rounded-xl transition-all group/btn shadow-sm"
+            className="bg-jozi-forest/5 hover:bg-jozi-forest hover:text-white p-2.5 rounded-xl transition-all group/btn shadow-sm text-jozi-forest"
             onClick={() => addItem(product, 1)}
           >
             <Plus className="w-4 h-4" />

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, Bell, Search, X } from 'lucide-react';
+import { Menu, Bell, Search, X, Loader2 } from 'lucide-react';
 import VendorSidebar from '../components/VendorSidebar';
+import { getMyActiveSubscriptionAction } from '@/app/actions/subscription';
 
 const VENDOR_PROFILE = {
   name: "Maboneng Textiles",
@@ -22,12 +23,59 @@ export default function VendorLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
   
-  // Check if current route is an auth page or subscription page
+  // Check if current route is an auth page, subscription page, or subscription payment pages
   const isAuthPage = pathname === '/vendor/signin' || pathname === '/vendor/forgot-password';
   const isSubscriptionPage = pathname === '/vendor/subscription';
-  const hideSidebar = isAuthPage || isSubscriptionPage;
+  const isSubscriptionSuccessPage = pathname === '/vendor/subscription/success';
+  const isSubscriptionFailedPage = pathname === '/vendor/subscription/failed';
+  const hideSidebar = isAuthPage || isSubscriptionPage || isSubscriptionSuccessPage || isSubscriptionFailedPage;
+  
+  // Check for active subscription on protected routes
+  useEffect(() => {
+    const checkSubscription = async () => {
+      // Skip check on auth and subscription pages
+      if (hideSidebar) {
+        setIsCheckingSubscription(false);
+        return;
+      }
+
+      try {
+        setIsCheckingSubscription(true);
+        const subscriptionResponse = await getMyActiveSubscriptionAction();
+        
+        // If no active subscription found, redirect to subscription page
+        if (subscriptionResponse.error || !subscriptionResponse.data) {
+          router.push('/vendor/subscription');
+          return;
+        }
+        
+        // User has active subscription, allow access
+        setIsCheckingSubscription(false);
+      } catch (error) {
+        // On error, redirect to subscription page as safe fallback
+        console.error('[Vendor Layout] Error checking subscription:', error);
+        router.push('/vendor/subscription');
+      }
+    };
+
+    checkSubscription();
+  }, [pathname, hideSidebar, router]);
+
+  // Show loading state while checking subscription
+  if (isCheckingSubscription && !hideSidebar) {
+    return (
+      <div className="min-h-screen bg-jozi-cream flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-jozi-gold animate-spin mx-auto" />
+          <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Verifying Subscription...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen flex overflow-hidden ${hideSidebar ? 'bg-jozi-cream' : 'bg-[#FDFCFB]'}`}>
@@ -112,7 +160,7 @@ export default function VendorLayout({
 
         {/* Scrollable Page Content */}
         <main className={`grow overflow-y-auto custom-scrollbar ${hideSidebar ? '' : 'bg-[#FDFCFB] p-6 lg:p-10'}`}>
-           {children}
+          <Suspense> {children}</Suspense>
         </main>
       </div>
     </div>

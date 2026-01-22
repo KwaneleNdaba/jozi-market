@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,14 +30,62 @@ import {
   Flame,
   Timer,
   Percent,
-  BadgeCheck
+  BadgeCheck,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
-import { vendors, products } from '../../data/mockData';
+import { getProductsByUserIdAction } from '@/app/actions/product/index';
+import { getAllCategoriesAction } from '@/app/actions/category/index';
+import { getUserByIdAction } from '@/app/actions/auth/auth';
+import { IProduct } from '@/interfaces/product/product';
+import { ICategory } from '@/interfaces/category/category';
+import { IVendorWithApplication } from '@/interfaces/auth/auth';
 import ProductCard from '../../components/ProductCard';
 import { Review } from '../../types';
+import { useToast } from '@/app/contexts/ToastContext';
+
+// Frontend product display format (matches Product type from types.ts)
+interface ProductDisplay {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  subcategory?: string;
+  rating: number;
+  reviewCount: number;
+  stock: number;
+  tags: string[];
+  images: string[];
+  vendor: {
+    id: string;
+    name: string;
+    rating: number;
+    logo?: string;
+    description?: string;
+  };
+  variants?: {
+    id: string;
+    name: string;
+    sku: string;
+    price: number;
+    stock: number;
+    type: string;
+    options: string[];
+  }[];
+}
 
 const VendorShopPage: React.FC = () => {
   const { vendorId } = useParams<{ vendorId: string }>();
+  const { showError } = useToast();
+  
+  // State for data
+  const [vendor, setVendor] = useState<IVendorWithApplication | null>(null);
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   
   // State for filtering
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,18 +101,164 @@ const VendorShopPage: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const vendor = useMemo(() => 
-    vendors.find(v => v.id === vendorId), 
-  [vendorId]);
+  // Fetch vendor data by ID
+  useEffect(() => {
+    const fetchVendor = async () => {
+      if (!vendorId) return;
+      
+      try {
+        setLoading(true);
+        const response = await getUserByIdAction(vendorId);
+        if (!response.error && response.data) {
+          setVendor(response.data as IVendorWithApplication);
+        } else {
+          showError(response.message || 'Failed to load vendor information');
+          setVendor(null);
+        }
+      } catch (error) {
+        console.error('Error fetching vendor:', error);
+        showError('Failed to load vendor information');
+        setVendor(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const rawVendorProducts = useMemo(() => 
-    products.filter(p => p.vendor.id === vendorId), 
-  [vendorId]);
+    fetchVendor();
+  }, [vendorId, showError]);
+
+  // Fetch products and categories
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!vendorId) return;
+
+      try {
+        setLoadingProducts(true);
+        
+        // Fetch products and categories in parallel
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          getProductsByUserIdAction(vendorId, 'Active'),
+          getAllCategoriesAction('Active')
+        ]);
+
+        if (productsResponse.error) {
+          showError(productsResponse.message || 'Failed to load products');
+          setProducts([]);
+        } else {
+          setProducts(productsResponse.data || []);
+        }
+
+        if (categoriesResponse.error) {
+          console.error('Failed to load categories:', categoriesResponse.message);
+          setCategories([]);
+        } else {
+          setCategories(categoriesResponse.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        showError('Failed to load vendor data');
+        setProducts([]);
+        setCategories([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchData();
+  }, [vendorId, showError]);
+
+  // Create category map for quick lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach(cat => {
+      map.set(cat.id, cat.name);
+    });
+    return map;
+  }, [categories]);
+
+  // Transform backend products to frontend format
+  const transformedProducts = useMemo(() => {
+    return products.map((product): ProductDisplay => {
+      // Get category name from map
+      const categoryName = categoryMap.get(product.technicalDetails.categoryId) || 'Uncategorized';
+      
+      // Get first image
+      const firstImage = product.images && product.images.length > 0
+        ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0].file)
+        : '/placeholder-product.jpg';
+      
+      // Get all images
+      const productImages = product.images?.map(img => 
+        typeof img === 'string' ? img : img.file
+      ) || [firstImage];
+
+      // Get price (use discountPrice if available, else regularPrice)
+      const price = product.technicalDetails.discountPrice || product.technicalDetails.regularPrice;
+      const originalPrice = product.technicalDetails.discountPrice 
+        ? product.technicalDetails.regularPrice 
+        : undefined;
+
+      // Get vendor name
+      const vendorName = product.vendorName || vendor?.vendorApplication?.shopName || vendor?.fullName || 'Unknown Vendor';
+
+      // Get subcategory name if available
+      const subcategoryName = product.technicalDetails.subcategoryId
+        ? categoryMap.get(product.technicalDetails.subcategoryId)
+        : undefined;
+
+      // Calculate stock (from variants or initialStock)
+      const stock = product.variants && product.variants.length > 0
+        ? product.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+        : (product.technicalDetails.initialStock || 0);
+
+      return {
+        id: product.id || '',
+        name: product.title,
+        description: product.description,
+        price,
+        originalPrice,
+        category: categoryName,
+        subcategory: subcategoryName,
+        rating: 4.5, // Default rating (can be enhanced with review data)
+        reviewCount: 0, // Default (can be enhanced with review data)
+        stock,
+        tags: [], // Empty tags array (can be enhanced later)
+        images: productImages,
+        vendor: {
+          id: vendorId || '',
+          name: vendorName,
+          rating: 4.5, // Default vendor rating
+          logo: vendor?.vendorApplication?.files?.logoUrl || vendor?.profileUrl,
+          description: vendor?.vendorApplication?.description,
+        },
+        variants: product.variants?.map(v => ({
+          id: v.id || '',
+          name: v.name,
+          sku: v.sku,
+          price: v.price || v.discountPrice || price,
+          stock: v.stock,
+          type: 'standard',
+          options: [],
+        })),
+      };
+    });
+  }, [products, categoryMap, vendorId, vendor]);
+
+  // Extract unique categories from products (only show categories that have products)
+  const vendorCategories = useMemo(() => {
+    const categorySet = new Set<string>();
+    transformedProducts.forEach(p => {
+      if (p.category && p.category !== 'Uncategorized') {
+        categorySet.add(p.category);
+      }
+    });
+    return ['All', ...Array.from(categorySet).sort()];
+  }, [transformedProducts]);
 
   // Derived Deals for this specific vendor
   const vendorDeals = useMemo(() => 
-    rawVendorProducts.filter(p => p.originalPrice && p.originalPrice > p.price),
-  [rawVendorProducts]);
+    transformedProducts.filter(p => p.originalPrice && p.originalPrice > p.price),
+  [transformedProducts]);
 
   // Mock Reviews state
   const [reviewsList, setReviewsList] = useState<Review[]>([
@@ -97,14 +291,8 @@ const VendorShopPage: React.FC = () => {
     }, 1500);
   };
 
-  // Extract unique categories from this vendor's products
-  const vendorCategories = useMemo(() => {
-    const cats = new Set(rawVendorProducts.map(p => p.category));
-    return ['All', ...Array.from(cats)];
-  }, [rawVendorProducts]);
-
   const filteredProducts = useMemo(() => {
-    let result = rawVendorProducts;
+    let result = transformedProducts;
 
     // Filter by search
     if (searchQuery) {
@@ -132,7 +320,18 @@ const VendorShopPage: React.FC = () => {
     }
 
     return result;
-  }, [rawVendorProducts, searchQuery, selectedCategory, priceRange, sortBy]);
+  }, [transformedProducts, searchQuery, selectedCategory, priceRange, sortBy]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-jozi-cream flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-jozi-gold animate-spin mx-auto" />
+          <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading Vendor...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!vendor) {
     return (
@@ -169,7 +368,7 @@ const VendorShopPage: React.FC = () => {
               <div className="space-y-8">
                 <div className="text-center space-y-2">
                   <h3 className="text-3xl font-black text-jozi-forest tracking-tight">Rate the Workshop</h3>
-                  <p className="text-gray-400 font-medium italic">Share your experience with {vendor.name}</p>
+                  <p className="text-gray-400 font-medium italic">Share your experience with {vendor.vendorApplication?.shopName || vendor.fullName}</p>
                 </div>
 
                 <form onSubmit={handleSubmitReview} className="space-y-8">
@@ -235,7 +434,7 @@ const VendorShopPage: React.FC = () => {
       <section className="relative">
         <div className="h-[300px] md:h-[450px] w-full relative overflow-hidden bg-jozi-dark">
           <img 
-            src="https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1600" 
+            src={vendor?.vendorApplication?.files?.bannerUrl || "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1600"} 
             className="w-full h-full object-cover opacity-40 scale-105"
             alt="Artisan Banner"
           />
@@ -250,30 +449,36 @@ const VendorShopPage: React.FC = () => {
               animate={{ scale: 1, opacity: 1 }}
               className="w-40 h-40 md:w-56 md:h-56 rounded-5xl overflow-hidden border-8 border-white shadow-2xl -mt-24 md:-mt-48 shrink-0 bg-white"
             >
-              <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover" />
+              <img 
+                src={vendor.vendorApplication?.files?.logoUrl || vendor.profileUrl || '/placeholder-vendor.jpg'} 
+                alt={vendor.vendorApplication?.shopName || vendor.fullName} 
+                className="w-full h-full object-cover" 
+              />
             </motion.div>
 
             {/* Info and Tagline */}
             <div className="grow text-center md:text-left space-y-5">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                  <h1 className="text-4xl md:text-6xl font-black text-jozi-forest tracking-tighter uppercase leading-none">{vendor.name}</h1>
+                  <h1 className="text-4xl md:text-6xl font-black text-jozi-forest tracking-tighter uppercase leading-none">
+                    {vendor.vendorApplication?.shopName || vendor.fullName}
+                  </h1>
                   <BadgeCheck className="w-10 h-10 text-jozi-gold" />
                 </div>
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-5 text-gray-400 font-bold text-xs uppercase tracking-widest">
                   <div className="flex items-center gap-2 bg-jozi-forest/5 px-4 py-2 rounded-full">
                     <Star className="w-4 h-4 text-jozi-gold fill-current" />
-                    <span className="text-jozi-forest">{vendor.rating}</span>
+                    <span className="text-jozi-forest">4.5</span>
                     <span className="opacity-40">/ 5.0</span>
                   </div>
                   <div className="flex items-center gap-2 px-4 py-2 border border-gray-100 rounded-full">
                     <MapPin className="w-4 h-4 text-jozi-gold" />
-                    <span>{vendor.location}ggg</span>
+                    <span>{vendor.vendorApplication?.address?.city || 'Johannesburg'}</span>
                   </div>
                 </div>
               </div>
               <p className="text-gray-500 font-medium text-xl max-w-3xl leading-relaxed italic">
-                "{vendor.description}"
+                "{vendor.vendorApplication?.description || vendor.vendorApplication?.tagline || 'A local artisan bringing unique products to Jozi Market.'}"
               </p>
             </div>
 
@@ -293,52 +498,62 @@ const VendorShopPage: React.FC = () => {
 
       {/* Professional Shop Experience */}
       <section className="container mx-auto px-4 mt-16">
-        <div className="flex flex-col lg:flex-row gap-12">
-          
-          {/* Sidebar Filters */}
-          <aside className="w-full lg:w-72 space-y-12 shrink-0">
-            {/* Search within store */}
-            <div className="bg-white p-6 rounded-3xl border border-jozi-forest/5 shadow-soft">
-              <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest mb-6 flex items-center">
-                <Search className="w-4 h-4 mr-2 text-jozi-gold" />
-                In-Store Search
-              </h3>
-              <div className="relative group">
-                <input 
-                  type="text" 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find a piece..." 
-                  className="w-full bg-jozi-cream rounded-xl px-4 py-3 text-sm font-bold text-jozi-forest outline-none border border-transparent focus:border-jozi-gold/30 transition-all"
-                />
-              </div>
+        {loadingProducts ? (
+          <div className="flex items-center justify-center py-32">
+            <div className="text-center space-y-4">
+              <Loader2 className="w-12 h-12 text-jozi-gold animate-spin mx-auto" />
+              <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading Products...</p>
             </div>
-
-            {/* Local Categories */}
-            <div>
-              <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest mb-6 flex items-center">
-                <Filter className="w-4 h-4 mr-2 text-jozi-gold" />
-                Workshop Feed
-              </h3>
-              <div className="space-y-2">
-                {vendorCategories.map((cat) => (
-                  <button 
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`w-full text-left px-5 py-3 rounded-xl font-bold text-sm transition-all flex justify-between items-center ${
-                      selectedCategory === cat 
-                        ? 'bg-jozi-forest text-white shadow-lg' 
-                        : 'text-gray-500 hover:bg-jozi-forest/5'
-                    }`}
-                  >
-                    {cat}
-                    {selectedCategory === cat && <div className="w-2 h-2 bg-jozi-gold rounded-full" />}
-                  </button>
-                ))}
+          </div>
+        ) : (
+          <div className="flex flex-col lg:flex-row gap-12">
+            
+            {/* Sidebar Filters */}
+            <aside className="w-full lg:w-72 space-y-12 shrink-0">
+              {/* Search within store */}
+              <div className="bg-white p-6 rounded-3xl border border-jozi-forest/5 shadow-soft">
+                <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest mb-6 flex items-center">
+                  <Search className="w-4 h-4 mr-2 text-jozi-gold" />
+                  In-Store Search
+                </h3>
+                <div className="relative group">
+                  <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Find a piece..." 
+                    className="w-full bg-jozi-cream rounded-xl px-4 py-3 text-sm font-bold text-jozi-forest outline-none border border-transparent focus:border-jozi-gold/30 transition-all"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Price Filter */}
+              {/* Local Categories - Only show categories that have products */}
+              {vendorCategories.length > 1 && (
+                <div>
+                  <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest mb-6 flex items-center">
+                    <Filter className="w-4 h-4 mr-2 text-jozi-gold" />
+                    Workshop Feed
+                  </h3>
+                  <div className="space-y-2">
+                    {vendorCategories.map((cat) => (
+                      <button 
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`w-full text-left px-5 py-3 rounded-xl font-bold text-sm transition-all flex justify-between items-center ${
+                          selectedCategory === cat 
+                            ? 'bg-jozi-forest text-white shadow-lg' 
+                            : 'text-gray-500 hover:bg-jozi-forest/5'
+                        }`}
+                      >
+                        {cat}
+                        {selectedCategory === cat && <div className="w-2 h-2 bg-jozi-gold rounded-full" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Price Filter */}
             <div>
               <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest mb-6 flex items-center">
                 <SlidersHorizontal className="w-4 h-4 mr-2 text-jozi-gold" />
@@ -388,7 +603,7 @@ const VendorShopPage: React.FC = () => {
                         <span className="text-[10px] font-black uppercase tracking-widest">Active Promotions</span>
                       </div>
                       <h2 className="text-3xl md:text-4xl font-black tracking-tighter uppercase leading-none">Workshop <br /><span className="text-jozi-gold italic">Golden Deals.</span></h2>
-                      <p className="text-jozi-cream/60 text-sm font-medium">Limited-time offers direct from {vendor.name}'s workshop.</p>
+                      <p className="text-jozi-cream/60 text-sm font-medium">Limited-time offers direct from {vendor.vendorApplication?.shopName || vendor.fullName}'s workshop.</p>
                     </div>
                     <div className="flex items-center space-x-3 bg-white/5 border border-white/10 p-4 rounded-2xl">
                       <Timer className="w-5 h-5 text-jozi-gold" />
@@ -539,7 +754,8 @@ const VendorShopPage: React.FC = () => {
               </motion.div>
             )}
           </div>
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Customer Reviews Section */}
@@ -551,11 +767,11 @@ const VendorShopPage: React.FC = () => {
               <div className="space-y-4">
                 <h2 className="text-3xl font-black text-jozi-forest tracking-tight">Customer Reviews</h2>
                 <div className="flex items-center space-x-4">
-                  <p className="text-6xl font-black text-jozi-forest">{vendor.rating}</p>
+                  <p className="text-6xl font-black text-jozi-forest">4.5</p>
                   <div>
                     <div className="flex items-center text-jozi-gold">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-5 h-5 ${i < Math.floor(vendor.rating) ? 'fill-current' : 'opacity-20'}`} />
+                        <Star key={i} className={`w-5 h-5 ${i < 4 ? 'fill-current' : 'opacity-20'}`} />
                       ))}
                     </div>
                     <p className="text-sm font-bold text-gray-400 mt-1 uppercase tracking-widest">Based on {reviewsList.length} Reviews</p>
@@ -672,7 +888,7 @@ const VendorShopPage: React.FC = () => {
                 <span className="text-jozi-gold italic">PURPOSE.</span>
               </h2>
               <p className="text-lg text-jozi-cream/70 font-medium leading-relaxed">
-                When you buy from <span className="text-white font-bold">{vendor.name}</span>, you aren't just acquiring a product; you're sustaining a livelihood. Every stitch, carve, and polish is done locally within the Johannesburg metropolitan area.
+                When you buy from <span className="text-white font-bold">{vendor.vendorApplication?.shopName || vendor.fullName}</span>, you aren't just acquiring a product; you're sustaining a livelihood. Every stitch, carve, and polish is done locally within the Johannesburg metropolitan area.
               </p>
               <div className="flex items-center space-x-12">
                 <div className="space-y-1">

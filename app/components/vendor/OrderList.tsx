@@ -19,86 +19,131 @@ import {
   Tag,
   RefreshCw,
   X,
+  RotateCcw,
   // Fix: Added missing ShoppingCart import
   ShoppingCart
 } from 'lucide-react';
 import StatusBadge from '../StatusBadge';
 import OrderDetailModal from './OrderDetailModal';
 
-// --- MOCK DATA ---
-const MOCK_ORDERS = [
-  { 
-    id: '#ORD-2041', 
-    customer: 'Lerato Dlamini', 
-    email: 'lerato@jozi.com',
-    items: [
-      { name: 'Shweshwe Evening Dress', variant: 'Indigo / Medium', qty: 1, price: 1250 },
-      { name: 'Beaded Necklace', variant: 'Gold', qty: 2, price: 320 }
-    ], 
-    total: 1890, 
-    status: 'Processing', 
-    payment: 'Paid',
-    method: 'Card',
-    date: '2024-10-15 14:30',
-    address: '12 Gwigwi Mrwebi St, Newtown, Joburg'
-  },
-  { 
-    id: '#ORD-2040', 
-    customer: 'Kevin Naidoo', 
-    email: 'kevin.n@gmail.com',
-    items: [
-      { name: 'Zebu Leather Wallet', variant: 'Midnight Black', qty: 1, price: 450 }
-    ], 
-    total: 450, 
-    status: 'Ready', 
-    payment: 'Paid',
-    method: 'EFT',
-    date: '2024-10-15 12:15',
-    address: '44 Vilakazi St, Orlando West, Soweto'
-  },
-  { 
-    id: '#ORD-2039', 
-    customer: 'Thandiwe Mokoena', 
-    email: 'thandi@alex.co.za',
-    items: [
-      { name: 'Shweshwe Evening Dress', variant: 'Red / Small', qty: 1, price: 1250 }
-    ], 
-    total: 1250, 
-    status: 'Delivered', 
-    payment: 'Paid',
-    method: 'Points',
-    date: '2024-10-14 09:00',
-    address: '88 Alexandra Rd, Sandton'
-  },
-  { 
-    id: '#ORD-2038', 
-    customer: 'Bongani Sithole', 
-    email: 'bsithole@web.com',
-    items: [
-      { name: 'Hand-Carved Baobab Bowl', variant: 'Large', qty: 1, price: 450 }
-    ], 
-    total: 450, 
-    status: 'In Transit', 
-    payment: 'Paid',
-    method: 'Card',
-    date: '2024-10-13 16:45',
-    address: '101 Juta St, Braamfontein'
-  },
-];
+import { IOrder, OrderStatus, ReturnRequestStatus, CancellationRequestStatus } from '@/interfaces/order/order';
 
 interface OrderListProps {
   filterStatus: 'all' | 'pending' | 'completed';
+  orders?: IOrder[];
+  loading?: boolean;
 }
 
-const OrderList: React.FC<OrderListProps> = ({ filterStatus }) => {
+interface TransformedOrder {
+  id: string;
+  customer: string;
+  email: string;
+  items: Array<{ name: string; variant: string; qty: number; price: number }>;
+  total: number;
+  status: string;
+  payment: string;
+  method: string;
+  date: string;
+  address: string;
+  cancellationRequestStatus?: CancellationRequestStatus | string | null;
+  returnRequestStatus?: ReturnRequestStatus | string | null;
+  originalOrder?: IOrder; // Keep reference to original order
+}
+
+const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loading = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<TransformedOrder | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Transform backend orders to frontend format
+  const transformedOrders = useMemo(() => {
+    if (!orders || orders.length === 0) return [];
+
+    return orders.map((order): TransformedOrder => {
+      const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
+      const formattedDate = orderDate.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+      }) + ' ' + orderDate.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+
+      // Transform order items
+      const items = (order.items || []).map(item => {
+        const product = item.product || {};
+        const productName = product.title || product.name || 'Unknown Product';
+        
+        // Get variant name if available
+        let variantName = 'Standard';
+        if (item.productVariantId && product.variants) {
+          const variant = product.variants.find((v: any) => v.id === item.productVariantId);
+          if (variant) {
+            variantName = variant.name || variant.size || 'Standard';
+          }
+        }
+
+        const unitPrice = typeof item.unitPrice === 'string' 
+          ? parseFloat(item.unitPrice) 
+          : item.unitPrice || 0;
+
+        return {
+          name: productName,
+          variant: variantName,
+          qty: item.quantity,
+          price: unitPrice,
+        };
+      });
+
+      // Calculate total
+      const totalAmount = typeof order.totalAmount === 'string' 
+        ? parseFloat(order.totalAmount) 
+        : order.totalAmount || 0;
+
+      // Map status
+      const statusMap: Record<string, string> = {
+        'pending': 'Processing',
+        'processing': 'Processing',
+        'shipped': 'In Transit',
+        'delivered': 'Delivered',
+        'cancelled': 'Cancelled',
+        'returned': 'Returned',
+      };
+      const frontendStatus = statusMap[order.status.toLowerCase()] || order.status;
+
+      // Format address
+      const address = order.shippingAddress 
+        ? `${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.postal || ''}, ${order.shippingAddress.country}`
+        : 'No address provided';
+
+      // Get customer name
+      const customerName = order.user?.fullName || order.email || 'Unknown Customer';
+
+      return {
+        id: `#${order.orderNumber}`,
+        customer: customerName,
+        email: order.user?.email || order.email || '',
+        items,
+        total: totalAmount,
+        status: frontendStatus,
+        payment: order.paymentStatus === 'paid' ? 'Paid' : 'Pending',
+        method: order.paymentMethod || 'Card',
+        date: formattedDate,
+        address,
+        cancellationRequestStatus: order.cancellationRequestStatus,
+        returnRequestStatus: order.returnRequestStatus,
+        originalOrder: order,
+      };
+    });
+  }, [orders]);
+
   const filteredOrders = useMemo(() => {
-    return MOCK_ORDERS.filter(order => {
+    return transformedOrders.filter(order => {
       const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          order.customer.toLowerCase().includes(searchQuery.toLowerCase());
+                          order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          order.email.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesTab = filterStatus === 'all' || 
                         (filterStatus === 'pending' && ['Processing', 'Ready'].includes(order.status)) ||
@@ -106,7 +151,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus }) => {
       
       return matchesSearch && matchesTab;
     });
-  }, [searchQuery, filterStatus]);
+  }, [searchQuery, filterStatus, transformedOrders]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -149,27 +194,38 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus }) => {
         </div>
 
         {/* Orders Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-50">
-                <th className="pb-6 w-12">
-                  <input 
-                    type="checkbox" 
-                    className="w-5 h-5 rounded-md border-gray-300 accent-jozi-forest"
-                    onChange={(e) => setSelectedIds(e.target.checked ? filteredOrders.map(o => o.id) : [])}
-                  />
-                </th>
-                <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Manifest ID / Date</th>
-                <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Customer Logic</th>
-                <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Ordered Asset(s)</th>
-                <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Fulfillment State</th>
-                <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Value (ZAR)</th>
-                <th className="pb-6 text-right text-[10px] font-black uppercase text-gray-400 tracking-widest">Ops</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredOrders.map((order) => (
+        {loading ? (
+          <div className="py-32 text-center space-y-6">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
+              <Package className="w-10 h-10 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-jozi-forest uppercase">Loading Orders...</h3>
+              <p className="text-gray-400 font-medium italic">Fetching your order manifest...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-50">
+                  <th className="pb-6 w-12">
+                    <input 
+                      type="checkbox" 
+                      className="w-5 h-5 rounded-md border-gray-300 accent-jozi-forest"
+                      onChange={(e) => setSelectedIds(e.target.checked ? filteredOrders.map(o => o.id) : [])}
+                    />
+                  </th>
+                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Manifest ID / Date</th>
+                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Customer Logic</th>
+                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Ordered Asset(s)</th>
+                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center">Fulfillment State</th>
+                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Value (ZAR)</th>
+                  <th className="pb-6 text-right text-[10px] font-black uppercase text-gray-400 tracking-widest">Ops</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredOrders.map((order) => (
                 <tr key={order.id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
                   <td className="py-6" onClick={(e) => e.stopPropagation()}>
                     <input 
@@ -181,7 +237,9 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus }) => {
                   </td>
                   <td className="py-6">
                     <div className="space-y-1">
-                      <p className="font-black text-jozi-forest text-sm leading-tight">{order.id}</p>
+                      <p className="font-black text-jozi-forest text-sm leading-tight">
+                        ORD_{order.id.split('_')[1]}
+                      </p>
                       <div className="flex items-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                          <Clock className="w-3 h-3 mr-1" /> {order.date.split(' ')[0]}
                       </div>
@@ -211,10 +269,50 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus }) => {
                     </div>
                   </td>
                   <td className="py-6 text-center">
-                    <StatusBadge status={order.status} />
+                    <div className="space-y-2">
+                      <StatusBadge status={order.status} />
+                      {/* Cancellation Request Status */}
+                      {order.cancellationRequestStatus && (
+                        <div className="flex items-center justify-center gap-1">
+                          <X className={`w-3 h-3 ${
+                            order.cancellationRequestStatus === 'approved' ? 'text-emerald-500' :
+                            order.cancellationRequestStatus === 'rejected' ? 'text-red-500' :
+                            'text-orange-500'
+                          }`} />
+                          <span className={`text-[9px] font-black uppercase tracking-wider ${
+                            order.cancellationRequestStatus === 'approved' ? 'text-emerald-600' :
+                            order.cancellationRequestStatus === 'rejected' ? 'text-red-600' :
+                            'text-orange-600'
+                          }`}>
+                            Cancel {order.cancellationRequestStatus === 'approved' ? 'Approved' :
+                                    order.cancellationRequestStatus === 'rejected' ? 'Rejected' :
+                                    'Pending'}
+                          </span>
+                        </div>
+                      )}
+                      {/* Return Request Status */}
+                      {order.returnRequestStatus && (
+                        <div className="flex items-center justify-center gap-1">
+                          <RotateCcw className={`w-3 h-3 ${
+                            order.returnRequestStatus === 'approved' ? 'text-emerald-500' :
+                            order.returnRequestStatus === 'rejected' ? 'text-red-500' :
+                            'text-orange-500'
+                          }`} />
+                          <span className={`text-[9px] font-black uppercase tracking-wider ${
+                            order.returnRequestStatus === 'approved' ? 'text-emerald-600' :
+                            order.returnRequestStatus === 'rejected' ? 'text-red-600' :
+                            'text-orange-600'
+                          }`}>
+                            Return {order.returnRequestStatus === 'approved' ? 'Approved' :
+                                    order.returnRequestStatus === 'rejected' ? 'Rejected' :
+                                    'Pending'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="py-6 text-right">
-                    <p className="font-black text-jozi-dark text-lg leading-none">R{order.total}</p>
+                    <p className="font-black text-jozi-dark text-lg leading-none">R{order.total.toFixed(2)}</p>
                     <p className={`text-[8px] font-black uppercase mt-1 ${order.payment === 'Paid' ? 'text-emerald-500' : 'text-orange-500'}`}>{order.payment} via {order.method}</p>
                   </td>
                   <td className="py-6 text-right" onClick={(e) => e.stopPropagation()}>
@@ -225,12 +323,13 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus }) => {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-        {filteredOrders.length === 0 && (
+        {!loading && filteredOrders.length === 0 && (
           <div className="py-32 text-center space-y-6">
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
                <ShoppingCart className="w-10 h-10" />

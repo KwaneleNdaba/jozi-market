@@ -1,6 +1,6 @@
 import { baseUrl } from "../../url";
 import { CustomResponse } from "@/interfaces/response";
-import { IUpdatePassword, IUser, IUserLogin, TokenData } from "@/interfaces/auth/auth";
+import { IUpdatePassword, IUser, IUserLogin, TokenData, IVendorWithApplication } from "@/interfaces/auth/auth";
 import { GET, POST, PUT } from "@/lib/client";
 import { logger } from "@/lib/log";
 
@@ -155,7 +155,7 @@ export const AUTH_API = {
     }
   },
 
-    GET_USER: async (userId : string): Promise<CustomResponse<IUser>> => {
+    GET_USER: async (userId : string): Promise<CustomResponse<IUser | IVendorWithApplication>> => {
     try {
       logger.info(`[AUTH_API] Getting user ${userId}`);
       const response = await GET(`${AuthbaseURL}/getUser/${userId}`);
@@ -308,6 +308,26 @@ export const AUTH_API = {
       return {
         data: null as any,
         message: err instanceof Error ? err.message : "Failed to deactivate store",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Get active vendors with products (public endpoint)
+   * Returns vendors with active subscriptions and their product counts
+   */
+  GET_ACTIVE_VENDORS: async (): Promise<CustomResponse<IVendorWithApplication[]>> => {
+    try {
+      logger.info(`[AUTH_API] Getting active vendors with products`);
+      const response = await GET(`${AuthbaseURL}/vendors/active`);
+      logger.info(`[AUTH_API] Active vendors retrieved successfully`);
+      return response;
+    } catch (err) {
+      logger.error("[AUTH_API] Error getting active vendors:", err);
+      return {
+        data: [] as IVendorWithApplication[],
+        message: err instanceof Error ? err.message : "Failed to get active vendors",
         error: true,
       };
     }

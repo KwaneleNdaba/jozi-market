@@ -81,3 +81,12 @@ export interface IDecodedJWT {
   iat: number;
 }
 
+// Import IVendorApplication type
+import { IVendorApplication } from '../vendor/vendor';
+
+// Vendor with application (extends IUser with vendor-specific data)
+export interface IVendorWithApplication extends IUser {
+  vendorApplication?: IVendorApplication;
+  productCount?: number;
+}
+

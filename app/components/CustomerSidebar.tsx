@@ -33,7 +33,7 @@ const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ user }) => {
 
   const menuItems = [
     { id: 'overview', label: 'My Dashboard', icon: User, path: '/profile' },
-    { id: 'orders', label: 'Order History', icon: Package, path: '/profile?tab=orders' },
+    { id: 'orders', label: 'Order History', icon: Package, path: '/orders' },
     { id: 'notifications', label: 'Notifications', icon: Bell, path: '/notifications' },
     { id: 'rewards', label: 'Loyalty Rewards', icon: Star, path: '/rewards' },
     { id: 'games', label: 'Play & Earn', icon: Gamepad2, path: '/games' },
@@ -49,6 +49,9 @@ const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ user }) => {
     }
     if (item.path === '/profile') {
       return pathname === '/profile' && !searchParams.toString();
+    }
+    if (item.path === '/orders') {
+      return pathname === '/orders';
     }
     return pathname === item.path;
   };
