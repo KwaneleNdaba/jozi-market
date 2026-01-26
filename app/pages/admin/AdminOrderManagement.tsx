@@ -495,28 +495,28 @@ const AdminOrderManagement: React.FC = () => {
     const statusValue = typeof status === 'string' ? status : status;
     switch (statusValue) {
       case OrderStatus.PENDING:
-      case 'pending': return 'bg-gray-50 text-gray-600 border-gray-100';
+      case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200';
       case OrderStatus.CONFIRMED:
-      case 'confirmed': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'confirmed': return 'bg-blue-100 text-blue-700 border-blue-300';
       case OrderStatus.PROCESSING:
-      case 'processing': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'processing': return 'bg-blue-100 text-blue-700 border-blue-300';
       case OrderStatus.READY_TO_SHIP:
-      case 'ready_to_ship': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+      case 'ready_to_ship': return 'bg-indigo-100 text-indigo-700 border-indigo-300';
       case OrderStatus.SHIPPED:
-      case 'shipped': return 'bg-purple-50 text-purple-600 border-purple-100';
+      case 'shipped': return 'bg-purple-100 text-purple-700 border-purple-300';
       case OrderStatus.DELIVERED:
-      case 'delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      case 'delivered': return 'bg-emerald-100 text-emerald-700 border-emerald-300';
       case OrderStatus.CANCELLED:
-      case 'cancelled': return 'bg-gray-100 text-gray-500 border-gray-200 line-through';
+      case 'cancelled': return 'bg-red-100 text-red-700 border-red-300 line-through';
       case OrderStatus.RETURN_IN_PROGRESS:
-      case 'return_in_progress': return 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse';
+      case 'return_in_progress': return 'bg-orange-100 text-orange-700 border-orange-300 animate-pulse';
       case OrderStatus.RETURNED:
-      case 'returned': return 'bg-gray-100 text-gray-600 border-gray-200';
+      case 'returned': return 'bg-gray-200 text-gray-800 border-gray-400';
       case OrderStatus.REFUND_PENDING:
-      case 'refund_pending': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
+      case 'refund_pending': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
       case OrderStatus.REFUNDED:
-      case 'refunded': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      default: return 'bg-gray-50 text-gray-600 border-gray-100';
+      case 'refunded': return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+      default: return 'bg-gray-200 text-gray-800 border-gray-400';
     }
   };
 
@@ -786,7 +786,7 @@ const AdminOrderManagement: React.FC = () => {
                             <td className="py-5 font-black text-jozi-dark">R{order.totalAmount}</td>
                             <td className="py-5">
                               <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyles(order.status)}`}>
-                                {order.status}
+                                {ORDER_STATUS_LABELS[order.status as OrderStatus] || order.status}
                               </span>
                             </td>
                             <td className="py-5">
@@ -932,7 +932,7 @@ const AdminOrderManagement: React.FC = () => {
                                               </td>
                                               <td className="px-6 py-4">
                                                 <span className={`text-[9px] px-2 py-0.5 rounded-full border ${getStatusStyles(order.status)}`}>
-                                                  {order.status}
+                                                  {ORDER_STATUS_LABELS[order.status as OrderStatus] || order.status}
                                                 </span>
                                               </td>
                                               <td className="px-6 py-4">
@@ -1091,7 +1091,7 @@ const AdminOrderManagement: React.FC = () => {
                   <h2 className="text-3xl font-black text-jozi-forest tracking-tighter uppercase">{selectedOrder.id}</h2>
                   <div className="flex items-center space-x-4 mt-2">
                     <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyles(selectedOrder.status)}`}>
-                      {selectedOrder.status}
+                      {ORDER_STATUS_LABELS[selectedOrder.status as OrderStatus] || selectedOrder.status}
                     </span>
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Placed {selectedOrder.orderDate}</span>
                   </div>
