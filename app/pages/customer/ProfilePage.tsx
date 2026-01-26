@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { products } from '../../data/mockData';
 import CustomerSidebar from '../../components/CustomerSidebar';
+import ProfileReturnsTab from '../../components/return/ProfileReturnsTab';
 import { getCurrentUserAction } from '@/app/actions/auth/auth';
 import { IUser } from '@/interfaces/auth/auth';
 
@@ -120,6 +121,10 @@ const ProfilePage: React.FC = () => {
                     </div>
                   )}
 
+
+                  {activeTab === 'returns' && (
+                    <ProfileReturnsTab />
+                  )}
 
                   {activeTab === 'wishlist' && (
                     <div className="bg-white rounded-5xl p-10 border border-jozi-forest/5 shadow-soft text-left">

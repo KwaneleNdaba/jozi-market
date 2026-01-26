@@ -15,7 +15,6 @@ import {
   ExternalLink,
   Tag,
   X,
-  RotateCcw,
   AlertCircle,
   Search,
   Filter,
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react';
 import CustomerSidebar from '../../components/CustomerSidebar';
 import { getCurrentUserAction } from '@/app/actions/auth/auth';
-import { getMyOrdersAction, requestReturnAction, requestCancellationAction, requestItemReturnAction } from '@/app/actions/order/index';
+import { getMyOrdersAction, requestCancellationAction } from '@/app/actions/order/index';
 import { IUser } from '@/interfaces/auth/auth';
 import { useToast } from '@/app/contexts/ToastContext';
 import { IOrder } from '@/interfaces/order/order';
@@ -46,7 +45,6 @@ interface OrderDetail {
   pointsEarned: number;
   deliveryAddress: string;
   trackingNumber: string;
-  returnRequestStatus?: string | null;
   cancellationRequestStatus?: string | null;
   items: {
     id: string;
@@ -55,11 +53,9 @@ interface OrderDetail {
     price: string;
     quantity: number;
     image: string;
-    orderItemId?: string; // Database ID for the order item
-    returnRequestStatus?: string | null;
-    returnQuantity?: number | null;
-    rejectionReason?: string | null; // Vendor rejection reason
-    status?: string; // Order item status
+    orderItemId?: string;
+    rejectionReason?: string | null;
+    status?: string;
   }[];
 }
 
@@ -75,24 +71,12 @@ const OrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(true);
   
-  // Action Modal State
+  // Action Modal State (cancellation only; returns handled in Profile → Returns)
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
-  const [reasonType, setReasonType] = useState<'cancellation' | 'return' | 'item-return' | null>(null);
+  const [reasonType, setReasonType] = useState<'cancellation' | null>(null);
   const [reasonOrderId, setReasonOrderId] = useState<string | null>(null);
   const [reasonText, setReasonText] = useState('');
-  
-  // Item Return Modal State
-  const [showItemReturnModal, setShowItemReturnModal] = useState(false);
-  const [selectedItemForReturn, setSelectedItemForReturn] = useState<{
-    orderId: string;
-    orderItemId: string;
-    itemName: string;
-    maxQuantity: number;
-    currentReturnQuantity?: number;
-  } | null>(null);
-  const [itemReturnQuantity, setItemReturnQuantity] = useState(1);
-  const [itemReturnReason, setItemReturnReason] = useState('');
   
   const { showSuccess, showError } = useToast();
 
@@ -157,29 +141,6 @@ const OrdersPage: React.FC = () => {
       let statusLabel = capitalize(order.status);
       let statusCode = order.status.toLowerCase();
 
-      // Derive return request status from returnRequestedAt and order status
-      // returnRequestedAt indicates a return request has been issued
-      let returnRequestStatus: string | null = null;
-      if (order.returnRequestedAt) {
-        // If status is 'return_in_progress', admin has approved and it's in progress
-        if (order.status === 'return_in_progress') {
-          returnRequestStatus = 'in_progress';
-        } 
-        // If status is 'returned', the return is complete
-        else if (order.status === 'returned') {
-          returnRequestStatus = 'completed';
-        }
-        // If there's a rejection reason, the request was rejected
-        else if (order.returnRejectionReason) {
-          returnRequestStatus = 'rejected';
-        }
-        // Otherwise, return request is pending (returnRequestedAt exists but status hasn't changed)
-        else {
-          returnRequestStatus = 'pending';
-        }
-      }
-
-      // Derive cancellation request status from status and metadata
       let cancellationRequestStatus: string | null = null;
       if (order.cancellationRequestedAt) {
         if (order.status === 'cancelled') {
@@ -191,26 +152,10 @@ const OrdersPage: React.FC = () => {
         }
       }
 
-      // Priority 1: Return Requests
-      if (returnRequestStatus) {
-        if (returnRequestStatus === 'in_progress') {
-          statusLabel = 'Return In Progress';
-          statusCode = 'return_in_progress';
-        } else if (returnRequestStatus === 'completed') {
-          statusLabel = 'Returned';
-          statusCode = 'returned';
-        } else {
-          statusLabel = `Return ${capitalize(returnRequestStatus)}`;
-          statusCode = `return_${returnRequestStatus}`;
-        }
-      }
-      // Priority 2: Cancellation Requests (if no return request)
-      else if (cancellationRequestStatus) {
+      if (cancellationRequestStatus) {
         statusLabel = `Cancellation ${capitalize(cancellationRequestStatus)}`;
         statusCode = `cancellation_${cancellationRequestStatus}`;
-      }
-      // Priority 3: Standard Status Maps
-      else {
+      } else {
         const statusMap: Record<string, string> = {
           'pending': 'Pending',
           'confirmed': 'Processing',
@@ -219,10 +164,6 @@ const OrdersPage: React.FC = () => {
           'shipped': 'In Transit',
           'delivered': 'Delivered',
           'cancelled': 'Cancelled',
-          'return_in_progress': 'Return in Progress',
-          'returned': 'Returned',
-          'refund_pending': 'Refund Pending',
-          'refunded': 'Refunded',
         };
         statusLabel = statusMap[order.status.toLowerCase()] || 'Processing';
       }
@@ -260,11 +201,7 @@ const OrdersPage: React.FC = () => {
           price: formatCurrency(unitPrice),
           quantity: item.quantity,
           image: firstImage,
-          orderItemId: item.id, // Database ID for the order item
-          returnRequestStatus: item.status && (item.status === 'return_requested' || item.status === 'return_approved' || item.status === 'return_rejected') 
-            ? (item.status === 'return_approved' ? 'approved' : item.status === 'return_rejected' ? 'rejected' : 'pending')
-            : null,
-          returnQuantity: item.returnQuantity || null,
+          orderItemId: item.id,
           rejectionReason: item.rejectionReason || undefined, // Vendor rejection reason
           status: item.status || undefined, // Order item status
         };
@@ -290,8 +227,7 @@ const OrdersPage: React.FC = () => {
         discount: formatCurrency(discount),
         pointsEarned,
         deliveryAddress,
-        trackingNumber: order.orderNumber, // Using order number as tracking for now
-        returnRequestStatus,
+        trackingNumber: order.orderNumber,
         cancellationRequestStatus,
         items,
       };
@@ -304,18 +240,8 @@ const OrdersPage: React.FC = () => {
       item.status === 'rejected' || 
       item.rejectionReason
     );
-    const hasReturnedItems = order.items.some(item => 
-      item.returnRequestStatus === 'approved' || 
-      item.status === 'return_approved' ||
-      (item.returnQuantity && item.returnQuantity > 0)
-    );
-    
-    if (hasRejectedItems && hasReturnedItems) {
-      return { hasRejected: true, hasReturned: true, message: 'Some items rejected & returned' };
-    } else if (hasRejectedItems) {
+    if (hasRejectedItems) {
       return { hasRejected: true, hasReturned: false, message: 'Some items rejected' };
-    } else if (hasReturnedItems) {
-      return { hasRejected: false, hasReturned: true, message: 'Some items returned' };
     }
     return { hasRejected: false, hasReturned: false, message: null };
   };
@@ -349,43 +275,11 @@ const OrdersPage: React.FC = () => {
 
   // --- Handlers ---
 
-  const openReturnModal = (orderId: string) => {
-    setReasonType('return');
-    setReasonOrderId(orderId);
-    setReasonText('');
-    setShowReasonModal(true);
-  };
-
   const openCancellationModal = (orderId: string) => {
     setReasonType('cancellation');
     setReasonOrderId(orderId);
     setReasonText('');
     setShowReasonModal(true);
-  };
-
-  const handleRequestReturn = async (orderId: string, reason: string) => {
-    if (!orderId) { showError('Order ID is required'); return; }
-    if (!reason.trim()) { showError('Please provide a reason'); return; }
-
-    setProcessingRequest(orderId);
-    try {
-      const response = await requestReturnAction({ orderId, reason: reason.trim() });
-      if (!response.error && response.data) {
-        showSuccess('Return request submitted successfully');
-        setShowReasonModal(false);
-        // Refresh
-        const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) {
-          setOrders(transformOrders(ordersResponse.data));
-        }
-      } else {
-        showError(response.message || 'Failed to submit return request');
-      }
-    } catch (error: any) {
-      showError(error?.message || 'Failed to submit return request');
-    } finally {
-      setProcessingRequest(null);
-    }
   };
 
   const handleRequestCancellation = async (orderId: string, reason: string) => {
@@ -415,60 +309,7 @@ const OrdersPage: React.FC = () => {
 
   const handleSubmitReason = () => {
     if (!reasonOrderId) return;
-    if (reasonType === 'return') handleRequestReturn(reasonOrderId, reasonText);
-    else if (reasonType === 'cancellation') handleRequestCancellation(reasonOrderId, reasonText);
-  };
-
-  // Item Return Handlers
-  const openItemReturnModal = (orderId: string, orderItemId: string, itemName: string, maxQuantity: number, currentReturnQuantity?: number) => {
-    setSelectedItemForReturn({
-      orderId,
-      orderItemId,
-      itemName,
-      maxQuantity,
-      currentReturnQuantity,
-    });
-    setItemReturnQuantity(currentReturnQuantity ? maxQuantity - currentReturnQuantity : 1);
-    setItemReturnReason('');
-    setShowItemReturnModal(true);
-  };
-
-  const handleRequestItemReturn = async () => {
-    if (!selectedItemForReturn) return;
-    if (!itemReturnReason.trim() || itemReturnReason.trim().length < 10) {
-      showError('Please provide a reason (minimum 10 characters)');
-      return;
-    }
-    if (itemReturnQuantity <= 0 || itemReturnQuantity > selectedItemForReturn.maxQuantity) {
-      showError(`Return quantity must be between 1 and ${selectedItemForReturn.maxQuantity}`);
-      return;
-    }
-
-    setProcessingRequest(selectedItemForReturn.orderId);
-    try {
-      const response = await requestItemReturnAction({
-        orderId: selectedItemForReturn.orderId,
-        orderItemId: selectedItemForReturn.orderItemId,
-        returnQuantity: itemReturnQuantity,
-        reason: itemReturnReason.trim(),
-      });
-      if (!response.error && response.data) {
-        showSuccess('Item return request submitted successfully');
-        setShowItemReturnModal(false);
-        setSelectedItemForReturn(null);
-        // Refresh orders
-        const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) {
-          setOrders(transformOrders(ordersResponse.data));
-        }
-      } else {
-        showError(response.message || 'Failed to submit item return request');
-      }
-    } catch (error: any) {
-      showError(error?.message || 'Failed to submit item return request');
-    } finally {
-      setProcessingRequest(null);
-    }
+    if (reasonType === 'cancellation') handleRequestCancellation(reasonOrderId, reasonText);
   };
 
   const selectedOrder = useMemo(() => orders.find(o => o.id === selectedOrderId || o.fullId === selectedOrderId), [selectedOrderId, orders]);
@@ -599,17 +440,7 @@ const OrdersPage: React.FC = () => {
                     <div className="space-y-6 text-left">
                       <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest">Ordered Items</h3>
                       <div className="grid gap-4">
-                        {selectedOrder.items.map((item) => {
-                          const availableQuantity = item.returnQuantity 
-                            ? item.quantity - item.returnQuantity 
-                            : item.quantity;
-                          const canReturn = selectedOrder.statusCode === 'delivered' && 
-                                          !selectedOrder.statusCode.includes('cancel') && 
-                                          !selectedOrder.statusCode.includes('return') &&
-                                          availableQuantity > 0 &&
-                                          (!item.returnRequestStatus || item.returnRequestStatus === 'rejected');
-                          
-                          return (
+                        {selectedOrder.items.map((item) => (
                             <div key={item.id} className="bg-gray-50/50 p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-6 border border-gray-100">
                               <div className="w-20 h-20 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
                                 <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
@@ -617,81 +448,28 @@ const OrdersPage: React.FC = () => {
                               <div className="grow text-center sm:text-left">
                                 <h4 className="text-lg font-black text-jozi-forest leading-tight">{item.name}</h4>
                                 <p className="text-[10px] font-bold text-jozi-gold uppercase tracking-widest mt-1">by {item.vendor}</p>
-                                
-                                {/* Rejection Status Badge */}
                                 {item.status === 'rejected' && item.rejectionReason && (
                                   <div className="mt-2 inline-flex flex-col gap-1 px-3 py-2 rounded-lg bg-red-50 border border-red-100">
                                     <div className="flex items-center gap-1">
                                       <Ban className="w-3 h-3 text-red-500" />
-                                      <span className="text-[9px] font-black uppercase tracking-wider text-red-600">
-                                        Item Rejected
-                                      </span>
+                                      <span className="text-[9px] font-black uppercase tracking-wider text-red-600">Item Rejected</span>
                                     </div>
-                                    <p className="text-[10px] font-medium text-red-700 italic leading-relaxed">
-                                      Reason: {item.rejectionReason}
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {/* Return Status Badge */}
-                                {item.returnRequestStatus && (
-                                  <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 border border-blue-100">
-                                    <RotateCcw className={`w-3 h-3 ${
-                                      item.returnRequestStatus === 'approved' ? 'text-emerald-500' :
-                                      item.returnRequestStatus === 'rejected' ? 'text-red-500' :
-                                      'text-orange-500'
-                                    }`} />
-                                    <span className={`text-[9px] font-black uppercase tracking-wider ${
-                                      item.returnRequestStatus === 'approved' ? 'text-emerald-600' :
-                                      item.returnRequestStatus === 'rejected' ? 'text-red-600' :
-                                      'text-orange-600'
-                                    }`}>
-                                      Return {item.returnRequestStatus === 'approved' ? 'Approved' :
-                                              item.returnRequestStatus === 'rejected' ? 'Rejected' :
-                                              'Pending'}
-                                      {item.returnQuantity && ` (${item.returnQuantity} qty)`}
-                                    </span>
+                                    <p className="text-[10px] font-medium text-red-700 italic leading-relaxed">Reason: {item.rejectionReason}</p>
                                   </div>
                                 )}
                               </div>
                               <div className="flex items-center gap-8 sm:gap-12 w-full sm:w-auto justify-between sm:justify-end px-4 sm:px-0">
                                 <div className="text-center">
                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Qty</p>
-                                  <p className="font-bold text-jozi-forest">
-                                    {item.quantity}
-                                    {item.returnQuantity && (
-                                      <span className="text-[10px] text-gray-400 ml-1">({item.returnQuantity} returned)</span>
-                                    )}
-                                  </p>
+                                  <p className="font-bold text-jozi-forest">{item.quantity}</p>
                                 </div>
                                 <div className="text-right">
                                   <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Price</p>
                                   <p className="font-bold text-jozi-forest text-lg">{item.price}</p>
                                 </div>
-                                {/* Return Button for Item */}
-                                {canReturn && item.orderItemId && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openItemReturnModal(
-                                        selectedOrder.orderId,
-                                        item.orderItemId!,
-                                        item.name,
-                                        availableQuantity,
-                                        item.returnQuantity || 0
-                                      );
-                                    }}
-                                    disabled={processingRequest === selectedOrder.orderId}
-                                    className="ml-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-100 transition-all disabled:opacity-50 flex items-center gap-1.5"
-                                  >
-                                    <RotateCcw className="w-3 h-3" />
-                                    <span>Return Item</span>
-                                  </button>
-                                )}
                               </div>
                             </div>
-                          );
-                        })}
+                        ))}
                       </div>
                     </div>
 
@@ -772,18 +550,6 @@ const OrdersPage: React.FC = () => {
                               <span>Request Cancellation</span>
                             </button>
                           )}
-                          
-                          {/* Return Logic */}
-                          {selectedOrder.statusCode === 'delivered' && (
-                            <button
-                              onClick={() => selectedOrder.orderId && openReturnModal(selectedOrder.orderId)}
-                              disabled={processingRequest === selectedOrder.orderId}
-                              className="flex-1 flex items-center justify-center space-x-2 py-4 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-100 transition-all disabled:opacity-50"
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                              <span>Request Return</span>
-                            </button>
-                          )}
                         </div>
                       </div>
                     )}
@@ -825,7 +591,7 @@ const OrdersPage: React.FC = () => {
                         <option value="all">All Orders</option>
                         <option value="active">Active Orders</option>
                         <option value="delivered">Delivered</option>
-                        <option value="requests">Returns & Cancellations</option>
+                        <option value="requests">Cancellations</option>
                       </select>
                       <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 rotate-90" />
                     </div>
@@ -871,13 +637,7 @@ const OrdersPage: React.FC = () => {
                                    <Clock className="w-3 h-3" /> {order.date}
                                  </p>
                                  {itemStatus.message && (
-                                   <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${
-                                     itemStatus.hasRejected && itemStatus.hasReturned
-                                       ? 'bg-orange-100 text-orange-700'
-                                       : itemStatus.hasRejected
-                                       ? 'bg-red-100 text-red-700'
-                                       : 'bg-blue-100 text-blue-700'
-                                   }`}>
+                                   <span className="text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md bg-red-100 text-red-700">
                                      {itemStatus.message}
                                    </span>
                                  )}
@@ -946,12 +706,10 @@ const OrdersPage: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-full ${reasonType === 'cancellation' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                    {reasonType === 'cancellation' ? <X className="w-5 h-5" /> : <RotateCcw className="w-5 h-5" />}
+                  <div className="p-3 rounded-full bg-red-100 text-red-600">
+                    <X className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xl font-black text-jozi-forest uppercase tracking-tight">
-                    {reasonType === 'cancellation' ? 'Cancel Order' : 'Return Order'}
-                  </h3>
+                  <h3 className="text-xl font-black text-jozi-forest uppercase tracking-tight">Cancel Order</h3>
                 </div>
                 <button
                   onClick={() => !processingRequest && setShowReasonModal(false)}
@@ -965,9 +723,7 @@ const OrdersPage: React.FC = () => {
               <div className="space-y-6">
                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <p className="text-xs font-bold text-gray-500 leading-relaxed">
-                    {reasonType === 'cancellation' 
-                      ? 'Please let us know why you wish to cancel. This helps us improve our service for future orders.'
-                      : 'We are sorry to hear you want to return this item. Please describe the issue so we can assist you effectively.'}
+                    Please let us know why you wish to cancel. This helps us improve our service for future orders.
                   </p>
                 </div>
 
@@ -1008,142 +764,6 @@ const OrdersPage: React.FC = () => {
                       </>
                     ) : (
                       <span>Confirm Request</span>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Item Return Modal */}
-      <AnimatePresence>
-        {showItemReturnModal && selectedItemForReturn && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jozi-forest/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => {
-              if (!processingRequest) {
-                setShowItemReturnModal(false);
-                setSelectedItemForReturn(null);
-                setItemReturnReason('');
-                setItemReturnQuantity(1);
-              }
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-[2rem] p-8 md:p-10 max-w-lg w-full shadow-2xl"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-                    <RotateCcw className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-black text-jozi-forest uppercase tracking-tight">
-                    Return Item
-                  </h3>
-                </div>
-                <button
-                  onClick={() => !processingRequest && setShowItemReturnModal(false)}
-                  disabled={processingRequest !== null}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p className="text-xs font-bold text-gray-500 mb-2">Item:</p>
-                  <p className="text-sm font-black text-jozi-forest">{selectedItemForReturn.itemName}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">Available to return: {selectedItemForReturn.maxQuantity} {selectedItemForReturn.maxQuantity === 1 ? 'item' : 'items'}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-jozi-forest ml-1">
-                    Return Quantity
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setItemReturnQuantity(Math.max(1, itemReturnQuantity - 1))}
-                      disabled={processingRequest !== null || itemReturnQuantity <= 1}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <X className="w-4 h-4 rotate-45" />
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max={selectedItemForReturn.maxQuantity}
-                      value={itemReturnQuantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1;
-                        setItemReturnQuantity(Math.max(1, Math.min(val, selectedItemForReturn.maxQuantity)));
-                      }}
-                      className="flex-1 text-center py-3 bg-white border-2 border-gray-100 rounded-xl font-black text-lg text-jozi-forest outline-none focus:border-jozi-gold/50 transition-all"
-                      disabled={processingRequest !== null}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setItemReturnQuantity(Math.min(selectedItemForReturn.maxQuantity, itemReturnQuantity + 1))}
-                      disabled={processingRequest !== null || itemReturnQuantity >= selectedItemForReturn.maxQuantity}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <X className="w-4 h-4 -rotate-45" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-jozi-forest ml-1">
-                    Reason for Return
-                  </label>
-                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
-                    <p className="text-xs font-bold text-gray-500 leading-relaxed">
-                      Please describe why you want to return this item. This helps us improve our service.
-                    </p>
-                  </div>
-                  <textarea
-                    value={itemReturnReason}
-                    onChange={(e) => setItemReturnReason(e.target.value)}
-                    placeholder="Type your reason here..."
-                    rows={4}
-                    className="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 font-medium text-sm text-jozi-forest outline-none focus:border-jozi-gold/50 transition-all resize-none placeholder-gray-300"
-                    disabled={processingRequest !== null}
-                  />
-                  <p className="text-[9px] text-gray-400 font-bold ml-1 text-right">
-                    {itemReturnReason.length}/10 min chars
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => !processingRequest && setShowItemReturnModal(false)}
-                    disabled={processingRequest !== null}
-                    className="flex-1 py-4 bg-gray-50 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleRequestItemReturn}
-                    disabled={processingRequest !== null || !itemReturnReason.trim() || itemReturnReason.trim().length < 10 || itemReturnQuantity <= 0}
-                    className="flex-1 py-4 bg-jozi-forest text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg shadow-jozi-forest/20"
-                  >
-                    {processingRequest ? (
-                      <>
-                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Processing</span>
-                      </>
-                    ) : (
-                      <span>Submit Return Request</span>
                     )}
                   </button>
                 </div>

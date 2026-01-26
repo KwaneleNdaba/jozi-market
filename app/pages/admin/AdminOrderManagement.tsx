@@ -36,11 +36,11 @@ import Link from 'next/link';
 import { getAllOrdersAction, getOrderItemsGroupedByDateAndVendorAction, updateOrderItemStatusAction, updateOrderAction } from '@/app/actions/order/index';
 import { IOrder, IOrderItemsGroupedResponse, IOrderItemsByVendorAndDate, OrderItemStatus, OrderStatus } from '@/interfaces/order/order';
 import { useToast } from '@/app/contexts/ToastContext';
+import AdminResolutionReturnsSection from '@/app/components/admin/AdminResolutionReturnsSection';
 
 // --- Types ---
 
-// User-friendly labels for OrderStatus enum values
-const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+const ORDER_STATUS_LABELS: Record<string, string> = {
   [OrderStatus.PENDING]: 'Pending',
   [OrderStatus.CONFIRMED]: 'Confirmed',
   [OrderStatus.PROCESSING]: 'Processing',
@@ -48,10 +48,7 @@ const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.SHIPPED]: 'Shipped',
   [OrderStatus.DELIVERED]: 'Delivered',
   [OrderStatus.CANCELLED]: 'Cancelled',
-  [OrderStatus.RETURN_IN_PROGRESS]: 'Return in Progress',
-  [OrderStatus.RETURNED]: 'Returned',
-  [OrderStatus.REFUND_PENDING]: 'Refund Pending',
-  [OrderStatus.REFUNDED]: 'Refunded',
+  'cancellation_requested': 'Cancellation Requested',
 };
 
 export interface ProductItem {
@@ -100,7 +97,7 @@ const MOCK_ORDERS: MarketOrder[] = [
   // ... existing mock data ...
   { id: 'ORD-2041', customerName: 'Lerato Dlamini', customerEmail: 'lerato@jozi.com', products: [{ name: 'Shweshwe Evening Dress', quantity: 1, price: 1250, vendorName: 'Maboneng Textiles' }], totalAmount: 1250, status: OrderStatus.PROCESSING, orderDate: '2024-10-22', category: 'Fashion', paymentMethod: 'Card', shippingAddress: '12 Gwigwi Mrwebi St, Newtown' },
   { id: 'ORD-2042', customerName: 'Kevin Naidoo', customerEmail: 'kevin.n@gmail.com', products: [{ name: 'Zulu Beadwork Necklace', quantity: 2, price: 320, vendorName: 'Soweto Gold' }], totalAmount: 640, status: OrderStatus.PENDING, requestReason: 'Found a cheaper alternative', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '44 Vilakazi St, Soweto' },
-  { id: 'ORD-2046', customerName: 'Michael Botha', customerEmail: 'm.botha@corp.za', products: [{ name: 'Silver Fern Earrings', quantity: 1, price: 490, vendorName: 'Soweto Gold' }], totalAmount: 490, status: OrderStatus.RETURN_IN_PROGRESS, requestReason: 'Item arrived damaged', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '12 Jan Smuts Ave, Westcliff' },
+  { id: 'ORD-2046', customerName: 'Michael Botha', customerEmail: 'm.botha@corp.za', products: [{ name: 'Silver Fern Earrings', quantity: 1, price: 490, vendorName: 'Soweto Gold' }], totalAmount: 490, status: OrderStatus.DELIVERED, requestReason: 'Item arrived damaged', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '12 Jan Smuts Ave, Westcliff' },
   
   // Generating "Volume" for Maboneng Textiles on a specific date to test scalability
   ...generateBulkOrders(12, 'Maboneng Textiles', '2024-10-22', OrderStatus.PROCESSING),
@@ -193,14 +190,6 @@ const AdminOrderManagement: React.FC = () => {
         status = OrderStatus.DELIVERED;
       } else if (normalizedStatus === 'cancelled') {
         status = OrderStatus.CANCELLED;
-      } else if (normalizedStatus === 'return_in_progress') {
-        status = OrderStatus.RETURN_IN_PROGRESS;
-      } else if (normalizedStatus === 'returned') {
-        status = OrderStatus.RETURNED;
-      } else if (normalizedStatus === 'refund_pending') {
-        status = OrderStatus.REFUND_PENDING;
-      } else if (normalizedStatus === 'refunded') {
-        status = OrderStatus.REFUNDED;
       } else {
         // Keep original value if it doesn't match enum
         status = orderStatusValue;
@@ -446,19 +435,12 @@ const AdminOrderManagement: React.FC = () => {
     { value: OrderItemStatus.PENDING, label: 'Pending' },
     { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
     { value: OrderItemStatus.REJECTED, label: 'Rejected' },
-    { value: OrderItemStatus.PROCESSING, label: 'Processed' }, // Display label changed for UX, value remains "processing"
+    { value: OrderItemStatus.PROCESSING, label: 'Processed' },
     { value: OrderItemStatus.PICKED, label: 'Picked' },
     { value: OrderItemStatus.PACKED, label: 'Packed' },
     { value: OrderItemStatus.SHIPPED, label: 'Shipped' },
     { value: OrderItemStatus.DELIVERED, label: 'Delivered' },
     { value: OrderItemStatus.CANCELLED, label: 'Cancelled' },
-    { value: OrderItemStatus.RETURN_REQUESTED, label: 'Return Requested' },
-    { value: OrderItemStatus.RETURN_APPROVED, label: 'Return Approved' },
-    { value: OrderItemStatus.RETURN_REJECTED, label: 'Return Rejected' },
-    { value: OrderItemStatus.RETURN_IN_TRANSIT, label: 'Return In Transit' },
-    { value: OrderItemStatus.RETURN_RECEIVED, label: 'Return Received' },
-    { value: OrderItemStatus.REFUND_PENDING, label: 'Refund Pending' },
-    { value: OrderItemStatus.REFUNDED, label: 'Refunded' },
   ];
 
   // Fetch vendor grouped data when vendor_grouped tab is active
@@ -507,15 +489,8 @@ const AdminOrderManagement: React.FC = () => {
       case OrderStatus.DELIVERED:
       case 'delivered': return 'bg-emerald-100 text-emerald-700 border-emerald-300';
       case OrderStatus.CANCELLED:
-      case 'cancelled': return 'bg-red-100 text-red-700 border-red-300 line-through';
-      case OrderStatus.RETURN_IN_PROGRESS:
-      case 'return_in_progress': return 'bg-orange-100 text-orange-700 border-orange-300 animate-pulse';
-      case OrderStatus.RETURNED:
-      case 'returned': return 'bg-gray-200 text-gray-800 border-gray-400';
-      case OrderStatus.REFUND_PENDING:
-      case 'refund_pending': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case OrderStatus.REFUNDED:
-      case 'refunded': return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+      case 'cancelled':
+      case 'cancellation_requested': return 'bg-red-100 text-red-700 border-red-300 line-through';
       default: return 'bg-gray-200 text-gray-800 border-gray-400';
     }
   };
@@ -660,9 +635,11 @@ const AdminOrderManagement: React.FC = () => {
   }, [vendorGroupedData]);
 
   const resolutionOrders = useMemo(() => {
-    return filteredOrders.filter(o => 
-      ['Cancelled', 'Cancellation Requested', 'Returned', 'Return Requested'].includes(o.status)
-    );
+    return filteredOrders.filter(o => {
+      const s = typeof o.status === 'string' ? o.status.toLowerCase() : '';
+      return ['cancelled', 'cancellation_requested'].includes(s) ||
+        ['Cancelled', 'Cancellation Requested'].includes(o.status as string);
+    });
   }, [filteredOrders]);
 
 
@@ -786,7 +763,7 @@ const AdminOrderManagement: React.FC = () => {
                             <td className="py-5 font-black text-jozi-dark">R{order.totalAmount}</td>
                             <td className="py-5">
                               <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyles(order.status)}`}>
-                                {ORDER_STATUS_LABELS[order.status as OrderStatus] || order.status}
+                                {ORDER_STATUS_LABELS[String(order.status)] || order.status}
                               </span>
                             </td>
                             <td className="py-5">
@@ -932,7 +909,7 @@ const AdminOrderManagement: React.FC = () => {
                                               </td>
                                               <td className="px-6 py-4">
                                                 <span className={`text-[9px] px-2 py-0.5 rounded-full border ${getStatusStyles(order.status)}`}>
-                                                  {ORDER_STATUS_LABELS[order.status as OrderStatus] || order.status}
+                                                  {ORDER_STATUS_LABELS[String(order.status)] || order.status}
                                                 </span>
                                               </td>
                                               <td className="px-6 py-4">
@@ -970,7 +947,7 @@ const AdminOrderManagement: React.FC = () => {
                <div className="flex items-center gap-2 mb-4 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 text-sm">
                  <AlertCircle className="w-5 h-5" />
                  <span className="font-bold">Attention Needed:</span>
-                 <span>Review cancellation and return requests below. Approve to process refunds automatically.</span>
+                 <span>Review cancellation requests below. Return requests are in the Returns section.</span>
                </div>
 
                <div className="grid gap-4">
@@ -1009,28 +986,20 @@ const AdminOrderManagement: React.FC = () => {
                            </div>
                         </div>
 
-                        {/* Action Column */}
+                        {/* Action Column — cancellations only; returns handled in Returns section below */}
                         <div className="md:w-1/4 flex flex-col gap-3 justify-center pl-6 border-l border-gray-100">
-                          {(order.status === OrderStatus.RETURN_IN_PROGRESS || 
-                            order.status === 'return_in_progress' ||
-                            (typeof order.status === 'string' && order.status.toLowerCase().includes('return') && order.status.toLowerCase().includes('request'))) ? (
-                            <>
+                          {(order.status === OrderStatus.CANCELLED || 
+                            (typeof order.status === 'string' && order.status.toLowerCase() === 'cancelled')) ? (
+                            <div className="text-center">
+                              <p className="text-xs font-bold text-gray-400 uppercase">Resolution Finalized</p>
                               <button 
-                                onClick={() => handleStatusUpdate(order.id, OrderStatus.RETURNED)}
-                                className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                onClick={() => setSelectedOrder(order)} 
+                                className="text-jozi-gold font-black text-xs uppercase tracking-widest hover:underline mt-2"
                               >
-                                <ThumbsUp className="w-4 h-4" /> Approve
+                                View Details
                               </button>
-                              <button 
-                                onClick={() => handleStatusUpdate(order.id, OrderStatus.DELIVERED)}
-                                className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                              >
-                                <ThumbsDown className="w-4 h-4" /> Reject
-                              </button>
-                            </>
-                          ) : (order.status === OrderStatus.CANCELLED || 
-                                order.status === 'cancelled' ||
-                                (typeof order.status === 'string' && order.status.toLowerCase().includes('cancel') && order.status.toLowerCase().includes('request'))) ? (
+                            </div>
+                          ) : (
                             <>
                               <button 
                                 onClick={() => handleStatusUpdate(order.id, OrderStatus.CANCELLED)}
@@ -1045,21 +1014,16 @@ const AdminOrderManagement: React.FC = () => {
                                 <ThumbsDown className="w-4 h-4" /> Reject
                               </button>
                             </>
-                          ) : (
-                            <div className="text-center">
-                              <p className="text-xs font-bold text-gray-400 uppercase">Resolution Finalized</p>
-                              <button 
-                                onClick={() => setSelectedOrder(order)} 
-                                className="text-jozi-gold font-black text-xs uppercase tracking-widest hover:underline mt-2"
-                              >
-                                View Details
-                              </button>
-                            </div>
                           )}
                         </div>
                      </div>
                    ))
                  )}
+               </div>
+
+               {/* Returns section — separate from order cancellations */}
+               <div className="pt-10 mt-10 border-t border-gray-200">
+                 <AdminResolutionReturnsSection />
                </div>
             </div>
           )}
@@ -1091,7 +1055,7 @@ const AdminOrderManagement: React.FC = () => {
                   <h2 className="text-3xl font-black text-jozi-forest tracking-tighter uppercase">{selectedOrder.id}</h2>
                   <div className="flex items-center space-x-4 mt-2">
                     <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyles(selectedOrder.status)}`}>
-                      {ORDER_STATUS_LABELS[selectedOrder.status as OrderStatus] || selectedOrder.status}
+                      {ORDER_STATUS_LABELS[String(selectedOrder.status)] || selectedOrder.status}
                     </span>
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Placed {selectedOrder.orderDate}</span>
                   </div>
@@ -1278,11 +1242,13 @@ const AdminOrderManagement: React.FC = () => {
                         value={selectedOrder.status}
                         onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value as OrderStatus)}
                       >
-                        {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
-                          <option key={value} value={value} className="text-jozi-forest">
-                            {label}
-                          </option>
-                        ))}
+                        {Object.entries(ORDER_STATUS_LABELS)
+                          .filter(([value]) => value !== 'cancellation_requested')
+                          .map(([value, label]) => (
+                            <option key={value} value={value} className="text-jozi-forest">
+                              {label}
+                            </option>
+                          ))}
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
@@ -1360,7 +1326,7 @@ const AdminOrderManagement: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Order Status</span>
                       <span className="text-sm font-black text-jozi-forest">
-                        {ORDER_STATUS_LABELS[pendingOrderStatus as OrderStatus] || pendingOrderStatus}
+                        {ORDER_STATUS_LABELS[String(pendingOrderStatus)] || pendingOrderStatus}
                       </span>
                     </div>
                   )}

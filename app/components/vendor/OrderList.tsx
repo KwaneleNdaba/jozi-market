@@ -19,7 +19,6 @@ import {
   Tag,
   RefreshCw,
   X,
-  RotateCcw,
   ShoppingCart,
   MapPin,
   User,
@@ -50,9 +49,8 @@ interface TransformedOrder {
   method: string;
   date: string;
   address: string;
-  cancellationRequestStatus?: string | null; // Derived from status field
-  returnRequestStatus?: string | null; // Derived from status field
-  originalOrder?: IOrder; // Keep reference to original order
+  cancellationRequestStatus?: string | null;
+  originalOrder?: IOrder;
 }
 
 const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loading = false, onOrdersRefresh }) => {
@@ -268,10 +266,6 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
         'shipped': 'In Transit',
         'delivered': 'Delivered',
         'cancelled': 'Cancelled',
-        'return_in_progress': 'Return in Progress',
-        'returned': 'Returned',
-        'refund_pending': 'Refund Pending',
-        'refunded': 'Refunded',
       };
       const frontendStatus = statusMap[order.status.toLowerCase()] || order.status;
 
@@ -284,20 +278,6 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
           cancellationRequestStatus = 'rejected';
         } else {
           cancellationRequestStatus = 'pending';
-        }
-      }
-
-      // Derive return request status from status and metadata
-      let returnRequestStatus: string | null = null;
-      if (order.returnRequestedAt) {
-        if (order.status === OrderStatus.RETURNED || order.status === OrderStatus.REFUNDED) {
-          returnRequestStatus = 'approved';
-        } else if (order.returnRejectionReason) {
-          returnRequestStatus = 'rejected';
-        } else if (order.status === OrderStatus.RETURN_IN_PROGRESS) {
-          returnRequestStatus = 'approved';
-        } else {
-          returnRequestStatus = 'pending';
         }
       }
 
@@ -321,7 +301,6 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
         date: formattedDate,
         address,
         cancellationRequestStatus,
-        returnRequestStatus,
         originalOrder: order,
       };
     });
@@ -478,25 +457,6 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                           </span>
                         </div>
                       )}
-                      {/* Return Request Status */}
-                      {order.returnRequestStatus && (
-                        <div className="flex items-center justify-center gap-1">
-                          <RotateCcw className={`w-3 h-3 ${
-                            order.returnRequestStatus === 'approved' ? 'text-emerald-500' :
-                            order.returnRequestStatus === 'rejected' ? 'text-red-500' :
-                            'text-orange-500'
-                          }`} />
-                          <span className={`text-[9px] font-black uppercase tracking-wider ${
-                            order.returnRequestStatus === 'approved' ? 'text-emerald-600' :
-                            order.returnRequestStatus === 'rejected' ? 'text-red-600' :
-                            'text-orange-600'
-                          }`}>
-                            Return {order.returnRequestStatus === 'approved' ? 'Approved' :
-                                    order.returnRequestStatus === 'rejected' ? 'Rejected' :
-                                    'Pending'}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </td>
                   <td className="py-6 text-right">
@@ -620,14 +580,8 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                       
                       // Check if order has cancellation or return request (vendor cannot edit status if ANY request exists)
                       const order = selectedOrder.originalOrder;
-                      // Check order-level cancellation request (any request, regardless of review status)
                       const hasOrderCancellationRequest = !!order?.cancellationRequestedAt;
-                      // Check order-level return request (any request, regardless of review status)
-                      const hasOrderReturnRequest = !!order?.returnRequestedAt;
-                      // Check item-level return request (any request, regardless of review status)
-                      const hasItemReturnRequest = !!item?.returnRequestedAt;
-                      // Vendor cannot edit if there's ANY cancellation or return request (order or item level)
-                      const isStatusEditable = !hasOrderCancellationRequest && !hasOrderReturnRequest && !hasItemReturnRequest;
+                      const isStatusEditable = !hasOrderCancellationRequest;
                       
                       return (
                         <div key={orderItemId || idx} className={`p-4 bg-gray-50 rounded-2xl border border-gray-100 ${rejectingItemId === orderItemId ? 'pb-6' : ''}`}>
@@ -675,9 +629,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                                 <div className="relative shrink-0">
                                   {!isStatusEditable && (
                                     <div className="mb-2 text-[9px] font-black text-amber-600 uppercase tracking-widest text-center">
-                                      {hasOrderCancellationRequest ? 'Cancellation Requested' : 
-                                       hasItemReturnRequest ? 'Item Return Requested' : 
-                                       'Return Requested'}
+                                      Cancellation Requested
                                     </div>
                                   )}
                                   <select
@@ -703,11 +655,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                                       }
                                     }}
                                     disabled={isUpdating || !isStatusEditable}
-                                    title={!isStatusEditable ? (
-                                      hasOrderCancellationRequest ? 'Cannot edit: Cancellation request exists' : 
-                                      hasItemReturnRequest ? 'Cannot edit: Item return request exists' :
-                                      'Cannot edit: Return request exists'
-                                    ) : ''}
+                                    title={!isStatusEditable ? 'Cannot edit: Cancellation request exists' : undefined}
                                     className={`appearance-none bg-white border-2 rounded-xl px-3 py-2 pr-8 font-black text-[10px] uppercase tracking-widest transition-all min-w-[140px] text-jozi-forest ${
                                       isUpdating || !isStatusEditable 
                                         ? 'opacity-50 cursor-not-allowed border-gray-200' 

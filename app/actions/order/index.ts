@@ -2,7 +2,7 @@
 
 import { serverGET, serverPOST, serverPUT } from '@/lib/server-client';
 import { baseUrl } from '@/endpoints/url';
-import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestReturn, IRequestCancellation, IReviewReturn, IReviewCancellation, IRequestItemReturn, IReviewItemReturn, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from '@/interfaces/order/order';
+import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestCancellation, IReviewCancellation, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from '@/interfaces/order/order';
 import { CustomResponse } from '@/interfaces/response';
 import { logger } from '@/lib/log';
 import { decodeServerAccessToken } from '@/lib/server-auth';
@@ -205,36 +205,6 @@ export async function updateOrderAction(
 }
 
 /**
- * Server action to request return (authenticated users only)
- */
-export async function requestReturnAction(
-  requestData: IRequestReturn
-): Promise<CustomResponse<IOrder>> {
-  try {
-    const decodedUser = await decodeServerAccessToken();
-    if (!decodedUser?.id) {
-      return {
-        data: null as any,
-        message: 'Authentication required. Please log in to request a return.',
-        error: true,
-      };
-    }
-
-    logger.info('[Order Action] Requesting return for order:', requestData.orderId);
-    const response = await serverPOST(`${baseUrl}/order/return`, requestData);
-    logger.info('[Order Action] Return request submitted successfully');
-    return response;
-  } catch (err: any) {
-    logger.error('[Order Action] Error requesting return:', err);
-    return {
-      data: null as any,
-      message: err?.message || 'Failed to request return',
-      error: true,
-    };
-  }
-}
-
-/**
  * Server action to request cancellation (authenticated users only)
  */
 export async function requestCancellationAction(
@@ -265,57 +235,6 @@ export async function requestCancellationAction(
 }
 
 /**
- * Server action to request item return (authenticated users only)
- * Allows returning specific items from an order with quantity
- */
-export async function requestItemReturnAction(
-  requestData: IRequestItemReturn
-): Promise<CustomResponse<IOrder>> {
-  try {
-    const decodedUser = await decodeServerAccessToken();
-    if (!decodedUser?.id) {
-      return {
-        data: null as any,
-        message: 'Authentication required. Please log in to request an item return.',
-        error: true,
-      };
-    }
-
-    if (!requestData.orderId || !requestData.orderItemId) {
-      return {
-        data: null as any,
-        message: 'Order ID and Order Item ID are required',
-        error: true,
-      };
-    }
-
-    if (!requestData.returnQuantity || requestData.returnQuantity <= 0) {
-      return {
-        data: null as any,
-        message: 'Return quantity must be greater than 0',
-        error: true,
-      };
-    }
-
-    logger.info('[Order Action] Requesting return for order item:', {
-      orderId: requestData.orderId,
-      orderItemId: requestData.orderItemId,
-      returnQuantity: requestData.returnQuantity,
-    });
-    const response = await serverPOST(`${baseUrl}/order/item/return`, requestData);
-    logger.info('[Order Action] Item return request submitted successfully');
-    return response;
-  } catch (err: any) {
-    logger.error('[Order Action] Error requesting item return:', err);
-    return {
-      data: null as any,
-      message: err?.message || 'Failed to request item return',
-      error: true,
-    };
-  }
-}
-
-/**
  * Server action to get order items grouped by date and vendor (admin only)
  * Returns order items from the last 30 days grouped by date and vendor
  */
@@ -330,27 +249,6 @@ export async function getOrderItemsGroupedByDateAndVendorAction(): Promise<Custo
     return {
       data: null as any,
       message: err?.message || 'Failed to fetch grouped order items',
-      error: true,
-    };
-  }
-}
-
-/**
- * Server action to review return request (admin only)
- */
-export async function reviewReturnAction(
-  reviewData: IReviewReturn
-): Promise<CustomResponse<IOrder>> {
-  try {
-    logger.info('[Order Action] Reviewing return request for order:', reviewData.orderId);
-    const response = await serverPUT(`${baseUrl}/order/return/review`, reviewData);
-    logger.info('[Order Action] Return request reviewed successfully');
-    return response;
-  } catch (err: any) {
-    logger.error('[Order Action] Error reviewing return:', err);
-    return {
-      data: null as any,
-      message: err?.message || 'Failed to review return request',
       error: true,
     };
   }
@@ -372,30 +270,6 @@ export async function reviewCancellationAction(
     return {
       data: null as any,
       message: err?.message || 'Failed to review cancellation request',
-      error: true,
-    };
-  }
-}
-
-/**
- * Server action to review item return request (admin only)
- */
-export async function reviewItemReturnAction(
-  reviewData: IReviewItemReturn
-): Promise<CustomResponse<IOrder>> {
-  try {
-    logger.info('[Order Action] Reviewing item return request:', {
-      orderId: reviewData.orderId,
-      orderItemId: reviewData.orderItemId,
-    });
-    const response = await serverPUT(`${baseUrl}/order/item/return/review`, reviewData);
-    logger.info('[Order Action] Item return request reviewed successfully');
-    return response;
-  } catch (err: any) {
-    logger.error('[Order Action] Error reviewing item return:', err);
-    return {
-      data: null as any,
-      message: err?.message || 'Failed to review item return request',
       error: true,
     };
   }

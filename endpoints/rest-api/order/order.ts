@@ -1,6 +1,6 @@
 import { baseUrl } from "../../url";
 import { CustomResponse } from "@/interfaces/response";
-import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestReturn, IRequestCancellation, IReviewReturn, IReviewCancellation, IRequestItemReturn, IReviewItemReturn, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from "@/interfaces/order/order";
+import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestCancellation, IReviewCancellation, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from "@/interfaces/order/order";
 import { POST, GET, PUT } from "@/lib/client";
 import { logger } from "@/lib/log";
 
@@ -129,25 +129,6 @@ export const ORDER_API = {
   },
 
   /**
-   * Request return (authenticated users only)
-   */
-  REQUEST_RETURN: async (requestData: IRequestReturn): Promise<CustomResponse<IOrder>> => {
-    try {
-      logger.info(`[ORDER_API] Requesting return for order: ${requestData.orderId}`);
-      const response = await POST(`${OrderBaseURL}/return`, requestData);
-      logger.info(`[ORDER_API] Return request submitted successfully`);
-      return response;
-    } catch (err: any) {
-      logger.error("[ORDER_API] Error requesting return:", err);
-      return {
-        data: null as any,
-        message: err?.message || "Failed to request return",
-        error: true,
-      };
-    }
-  },
-
-  /**
    * Request cancellation (authenticated users only)
    */
   REQUEST_CANCELLATION: async (requestData: IRequestCancellation): Promise<CustomResponse<IOrder>> => {
@@ -186,26 +167,6 @@ export const ORDER_API = {
   },
 
   /**
-   * Request item return (authenticated users only)
-   * Allows returning specific items from an order with quantity
-   */
-  REQUEST_ITEM_RETURN: async (requestData: IRequestItemReturn): Promise<CustomResponse<IOrder>> => {
-    try {
-      logger.info(`[ORDER_API] Requesting return for order item: ${requestData.orderItemId} from order: ${requestData.orderId}`);
-      const response = await POST(`${OrderBaseURL}/item/return`, requestData);
-      logger.info(`[ORDER_API] Item return request submitted successfully`);
-      return response;
-    } catch (err: any) {
-      logger.error("[ORDER_API] Error requesting item return:", err);
-      return {
-        data: null as any,
-        message: err?.message || "Failed to request item return",
-        error: true,
-      };
-    }
-  },
-
-  /**
    * Get order items grouped by date and vendor (admin only)
    * Returns order items from the last 30 days grouped by date and vendor
    */
@@ -226,25 +187,6 @@ export const ORDER_API = {
   },
 
   /**
-   * Review return request (admin only)
-   */
-  REVIEW_RETURN: async (reviewData: IReviewReturn): Promise<CustomResponse<IOrder>> => {
-    try {
-      logger.info(`[ORDER_API] Reviewing return request for order: ${reviewData.orderId}`);
-      const response = await PUT(`${OrderBaseURL}/return/review`, reviewData);
-      logger.info(`[ORDER_API] Return request reviewed successfully`);
-      return response;
-    } catch (err: any) {
-      logger.error("[ORDER_API] Error reviewing return:", err);
-      return {
-        data: null as any,
-        message: err?.message || "Failed to review return request",
-        error: true,
-      };
-    }
-  },
-
-  /**
    * Review cancellation request (admin only)
    */
   REVIEW_CANCELLATION: async (reviewData: IReviewCancellation): Promise<CustomResponse<IOrder>> => {
@@ -258,25 +200,6 @@ export const ORDER_API = {
       return {
         data: null as any,
         message: err?.message || "Failed to review cancellation request",
-        error: true,
-      };
-    }
-  },
-
-  /**
-   * Review item return request (admin only)
-   */
-  REVIEW_ITEM_RETURN: async (reviewData: IReviewItemReturn): Promise<CustomResponse<IOrder>> => {
-    try {
-      logger.info(`[ORDER_API] Reviewing item return request for order item: ${reviewData.orderItemId} from order: ${reviewData.orderId}`);
-      const response = await PUT(`${OrderBaseURL}/item/return/review`, reviewData);
-      logger.info(`[ORDER_API] Item return request reviewed successfully`);
-      return response;
-    } catch (err: any) {
-      logger.error("[ORDER_API] Error reviewing item return:", err);
-      return {
-        data: null as any,
-        message: err?.message || "Failed to review item return request",
         error: true,
       };
     }
