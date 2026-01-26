@@ -405,6 +405,7 @@ export async function reviewItemReturnAction(
  * Server action to update order item status
  * Vendor: Can update status for their products (accepted, rejected, processing, picked, packed, shipped)
  * Admin: Can update status for any order item (full control)
+ * Note: rejectionReason is required when status is "rejected"
  */
 export async function updateOrderItemStatusAction(
   orderItemId: string,
@@ -427,9 +428,19 @@ export async function updateOrderItemStatusAction(
       };
     }
 
+    // Validate rejection reason when rejecting
+    if (updateData.status === 'rejected' && !updateData.rejectionReason) {
+      return {
+        data: null as any,
+        message: 'Rejection reason is required when rejecting an order item',
+        error: true,
+      };
+    }
+
     logger.info('[Order Action] Updating order item status:', {
       orderItemId,
       status: updateData.status,
+      hasRejectionReason: !!updateData.rejectionReason,
     });
     const response = await serverPUT(`${baseUrl}/order/item/${orderItemId}/status`, updateData);
     logger.info('[Order Action] Order item status updated successfully');

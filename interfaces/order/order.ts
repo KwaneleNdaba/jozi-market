@@ -55,6 +55,10 @@ export interface IOrderItem {
   unitPrice: number;
   totalPrice: number;
   status?: OrderItemStatus | string;
+  // Rejection metadata fields (for vendor rejection)
+  rejectionReason?: string | null;
+  rejectedBy?: string | null;
+  rejectedAt?: Date | null;
   // Return request metadata fields (status is now in status field)
   returnRequestedAt?: Date | null;
   returnQuantity?: number | null;
@@ -114,6 +118,7 @@ export interface IUpdateOrder {
 export interface IUpdateOrderItemStatus {
   orderItemId: string;
   status: OrderItemStatus | string;
+  rejectionReason?: string; // Required when status is "rejected"
 }
 
 export interface IRequestReturn {

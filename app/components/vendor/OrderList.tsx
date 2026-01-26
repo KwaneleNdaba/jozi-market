@@ -62,15 +62,26 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [rejectingItemId, setRejectingItemId] = useState<string | null>(null);
+  const [rejectionReasons, setRejectionReasons] = useState<Map<string, string>>(new Map());
+  
+  // Rejection reasons dropdown options
+  const rejectionReasonOptions = [
+    'Out of Stock',
+    'Product Discontinued',
+    'Quality Issue',
+    'Manufacturing Delay',
+    'Supplier Issue',
+    'Other'
+  ];
 
   // Vendor allowed statuses: pending, accepted, rejected, processing, picked, packed, shipped
   const vendorAllowedStatuses: Array<{ value: OrderItemStatus; label: string }> = [
     { value: OrderItemStatus.PENDING, label: 'Pending' },
     { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
     { value: OrderItemStatus.REJECTED, label: 'Rejected' },
-    { value: OrderItemStatus.PROCESSING, label: 'Processing' },
+    { value: OrderItemStatus.PROCESSING, label: 'Processed' }, // Display label changed for UX, value remains "processing"
     { value: OrderItemStatus.PICKED, label: 'Picked' },
-    { value: OrderItemStatus.PACKED, label: 'Packed' },
   ];
 
   const handleItemStatusUpdate = async (orderItemId: string, newStatus: OrderItemStatus) => {
@@ -79,11 +90,27 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
       return;
     }
 
+    // If rejecting, check if reason is provided
+    if (newStatus === OrderItemStatus.REJECTED) {
+      const reason = rejectionReasons.get(orderItemId);
+      if (!reason || reason.trim() === '') {
+        // Show rejection reason dropdown for this item
+        setRejectingItemId(orderItemId);
+        return;
+      }
+    } else {
+      // Clear rejection state if changing to non-rejected status
+      setRejectingItemId(null);
+      rejectionReasons.delete(orderItemId);
+    }
+
     setUpdatingItemId(orderItemId);
     try {
+      const reason = newStatus === OrderItemStatus.REJECTED ? rejectionReasons.get(orderItemId) : undefined;
       const response = await updateOrderItemStatusAction(orderItemId, {
         orderItemId,
         status: newStatus,
+        rejectionReason: reason,
       });
 
       if (response.error) {
@@ -93,12 +120,37 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
         if (onOrdersRefresh) {
           onOrdersRefresh();
         }
+        // Clear rejection state after successful update
+        setRejectingItemId(null);
+        rejectionReasons.delete(orderItemId);
       }
     } catch (error: any) {
       showError(error?.message || 'Failed to update order item status');
     } finally {
       setUpdatingItemId(null);
     }
+  };
+
+  const handleRejectionReasonChange = (orderItemId: string, reason: string) => {
+    setRejectionReasons(prev => {
+      const newMap = new Map(prev);
+      if (reason) {
+        newMap.set(orderItemId, reason);
+      } else {
+        newMap.delete(orderItemId);
+      }
+      return newMap;
+    });
+  };
+
+  const handleConfirmRejection = async (orderItemId: string) => {
+    const reason = rejectionReasons.get(orderItemId);
+    if (!reason || reason.trim() === '') {
+      showError('Please select a rejection reason');
+      return;
+    }
+
+    await handleItemStatusUpdate(orderItemId, OrderItemStatus.REJECTED);
   };
 
   // Transform backend orders to frontend format
@@ -507,71 +559,163 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                       const productName = product.title || product.name || item.name || 'Unknown Product';
                       const productImage = product.images?.[0]?.file || product.images?.[0] || undefined;
                       
+                      // Check if order has cancellation or return request (vendor cannot edit status if ANY request exists)
+                      const order = selectedOrder.originalOrder;
+                      // Check order-level cancellation request (any request, regardless of review status)
+                      const hasOrderCancellationRequest = !!order?.cancellationRequestedAt;
+                      // Check order-level return request (any request, regardless of review status)
+                      const hasOrderReturnRequest = !!order?.returnRequestedAt;
+                      // Check item-level return request (any request, regardless of review status)
+                      const hasItemReturnRequest = !!item?.returnRequestedAt;
+                      // Vendor cannot edit if there's ANY cancellation or return request (order or item level)
+                      const isStatusEditable = !hasOrderCancellationRequest && !hasOrderReturnRequest && !hasItemReturnRequest;
+                      
                       return (
-                        <div key={orderItemId || idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex items-center justify-center text-jozi-forest shadow-sm border border-gray-100 shrink-0">
-                              {productImage && !hasImageError ? (
-                                <img 
-                                  src={productImage} 
-                                  alt={productName}
-                                  className="w-full h-full object-cover"
-                                  onError={() => {
-                                    setImageErrors(prev => new Set(prev).add(imageKey));
-                                  }}
-                                />
-                              ) : (
-                                <Package className="w-5 h-5 opacity-40" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-black text-jozi-forest text-sm leading-tight">{productName}</p>
-                              <p className="text-[10px] font-bold  uppercase tracking-widest mt-1 text-jozi-gold">Variant: {item.variant || 'Standard'}</p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[9px] font-black text-gray-400 uppercase">Qty: {item.quantity || item.qty}</span>
-                                <span className={`text-[9px] px-2 py-0.5 rounded border font-black uppercase ${
-                                  currentStatus === OrderItemStatus.SHIPPED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                  currentStatus === OrderItemStatus.PACKED ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                  currentStatus === OrderItemStatus.PICKED ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                                  currentStatus === OrderItemStatus.PROCESSING ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                                  currentStatus === OrderItemStatus.ACCEPTED ? 'bg-green-50 text-green-600 border-green-100' :
-                                  currentStatus === OrderItemStatus.REJECTED ? 'bg-red-50 text-red-600 border-red-100' :
-                                  'bg-gray-50 text-gray-600 border-gray-100'
-                                }`}>
-                                  {currentStatus.replace(/_/g, ' ').toUpperCase()}
-                                </span>
+                        <div key={orderItemId || idx} className={`p-4 bg-gray-50 rounded-2xl border border-gray-100 ${rejectingItemId === orderItemId ? 'pb-6' : ''}`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4 flex-1 min-w-0">
+                              <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex items-center justify-center text-jozi-forest shadow-sm border border-gray-100 shrink-0">
+                                {productImage && !hasImageError ? (
+                                  <img 
+                                    src={productImage} 
+                                    alt={productName}
+                                    className="w-full h-full object-cover"
+                                    onError={() => {
+                                      setImageErrors(prev => new Set(prev).add(imageKey));
+                                    }}
+                                  />
+                                ) : (
+                                  <Package className="w-5 h-5 opacity-40" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-black text-jozi-forest text-sm leading-tight truncate">{productName}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-jozi-gold">Variant: {item.variant || 'Standard'}</p>
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                  <span className="text-[9px] font-black text-gray-400 uppercase">Qty: {item.quantity || item.qty}</span>
+                                  <span className={`text-[9px] px-2 py-0.5 rounded border font-black uppercase ${
+                                    currentStatus === OrderItemStatus.SHIPPED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                    currentStatus === OrderItemStatus.PACKED ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                    currentStatus === OrderItemStatus.PICKED ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                    currentStatus === OrderItemStatus.PROCESSING ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                    currentStatus === OrderItemStatus.ACCEPTED ? 'bg-green-50 text-green-600 border-green-100' :
+                                    currentStatus === OrderItemStatus.REJECTED ? 'bg-red-50 text-red-600 border-red-100' :
+                                    'bg-gray-50 text-gray-600 border-gray-100'
+                                  }`}>
+                                    {currentStatus.replace(/_/g, ' ').toUpperCase()}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right mr-4">
-                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
-                              <p className="font-black text-jozi-forest mt-1">R{typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || item.price || 0}</p>
+                            <div className="flex items-center space-x-4 shrink-0 ml-4">
+                              <div className="text-right mr-4">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
+                                <p className="font-black text-jozi-forest mt-1">R{typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || item.price || 0}</p>
+                              </div>
+                              {orderItemId && (
+                                <div className="relative shrink-0">
+                                  {!isStatusEditable && (
+                                    <div className="mb-2 text-[9px] font-black text-amber-600 uppercase tracking-widest text-center">
+                                      {hasOrderCancellationRequest ? 'Cancellation Requested' : 
+                                       hasItemReturnRequest ? 'Item Return Requested' : 
+                                       'Return Requested'}
+                                    </div>
+                                  )}
+                                  <select
+                                    value={currentStatus}
+                                    onChange={(e) => {
+                                      const newStatus = e.target.value as OrderItemStatus;
+                                      if (newStatus === OrderItemStatus.REJECTED) {
+                                        setRejectingItemId(orderItemId);
+                                        if (!rejectionReasons.has(orderItemId)) {
+                                          handleRejectionReasonChange(orderItemId, '');
+                                        }
+                                      } else {
+                                        setRejectingItemId(null);
+                                        const newMap = new Map(rejectionReasons);
+                                        newMap.delete(orderItemId);
+                                        setRejectionReasons(newMap);
+                                        handleItemStatusUpdate(orderItemId, newStatus);
+                                      }
+                                    }}
+                                    disabled={isUpdating || !isStatusEditable}
+                                    title={!isStatusEditable ? (
+                                      hasOrderCancellationRequest ? 'Cannot edit: Cancellation request exists' : 
+                                      hasItemReturnRequest ? 'Cannot edit: Item return request exists' :
+                                      'Cannot edit: Return request exists'
+                                    ) : ''}
+                                    className={`appearance-none bg-white border-2 rounded-xl px-3 py-2 pr-8 font-black text-[10px] uppercase tracking-widest transition-all min-w-[140px] text-jozi-forest ${
+                                      isUpdating || !isStatusEditable 
+                                        ? 'opacity-50 cursor-not-allowed border-gray-200' 
+                                        : 'cursor-pointer hover:border-jozi-gold border-gray-200'
+                                    }`}
+                                  >
+                                    {vendorAllowedStatuses.map((status) => (
+                                      <option key={status.value} value={status.value} className="text-jozi-forest">
+                                        {status.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {isUpdating && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                                      <Loader2 className="w-4 h-4 text-jozi-gold animate-spin" />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                            {orderItemId && (
-                              <div className="relative">
+                          </div>
+                          
+                          {/* Rejection Reason Dropdown - appears when Rejected is selected */}
+                          {rejectingItemId === orderItemId && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mt-3 pt-3 border-t border-gray-200"
+                            >
+                              <div className="flex items-center gap-2">
+                                <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest shrink-0">
+                                  Rejection Reason:
+                                </label>
                                 <select
-                                  value={currentStatus}
-                                  onChange={(e) => handleItemStatusUpdate(orderItemId, e.target.value as OrderItemStatus)}
-                                  disabled={isUpdating}
-                                  className={`appearance-none bg-white border-2 rounded-xl px-3 py-2 pr-8 font-black text-[10px] uppercase tracking-widest cursor-pointer transition-all min-w-[140px] text-jozi-forest ${
-                                    isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:border-jozi-gold border-gray-200'
-                                  }`}
+                                  value={rejectionReasons.get(orderItemId) || ''}
+                                  onChange={(e) => handleRejectionReasonChange(orderItemId, e.target.value)}
+                                  className="appearance-none bg-white border-2 border-red-200 rounded-xl px-3 py-2 pr-8 font-bold text-[10px] uppercase tracking-widest cursor-pointer transition-all text-jozi-forest hover:border-red-300 flex-1 min-w-0"
                                 >
-                                  {vendorAllowedStatuses.map((status) => (
-                                    <option key={status.value} value={status.value} className="text-jozi-forest">
-                                      {status.label}
+                                  <option value="">Select reason...</option>
+                                  {rejectionReasonOptions.map((reason) => (
+                                    <option key={reason} value={reason} className="text-jozi-forest">
+                                      {reason}
                                     </option>
                                   ))}
                                 </select>
-                                {isUpdating && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
-                                    <Loader2 className="w-4 h-4 text-jozi-gold animate-spin" />
-                                  </div>
-                                )}
+                                <button
+                                  onClick={() => handleConfirmRejection(orderItemId)}
+                                  disabled={!rejectionReasons.get(orderItemId) || rejectionReasons.get(orderItemId)?.trim() === ''}
+                                  className={`px-3 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap shrink-0 ${
+                                    rejectionReasons.get(orderItemId) && rejectionReasons.get(orderItemId)?.trim() !== ''
+                                      ? 'bg-red-500 text-white hover:bg-red-600'
+                                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                  }`}
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setRejectingItemId(null);
+                                    const newMap = new Map(rejectionReasons);
+                                    newMap.delete(orderItemId);
+                                    setRejectionReasons(newMap);
+                                  }}
+                                  className="px-3 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all whitespace-nowrap shrink-0"
+                                  title="Cancel rejection"
+                                >
+                                  Cancel
+                                </button>
                               </div>
-                            )}
-                          </div>
+                            </motion.div>
+                          )}
                         </div>
                       );
                     })}
@@ -632,6 +776,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

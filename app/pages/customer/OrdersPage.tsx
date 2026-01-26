@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Search,
   Filter,
-  Receipt
+  Receipt,
+  Ban
 } from 'lucide-react';
 import CustomerSidebar from '../../components/CustomerSidebar';
 import { getCurrentUserAction } from '@/app/actions/auth/auth';
@@ -57,6 +58,8 @@ interface OrderDetail {
     orderItemId?: string; // Database ID for the order item
     returnRequestStatus?: string | null;
     returnQuantity?: number | null;
+    rejectionReason?: string | null; // Vendor rejection reason
+    status?: string; // Order item status
   }[];
 }
 
@@ -246,6 +249,8 @@ const OrdersPage: React.FC = () => {
             ? (item.status === 'return_approved' ? 'approved' : item.status === 'return_rejected' ? 'rejected' : 'pending')
             : null,
           returnQuantity: item.returnQuantity || null,
+          rejectionReason: item.rejectionReason || undefined, // Vendor rejection reason
+          status: item.status || undefined, // Order item status
         };
       });
 
@@ -572,6 +577,22 @@ const OrdersPage: React.FC = () => {
                               <div className="grow text-center sm:text-left">
                                 <h4 className="text-lg font-black text-jozi-forest leading-tight">{item.name}</h4>
                                 <p className="text-[10px] font-bold text-jozi-gold uppercase tracking-widest mt-1">by {item.vendor}</p>
+                                
+                                {/* Rejection Status Badge */}
+                                {item.status === 'rejected' && item.rejectionReason && (
+                                  <div className="mt-2 inline-flex flex-col gap-1 px-3 py-2 rounded-lg bg-red-50 border border-red-100">
+                                    <div className="flex items-center gap-1">
+                                      <Ban className="w-3 h-3 text-red-500" />
+                                      <span className="text-[9px] font-black uppercase tracking-wider text-red-600">
+                                        Item Rejected
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] font-medium text-red-700 italic leading-relaxed">
+                                      Reason: {item.rejectionReason}
+                                    </p>
+                                  </div>
+                                )}
+                                
                                 {/* Return Status Badge */}
                                 {item.returnRequestStatus && (
                                   <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 border border-blue-100">

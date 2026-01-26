@@ -34,24 +34,25 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getAllOrdersAction, getOrderItemsGroupedByDateAndVendorAction, updateOrderItemStatusAction } from '@/app/actions/order/index';
-import { IOrder, IOrderItemsGroupedResponse, IOrderItemsByVendorAndDate, OrderItemStatus } from '@/interfaces/order/order';
+import { IOrder, IOrderItemsGroupedResponse, IOrderItemsByVendorAndDate, OrderItemStatus, OrderStatus } from '@/interfaces/order/order';
 import { useToast } from '@/app/contexts/ToastContext';
 
 // --- Types ---
 
-export type OrderStatus = 
-  | 'Processing' 
-  | 'Picked' 
-  | 'Out for Delivery' 
-  | 'Delivered' 
-  | 'Cancelled' 
-  | 'Cancellation Requested'
-  | 'Returned'
-  | 'Return Requested'
-  | 'Return in Progress'
-  | 'Ready to Ship'
-  | 'Refund Pending'
-  | 'Refunded';
+// User-friendly labels for OrderStatus enum values
+const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  [OrderStatus.PENDING]: 'Pending',
+  [OrderStatus.CONFIRMED]: 'Confirmed',
+  [OrderStatus.PROCESSING]: 'Processing',
+  [OrderStatus.READY_TO_SHIP]: 'Ready to Ship',
+  [OrderStatus.SHIPPED]: 'Shipped',
+  [OrderStatus.DELIVERED]: 'Delivered',
+  [OrderStatus.CANCELLED]: 'Cancelled',
+  [OrderStatus.RETURN_IN_PROGRESS]: 'Return in Progress',
+  [OrderStatus.RETURNED]: 'Returned',
+  [OrderStatus.REFUND_PENDING]: 'Refund Pending',
+  [OrderStatus.REFUNDED]: 'Refunded',
+};
 
 export interface ProductItem {
   name: string;
@@ -69,17 +70,18 @@ export interface MarketOrder {
   customerEmail: string;
   products: ProductItem[];
   totalAmount: number;
-  status: OrderStatus;
+  status: OrderStatus | string; // Use enum or string for flexibility
   orderDate: string; // ISO Date YYYY-MM-DD
   category: string;
   paymentMethod: string;
   shippingAddress: string;
   requestReason?: string;
+  originalOrder?: IOrder; // Keep reference to original order for cancellation/return checks
 }
 
 // --- Mock Data (Expanded for Volume Testing) ---
 
-const generateBulkOrders = (count: number, vendor: string, date: string, status: OrderStatus): MarketOrder[] => {
+const generateBulkOrders = (count: number, vendor: string, date: string, status: OrderStatus | string): MarketOrder[] => {
   return Array.from({ length: count }).map((_, i) => ({
     id: `ORD-${date.replace(/-/g, '')}-${vendor.substring(0,3).toUpperCase()}-${i}`,
     customerName: `Bulk Customer ${i}`,
@@ -96,17 +98,17 @@ const generateBulkOrders = (count: number, vendor: string, date: string, status:
 
 const MOCK_ORDERS: MarketOrder[] = [
   // ... existing mock data ...
-  { id: 'ORD-2041', customerName: 'Lerato Dlamini', customerEmail: 'lerato@jozi.com', products: [{ name: 'Shweshwe Evening Dress', quantity: 1, price: 1250, vendorName: 'Maboneng Textiles' }], totalAmount: 1250, status: 'Processing', orderDate: '2024-10-22', category: 'Fashion', paymentMethod: 'Card', shippingAddress: '12 Gwigwi Mrwebi St, Newtown' },
-  { id: 'ORD-2042', customerName: 'Kevin Naidoo', customerEmail: 'kevin.n@gmail.com', products: [{ name: 'Zulu Beadwork Necklace', quantity: 2, price: 320, vendorName: 'Soweto Gold' }], totalAmount: 640, status: 'Cancellation Requested', requestReason: 'Found a cheaper alternative', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '44 Vilakazi St, Soweto' },
-  { id: 'ORD-2046', customerName: 'Michael Botha', customerEmail: 'm.botha@corp.za', products: [{ name: 'Silver Fern Earrings', quantity: 1, price: 490, vendorName: 'Soweto Gold' }], totalAmount: 490, status: 'Return Requested', requestReason: 'Item arrived damaged', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '12 Jan Smuts Ave, Westcliff' },
+  { id: 'ORD-2041', customerName: 'Lerato Dlamini', customerEmail: 'lerato@jozi.com', products: [{ name: 'Shweshwe Evening Dress', quantity: 1, price: 1250, vendorName: 'Maboneng Textiles' }], totalAmount: 1250, status: OrderStatus.PROCESSING, orderDate: '2024-10-22', category: 'Fashion', paymentMethod: 'Card', shippingAddress: '12 Gwigwi Mrwebi St, Newtown' },
+  { id: 'ORD-2042', customerName: 'Kevin Naidoo', customerEmail: 'kevin.n@gmail.com', products: [{ name: 'Zulu Beadwork Necklace', quantity: 2, price: 320, vendorName: 'Soweto Gold' }], totalAmount: 640, status: OrderStatus.PENDING, requestReason: 'Found a cheaper alternative', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '44 Vilakazi St, Soweto' },
+  { id: 'ORD-2046', customerName: 'Michael Botha', customerEmail: 'm.botha@corp.za', products: [{ name: 'Silver Fern Earrings', quantity: 1, price: 490, vendorName: 'Soweto Gold' }], totalAmount: 490, status: OrderStatus.RETURN_IN_PROGRESS, requestReason: 'Item arrived damaged', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '12 Jan Smuts Ave, Westcliff' },
   
   // Generating "Volume" for Maboneng Textiles on a specific date to test scalability
-  ...generateBulkOrders(12, 'Maboneng Textiles', '2024-10-22', 'Processing'),
-  ...generateBulkOrders(5, 'Maboneng Textiles', '2024-10-22', 'Delivered'),
-  ...generateBulkOrders(3, 'Maboneng Textiles', '2024-10-22', 'Cancelled'),
+  ...generateBulkOrders(12, 'Maboneng Textiles', '2024-10-22', OrderStatus.PROCESSING),
+  ...generateBulkOrders(5, 'Maboneng Textiles', '2024-10-22', OrderStatus.DELIVERED),
+  ...generateBulkOrders(3, 'Maboneng Textiles', '2024-10-22', OrderStatus.CANCELLED),
   
   // Another date
-  ...generateBulkOrders(8, 'Jozi Apothecary', '2024-10-21', 'Delivered'),
+  ...generateBulkOrders(8, 'Jozi Apothecary', '2024-10-21', OrderStatus.DELIVERED),
 ];
 
 const ITEMS_PER_PAGE = 8;
@@ -164,48 +166,41 @@ const AdminOrderManagement: React.FC = () => {
       };
     });
 
-    // Determine status mapping
-    let status: OrderStatus = 'Processing';
-    const orderStatusLower = (order.status || '').toLowerCase();
+    // Determine status mapping - use enum values
+    let status: OrderStatus | string = OrderStatus.PENDING;
+    const orderStatusValue = order.status as OrderStatus | string;
     
-    if (orderStatusLower === 'pending' || orderStatusLower === 'processing') {
-      status = 'Processing';
-    } else if (orderStatusLower === 'shipped') {
-      status = 'Out for Delivery';
-    } else if (orderStatusLower === 'delivered') {
-      status = 'Delivered';
-    } else if (orderStatusLower === 'cancelled') {
-      status = 'Cancelled';
-    } else if (orderStatusLower === 'returned') {
-      status = 'Returned';
-    } else if (orderStatusLower === 'return_in_progress') {
-      status = 'Return in Progress';
-    } else if (orderStatusLower === 'ready_to_ship') {
-      status = 'Ready to Ship';
-    } else if (orderStatusLower === 'refund_pending') {
-      status = 'Refund Pending';
-    } else if (orderStatusLower === 'refunded') {
-      status = 'Refunded';
-    }
-    
-    // Check for cancellation request (derived from status and metadata)
-    if (order.cancellationRequestedAt) {
-      if (orderStatusLower === 'cancelled') {
-        status = 'Cancelled';
-      } else if (!order.cancellationRejectionReason) {
-        status = 'Cancellation Requested';
+    // Map to enum if it's a valid enum value, otherwise keep as string
+    if (typeof orderStatusValue === 'string') {
+      const normalizedStatus = orderStatusValue.toLowerCase();
+      if (normalizedStatus === 'pending') {
+        status = OrderStatus.PENDING;
+      } else if (normalizedStatus === 'confirmed') {
+        status = OrderStatus.CONFIRMED;
+      } else if (normalizedStatus === 'processing') {
+        status = OrderStatus.PROCESSING;
+      } else if (normalizedStatus === 'ready_to_ship') {
+        status = OrderStatus.READY_TO_SHIP;
+      } else if (normalizedStatus === 'shipped') {
+        status = OrderStatus.SHIPPED;
+      } else if (normalizedStatus === 'delivered') {
+        status = OrderStatus.DELIVERED;
+      } else if (normalizedStatus === 'cancelled') {
+        status = OrderStatus.CANCELLED;
+      } else if (normalizedStatus === 'return_in_progress') {
+        status = OrderStatus.RETURN_IN_PROGRESS;
+      } else if (normalizedStatus === 'returned') {
+        status = OrderStatus.RETURNED;
+      } else if (normalizedStatus === 'refund_pending') {
+        status = OrderStatus.REFUND_PENDING;
+      } else if (normalizedStatus === 'refunded') {
+        status = OrderStatus.REFUNDED;
+      } else {
+        // Keep original value if it doesn't match enum
+        status = orderStatusValue;
       }
-    }
-    
-    // Check for return request (derived from status and metadata)
-    if (order.returnRequestedAt) {
-      if (orderStatusLower === 'return_in_progress') {
-        status = 'Return in Progress';
-      } else if (orderStatusLower === 'returned') {
-        status = 'Returned';
-      } else if (!order.returnRejectionReason) {
-        status = 'Return Requested';
-      }
+    } else {
+      status = orderStatusValue;
     }
 
     // Format shipping address
@@ -243,7 +238,8 @@ const AdminOrderManagement: React.FC = () => {
       category: products[0]?.vendorName || 'General',
       paymentMethod: order.paymentMethod || 'Card',
       shippingAddress,
-      requestReason
+      requestReason,
+      originalOrder: order // Store original order for cancellation/return checks
     };
   };
 
@@ -308,11 +304,12 @@ const AdminOrderManagement: React.FC = () => {
   };
 
   // Admin allowed statuses (full control - all OrderItemStatus values)
+  // Admin can see and update all statuses regardless of cancellation/return requests
   const adminAllowedStatuses: Array<{ value: OrderItemStatus; label: string }> = [
     { value: OrderItemStatus.PENDING, label: 'Pending' },
     { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
     { value: OrderItemStatus.REJECTED, label: 'Rejected' },
-    { value: OrderItemStatus.PROCESSING, label: 'Processing' },
+    { value: OrderItemStatus.PROCESSING, label: 'Processed' }, // Display label changed for UX, value remains "processing"
     { value: OrderItemStatus.PICKED, label: 'Picked' },
     { value: OrderItemStatus.PACKED, label: 'Packed' },
     { value: OrderItemStatus.SHIPPED, label: 'Shipped' },
@@ -356,21 +353,37 @@ const AdminOrderManagement: React.FC = () => {
 
   // --- Helpers ---
 
-  const getStatusStyles = (status: OrderStatus) => {
-    switch (status) {
-      case 'Processing': return 'bg-blue-50 text-blue-600 border-blue-100';
-      case 'Picked': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
-      case 'Out for Delivery': return 'bg-purple-50 text-purple-600 border-purple-100';
-      case 'Delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      case 'Cancelled': return 'bg-gray-100 text-gray-500 border-gray-200 line-through';
-      case 'Cancellation Requested': return 'bg-red-50 text-red-600 border-red-100 animate-pulse';
-      case 'Returned': return 'bg-gray-100 text-gray-600 border-gray-200';
-      case 'Return Requested': return 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse';
+  const getStatusStyles = (status: OrderStatus | string) => {
+    // Handle both enum values and string values
+    const statusValue = typeof status === 'string' ? status : status;
+    switch (statusValue) {
+      case OrderStatus.PENDING:
+      case 'pending': return 'bg-gray-50 text-gray-600 border-gray-100';
+      case OrderStatus.CONFIRMED:
+      case 'confirmed': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case OrderStatus.PROCESSING:
+      case 'processing': return 'bg-blue-50 text-blue-600 border-blue-100';
+      case OrderStatus.READY_TO_SHIP:
+      case 'ready_to_ship': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+      case OrderStatus.SHIPPED:
+      case 'shipped': return 'bg-purple-50 text-purple-600 border-purple-100';
+      case OrderStatus.DELIVERED:
+      case 'delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      case OrderStatus.CANCELLED:
+      case 'cancelled': return 'bg-gray-100 text-gray-500 border-gray-200 line-through';
+      case OrderStatus.RETURN_IN_PROGRESS:
+      case 'return_in_progress': return 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse';
+      case OrderStatus.RETURNED:
+      case 'returned': return 'bg-gray-100 text-gray-600 border-gray-200';
+      case OrderStatus.REFUND_PENDING:
+      case 'refund_pending': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
+      case OrderStatus.REFUNDED:
+      case 'refunded': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
       default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
 
-  const handleStatusUpdate = (id: string, newStatus: OrderStatus) => {
+  const handleStatusUpdate = (id: string, newStatus: OrderStatus | string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
     if (selectedOrder?.id === id) setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
   };
@@ -438,7 +451,7 @@ const AdminOrderManagement: React.FC = () => {
                 : date;
 
               // Determine status from order (if available) or default
-              let status: OrderStatus = 'Processing';
+              let status: OrderStatus = OrderStatus.PROCESSING;
               // Note: Status would need to come from the order if available in the response
               
               const productImage = item.product?.images && item.product.images.length > 0
@@ -858,16 +871,35 @@ const AdminOrderManagement: React.FC = () => {
 
                         {/* Action Column */}
                         <div className="md:w-1/4 flex flex-col gap-3 justify-center pl-6 border-l border-gray-100">
-                          {order.status.includes('Requested') ? (
+                          {(order.status === OrderStatus.RETURN_IN_PROGRESS || 
+                            order.status === 'return_in_progress' ||
+                            (typeof order.status === 'string' && order.status.toLowerCase().includes('return') && order.status.toLowerCase().includes('request'))) ? (
                             <>
                               <button 
-                                onClick={() => handleStatusUpdate(order.id, order.status.includes('Return') ? 'Returned' : 'Cancelled')}
+                                onClick={() => handleStatusUpdate(order.id, OrderStatus.RETURNED)}
                                 className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2"
                               >
                                 <ThumbsUp className="w-4 h-4" /> Approve
                               </button>
                               <button 
-                                onClick={() => handleStatusUpdate(order.id, order.status.includes('Return') ? 'Delivered' : 'Processing')}
+                                onClick={() => handleStatusUpdate(order.id, OrderStatus.DELIVERED)}
+                                className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                              >
+                                <ThumbsDown className="w-4 h-4" /> Reject
+                              </button>
+                            </>
+                          ) : (order.status === OrderStatus.CANCELLED || 
+                                order.status === 'cancelled' ||
+                                (typeof order.status === 'string' && order.status.toLowerCase().includes('cancel') && order.status.toLowerCase().includes('request'))) ? (
+                            <>
+                              <button 
+                                onClick={() => handleStatusUpdate(order.id, OrderStatus.CANCELLED)}
+                                className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                              >
+                                <ThumbsUp className="w-4 h-4" /> Approve
+                              </button>
+                              <button 
+                                onClick={() => handleStatusUpdate(order.id, OrderStatus.PROCESSING)}
                                 className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
                               >
                                 <ThumbsDown className="w-4 h-4" /> Reject
@@ -1112,12 +1144,11 @@ const AdminOrderManagement: React.FC = () => {
                         value={selectedOrder.status}
                         onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value as OrderStatus)}
                       >
-                        <option value="Processing">Processing</option>
-                        <option value="Picked">Picked</option>
-                        <option value="Out for Delivery">Out for Delivery</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                        <option value="Returned">Returned</option>
+                        {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+                          <option key={value} value={value} className="text-jozi-forest">
+                            {label}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
