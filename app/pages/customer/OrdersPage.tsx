@@ -157,16 +157,24 @@ const OrdersPage: React.FC = () => {
       let statusLabel = capitalize(order.status);
       let statusCode = order.status.toLowerCase();
 
-      // Derive return request status from status and metadata
+      // Derive return request status from returnRequestedAt and order status
+      // returnRequestedAt indicates a return request has been issued
       let returnRequestStatus: string | null = null;
       if (order.returnRequestedAt) {
-        if (order.status === 'returned' || order.status === 'refunded') {
-          returnRequestStatus = 'approved';
-        } else if (order.returnRejectionReason) {
+        // If status is 'return_in_progress', admin has approved and it's in progress
+        if (order.status === 'return_in_progress') {
+          returnRequestStatus = 'in_progress';
+        } 
+        // If status is 'returned', the return is complete
+        else if (order.status === 'returned') {
+          returnRequestStatus = 'completed';
+        }
+        // If there's a rejection reason, the request was rejected
+        else if (order.returnRejectionReason) {
           returnRequestStatus = 'rejected';
-        } else if (order.status === 'return_in_progress') {
-          returnRequestStatus = 'approved';
-        } else {
+        }
+        // Otherwise, return request is pending (returnRequestedAt exists but status hasn't changed)
+        else {
           returnRequestStatus = 'pending';
         }
       }
@@ -185,8 +193,16 @@ const OrdersPage: React.FC = () => {
 
       // Priority 1: Return Requests
       if (returnRequestStatus) {
-        statusLabel = `Return ${capitalize(returnRequestStatus)}`;
-        statusCode = `return_${returnRequestStatus}`;
+        if (returnRequestStatus === 'in_progress') {
+          statusLabel = 'Return In Progress';
+          statusCode = 'return_in_progress';
+        } else if (returnRequestStatus === 'completed') {
+          statusLabel = 'Returned';
+          statusCode = 'returned';
+        } else {
+          statusLabel = `Return ${capitalize(returnRequestStatus)}`;
+          statusCode = `return_${returnRequestStatus}`;
+        }
       }
       // Priority 2: Cancellation Requests (if no return request)
       else if (cancellationRequestStatus) {
@@ -282,6 +298,28 @@ const OrdersPage: React.FC = () => {
     });
   };
 
+  // Helper to check if order has rejected or returned items
+  const getOrderItemStatus = (order: OrderDetail) => {
+    const hasRejectedItems = order.items.some(item => 
+      item.status === 'rejected' || 
+      item.rejectionReason
+    );
+    const hasReturnedItems = order.items.some(item => 
+      item.returnRequestStatus === 'approved' || 
+      item.status === 'return_approved' ||
+      (item.returnQuantity && item.returnQuantity > 0)
+    );
+    
+    if (hasRejectedItems && hasReturnedItems) {
+      return { hasRejected: true, hasReturned: true, message: 'Some items rejected & returned' };
+    } else if (hasRejectedItems) {
+      return { hasRejected: true, hasReturned: false, message: 'Some items rejected' };
+    } else if (hasReturnedItems) {
+      return { hasRejected: false, hasReturned: true, message: 'Some items returned' };
+    }
+    return { hasRejected: false, hasReturned: false, message: null };
+  };
+
   // Filter Logic
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -329,65 +367,11 @@ const OrdersPage: React.FC = () => {
     if (!orderId) { showError('Order ID is required'); return; }
     if (!reason.trim()) { showError('Please provide a reason'); return; }
 
-    // Find the order to get all items
-    const order = orders.find(o => o.orderId === orderId);
-    if (!order) {
-      showError('Order not found');
-      return;
-    }
-
-    // Get all order items that can be returned
-    // Include items that:
-    // 1. Don't have a return request, OR
-    // 2. Have a rejected return request, OR
-    // 3. Have a partial return (returnQuantity < quantity)
-    const itemsToReturn = order.items.filter(item => {
-      if (!item.orderItemId) return false;
-      
-      // If no return request status, can return
-      if (!item.returnRequestStatus) return true;
-      
-      // If rejected, can retry
-      if (item.returnRequestStatus === 'rejected') return true;
-      
-      // If pending or approved but partial return, can return remaining
-      if (item.returnRequestStatus === 'pending' || item.returnRequestStatus === 'approved') {
-        const returnQty = item.returnQuantity || 0;
-        return returnQty < item.quantity;
-      }
-      
-      return false;
-    });
-
-    if (itemsToReturn.length === 0) {
-      showError('No items available to return in this order');
-      return;
-    }
-
     setProcessingRequest(orderId);
     try {
-      // Bulk update all items with return request using the same reason
-      const returnPromises = itemsToReturn.map(item => {
-        // Calculate return quantity: full quantity minus already returned quantity
-        const alreadyReturned = item.returnQuantity || 0;
-        const returnQuantity = item.quantity - alreadyReturned;
-        
-        return requestItemReturnAction({
-          orderId: orderId,
-          orderItemId: item.orderItemId!,
-          returnQuantity: returnQuantity, // Return remaining quantity for each item
-          reason: reason.trim(),
-        });
-      });
-
-      const responses = await Promise.all(returnPromises);
-      
-      // Check if all requests succeeded
-      const allSucceeded = responses.every(r => !r.error);
-      const errors = responses.filter(r => r.error);
-      
-      if (allSucceeded) {
-        showSuccess(`Return request submitted successfully for ${itemsToReturn.length} item(s)`);
+      const response = await requestReturnAction({ orderId, reason: reason.trim() });
+      if (!response.error && response.data) {
+        showSuccess('Return request submitted successfully');
         setShowReasonModal(false);
         // Refresh
         const ordersResponse = await getMyOrdersAction();
@@ -395,13 +379,7 @@ const OrdersPage: React.FC = () => {
           setOrders(transformOrders(ordersResponse.data));
         }
       } else {
-        const errorMessages = errors.map(e => e.message).filter(Boolean);
-        showError(`Failed to submit return request for some items: ${errorMessages.join(', ')}`);
-        // Still refresh to show partial updates
-        const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) {
-          setOrders(transformOrders(ordersResponse.data));
-        }
+        showError(response.message || 'Failed to submit return request');
       }
     } catch (error: any) {
       showError(error?.message || 'Failed to submit return request');
@@ -518,7 +496,9 @@ const OrdersPage: React.FC = () => {
     else if (code.includes('transit') || code.includes('shipped')) styles = "bg-blue-100 text-blue-600";
     else if (code.includes('processing')) styles = "bg-amber-100 text-amber-600";
     else if (code.includes('cancelled') || code.includes('cancellation_approved')) styles = "bg-red-100 text-red-600";
-    else if (code.includes('returned') || code.includes('return_approved')) styles = "bg-purple-100 text-purple-600";
+    else if (code === 'returned' || code.includes('return_completed')) styles = "bg-purple-100 text-purple-600"; // Return completed
+    else if (code === 'return_in_progress') styles = "bg-blue-100 text-blue-600"; // Return in progress
+    else if (code.includes('return_rejected')) styles = "bg-red-100 text-red-600"; // Return rejected
     else if (code.includes('cancellation') || code.includes('return')) styles = "bg-orange-100 text-orange-600"; // Pending requests
 
     return (
@@ -870,7 +850,9 @@ const OrdersPage: React.FC = () => {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                       {filteredOrders.map((order) => (
+                       {filteredOrders.map((order) => {
+                         const itemStatus = getOrderItemStatus(order);
+                         return (
                          <div 
                           key={order.fullId} 
                           onClick={() => setSelectedOrderId(order.fullId)}
@@ -878,15 +860,28 @@ const OrdersPage: React.FC = () => {
                          >
                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
                              <div className="space-y-1.5">
-                               <div className="flex items-center gap-3">
+                               <div className="flex items-center gap-3 flex-wrap">
                                   <p className="text-lg font-black text-jozi-forest group-hover:text-jozi-gold transition-colors font-mono tracking-tight">
                                     {order.id}
                                   </p>
                                   {renderStatusBadge(order.statusLabel, order.statusCode)}
                                </div>
-                               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                                 <Clock className="w-3 h-3" /> {order.date}
-                               </p>
+                               <div className="flex items-center gap-3 flex-wrap">
+                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                                   <Clock className="w-3 h-3" /> {order.date}
+                                 </p>
+                                 {itemStatus.message && (
+                                   <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${
+                                     itemStatus.hasRejected && itemStatus.hasReturned
+                                       ? 'bg-orange-100 text-orange-700'
+                                       : itemStatus.hasRejected
+                                       ? 'bg-red-100 text-red-700'
+                                       : 'bg-blue-100 text-blue-700'
+                                   }`}>
+                                     {itemStatus.message}
+                                   </span>
+                                 )}
+                               </div>
                              </div>
                              <div className="flex items-center justify-between sm:justify-end gap-6 min-w-[150px]">
                                <p className="text-xl font-black text-jozi-forest">{order.total}</p>
@@ -913,7 +908,8 @@ const OrdersPage: React.FC = () => {
                              </div>
                            </div>
                          </div>
-                       ))}
+                         );
+                       })}
                       </div>
                     )}
                   </div>
