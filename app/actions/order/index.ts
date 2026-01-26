@@ -2,7 +2,7 @@
 
 import { serverGET, serverPOST, serverPUT } from '@/lib/server-client';
 import { baseUrl } from '@/endpoints/url';
-import { IOrder, ICreateOrder, IUpdateOrder, IRequestReturn, IRequestCancellation, IRequestItemReturn, IVendorOrdersResponse } from '@/interfaces/order/order';
+import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestReturn, IRequestCancellation, IReviewReturn, IReviewCancellation, IRequestItemReturn, IReviewItemReturn, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from '@/interfaces/order/order';
 import { CustomResponse } from '@/interfaces/response';
 import { logger } from '@/lib/log';
 import { decodeServerAccessToken } from '@/lib/server-auth';
@@ -310,6 +310,135 @@ export async function requestItemReturnAction(
     return {
       data: null as any,
       message: err?.message || 'Failed to request item return',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to get order items grouped by date and vendor (admin only)
+ * Returns order items from the last 30 days grouped by date and vendor
+ */
+export async function getOrderItemsGroupedByDateAndVendorAction(): Promise<CustomResponse<IOrderItemsGroupedResponse>> {
+  try {
+    logger.info('[Order Action] Fetching order items grouped by date and vendor');
+    const response = await serverGET(`${baseUrl}/order/items/grouped`);
+    logger.info('[Order Action] Order items grouped by date and vendor retrieved successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Order Action] Error fetching grouped order items:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to fetch grouped order items',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to review return request (admin only)
+ */
+export async function reviewReturnAction(
+  reviewData: IReviewReturn
+): Promise<CustomResponse<IOrder>> {
+  try {
+    logger.info('[Order Action] Reviewing return request for order:', reviewData.orderId);
+    const response = await serverPUT(`${baseUrl}/order/return/review`, reviewData);
+    logger.info('[Order Action] Return request reviewed successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Order Action] Error reviewing return:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to review return request',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to review cancellation request (admin only)
+ */
+export async function reviewCancellationAction(
+  reviewData: IReviewCancellation
+): Promise<CustomResponse<IOrder>> {
+  try {
+    logger.info('[Order Action] Reviewing cancellation request for order:', reviewData.orderId);
+    const response = await serverPUT(`${baseUrl}/order/cancellation/review`, reviewData);
+    logger.info('[Order Action] Cancellation request reviewed successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Order Action] Error reviewing cancellation:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to review cancellation request',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to review item return request (admin only)
+ */
+export async function reviewItemReturnAction(
+  reviewData: IReviewItemReturn
+): Promise<CustomResponse<IOrder>> {
+  try {
+    logger.info('[Order Action] Reviewing item return request:', {
+      orderId: reviewData.orderId,
+      orderItemId: reviewData.orderItemId,
+    });
+    const response = await serverPUT(`${baseUrl}/order/item/return/review`, reviewData);
+    logger.info('[Order Action] Item return request reviewed successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Order Action] Error reviewing item return:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to review item return request',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to update order item status
+ * Vendor: Can update status for their products (accepted, rejected, processing, picked, packed, shipped)
+ * Admin: Can update status for any order item (full control)
+ */
+export async function updateOrderItemStatusAction(
+  orderItemId: string,
+  updateData: IUpdateOrderItemStatus
+): Promise<CustomResponse<IOrderItem>> {
+  try {
+    if (!orderItemId) {
+      return {
+        data: null as any,
+        message: 'Order Item ID is required',
+        error: true,
+      };
+    }
+
+    if (!updateData.status) {
+      return {
+        data: null as any,
+        message: 'Status is required',
+        error: true,
+      };
+    }
+
+    logger.info('[Order Action] Updating order item status:', {
+      orderItemId,
+      status: updateData.status,
+    });
+    const response = await serverPUT(`${baseUrl}/order/item/${orderItemId}/status`, updateData);
+    logger.info('[Order Action] Order item status updated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Order Action] Error updating order item status:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to update order item status',
       error: true,
     };
   }

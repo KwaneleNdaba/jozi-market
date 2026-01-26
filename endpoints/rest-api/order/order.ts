@@ -1,6 +1,6 @@
 import { baseUrl } from "../../url";
 import { CustomResponse } from "@/interfaces/response";
-import { IOrder, ICreateOrder, IUpdateOrder, IRequestReturn, IRequestCancellation, IRequestItemReturn, IVendorOrdersResponse } from "@/interfaces/order/order";
+import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestReturn, IRequestCancellation, IReviewReturn, IReviewCancellation, IRequestItemReturn, IReviewItemReturn, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from "@/interfaces/order/order";
 import { POST, GET, PUT } from "@/lib/client";
 import { logger } from "@/lib/log";
 
@@ -200,6 +200,104 @@ export const ORDER_API = {
       return {
         data: null as any,
         message: err?.message || "Failed to request item return",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Get order items grouped by date and vendor (admin only)
+   * Returns order items from the last 30 days grouped by date and vendor
+   */
+  GET_ORDER_ITEMS_GROUPED_BY_DATE_AND_VENDOR: async (): Promise<CustomResponse<IOrderItemsGroupedResponse>> => {
+    try {
+      logger.info(`[ORDER_API] Fetching order items grouped by date and vendor`);
+      const response = await GET(`${OrderBaseURL}/items/grouped`);
+      logger.info(`[ORDER_API] Order items grouped by date and vendor retrieved successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error fetching grouped order items:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to fetch grouped order items",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Review return request (admin only)
+   */
+  REVIEW_RETURN: async (reviewData: IReviewReturn): Promise<CustomResponse<IOrder>> => {
+    try {
+      logger.info(`[ORDER_API] Reviewing return request for order: ${reviewData.orderId}`);
+      const response = await PUT(`${OrderBaseURL}/return/review`, reviewData);
+      logger.info(`[ORDER_API] Return request reviewed successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error reviewing return:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to review return request",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Review cancellation request (admin only)
+   */
+  REVIEW_CANCELLATION: async (reviewData: IReviewCancellation): Promise<CustomResponse<IOrder>> => {
+    try {
+      logger.info(`[ORDER_API] Reviewing cancellation request for order: ${reviewData.orderId}`);
+      const response = await PUT(`${OrderBaseURL}/cancellation/review`, reviewData);
+      logger.info(`[ORDER_API] Cancellation request reviewed successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error reviewing cancellation:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to review cancellation request",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Review item return request (admin only)
+   */
+  REVIEW_ITEM_RETURN: async (reviewData: IReviewItemReturn): Promise<CustomResponse<IOrder>> => {
+    try {
+      logger.info(`[ORDER_API] Reviewing item return request for order item: ${reviewData.orderItemId} from order: ${reviewData.orderId}`);
+      const response = await PUT(`${OrderBaseURL}/item/return/review`, reviewData);
+      logger.info(`[ORDER_API] Item return request reviewed successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error reviewing item return:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to review item return request",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Update order item status (vendor - for their products, admin - full control)
+   * Allowed statuses for vendor: accepted, rejected, processing, picked, packed, shipped
+   * Admin can set any status
+   */
+  UPDATE_ORDER_ITEM_STATUS: async (orderItemId: string, updateData: IUpdateOrderItemStatus): Promise<CustomResponse<IOrderItem>> => {
+    try {
+      logger.info(`[ORDER_API] Updating order item status: ${orderItemId} to ${updateData.status}`);
+      const response = await PUT(`${OrderBaseURL}/item/${orderItemId}/status`, updateData);
+      logger.info(`[ORDER_API] Order item status updated successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error updating order item status:", err);
+      return {
+        data: null as any,
+        message: err?.message || "Failed to update order item status",
         error: true,
       };
     }

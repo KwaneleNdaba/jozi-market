@@ -54,26 +54,26 @@ const VendorOrdersPage: React.FC = () => {
   }, [showError]);
 
   // Fetch orders by vendor ID
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!user?.id) return;
+  const fetchOrders = async () => {
+    if (!user?.id) return;
 
-      try {
-        setLoadingOrders(true);
-        const response = await getOrdersByVendorIdAction(user.id);
-        if (!response.error && response.data) {
-          setVendorOrders(response.data);
-        } else {
-          showError(response.message || 'Failed to load orders');
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-        showError('Failed to load orders');
-      } finally {
-        setLoadingOrders(false);
+    try {
+      setLoadingOrders(true);
+      const response = await getOrdersByVendorIdAction(user.id);
+      if (!response.error && response.data) {
+        setVendorOrders(response.data);
+      } else {
+        showError(response.message || 'Failed to load orders');
       }
-    };
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      showError('Failed to load orders');
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
+  useEffect(() => {
     if (user?.id) {
       fetchOrders();
     }
@@ -194,6 +194,7 @@ const VendorOrdersPage: React.FC = () => {
               filterStatus={activeTab} 
               orders={allOrders}
               loading={loadingOrders}
+              onOrdersRefresh={fetchOrders}
             />
           )}
         </motion.div>

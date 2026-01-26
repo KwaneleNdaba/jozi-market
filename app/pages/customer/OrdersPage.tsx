@@ -154,25 +154,56 @@ const OrdersPage: React.FC = () => {
       let statusLabel = capitalize(order.status);
       let statusCode = order.status.toLowerCase();
 
+      // Derive return request status from status and metadata
+      let returnRequestStatus: string | null = null;
+      if (order.returnRequestedAt) {
+        if (order.status === 'returned' || order.status === 'refunded') {
+          returnRequestStatus = 'approved';
+        } else if (order.returnRejectionReason) {
+          returnRequestStatus = 'rejected';
+        } else if (order.status === 'return_in_progress') {
+          returnRequestStatus = 'approved';
+        } else {
+          returnRequestStatus = 'pending';
+        }
+      }
+
+      // Derive cancellation request status from status and metadata
+      let cancellationRequestStatus: string | null = null;
+      if (order.cancellationRequestedAt) {
+        if (order.status === 'cancelled') {
+          cancellationRequestStatus = 'approved';
+        } else if (order.cancellationRejectionReason) {
+          cancellationRequestStatus = 'rejected';
+        } else {
+          cancellationRequestStatus = 'pending';
+        }
+      }
+
       // Priority 1: Return Requests
-      if (order.returnRequestStatus) {
-        statusLabel = `Return ${capitalize(order.returnRequestStatus)}`;
-        statusCode = `return_${order.returnRequestStatus}`;
+      if (returnRequestStatus) {
+        statusLabel = `Return ${capitalize(returnRequestStatus)}`;
+        statusCode = `return_${returnRequestStatus}`;
       }
       // Priority 2: Cancellation Requests (if no return request)
-      else if (order.cancellationRequestStatus) {
-        statusLabel = `Cancellation ${capitalize(order.cancellationRequestStatus)}`;
-        statusCode = `cancellation_${order.cancellationRequestStatus}`;
+      else if (cancellationRequestStatus) {
+        statusLabel = `Cancellation ${capitalize(cancellationRequestStatus)}`;
+        statusCode = `cancellation_${cancellationRequestStatus}`;
       }
       // Priority 3: Standard Status Maps
       else {
         const statusMap: Record<string, string> = {
           'pending': 'Pending',
+          'confirmed': 'Processing',
           'processing': 'Processing',
+          'ready_to_ship': 'Ready to Ship',
           'shipped': 'In Transit',
           'delivered': 'Delivered',
           'cancelled': 'Cancelled',
+          'return_in_progress': 'Return in Progress',
           'returned': 'Returned',
+          'refund_pending': 'Refund Pending',
+          'refunded': 'Refunded',
         };
         statusLabel = statusMap[order.status.toLowerCase()] || 'Processing';
       }
@@ -211,7 +242,9 @@ const OrdersPage: React.FC = () => {
           quantity: item.quantity,
           image: firstImage,
           orderItemId: item.id, // Database ID for the order item
-          returnRequestStatus: item.returnRequestStatus || null,
+          returnRequestStatus: item.status && (item.status === 'return_requested' || item.status === 'return_approved' || item.status === 'return_rejected') 
+            ? (item.status === 'return_approved' ? 'approved' : item.status === 'return_rejected' ? 'rejected' : 'pending')
+            : null,
           returnQuantity: item.returnQuantity || null,
         };
       });
@@ -237,8 +270,8 @@ const OrdersPage: React.FC = () => {
         pointsEarned,
         deliveryAddress,
         trackingNumber: order.orderNumber, // Using order number as tracking for now
-        returnRequestStatus: order.returnRequestStatus,
-        cancellationRequestStatus: order.cancellationRequestStatus,
+        returnRequestStatus,
+        cancellationRequestStatus,
         items,
       };
     });

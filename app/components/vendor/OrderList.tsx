@@ -20,18 +20,23 @@ import {
   RefreshCw,
   X,
   RotateCcw,
-  // Fix: Added missing ShoppingCart import
-  ShoppingCart
+  ShoppingCart,
+  MapPin,
+  User,
+  Mail,
+  Phone,
+  Loader2
 } from 'lucide-react';
 import StatusBadge from '../StatusBadge';
-import OrderDetailModal from './OrderDetailModal';
-
-import { IOrder, OrderStatus, ReturnRequestStatus, CancellationRequestStatus } from '@/interfaces/order/order';
+import { IOrder, OrderStatus, OrderItemStatus } from '@/interfaces/order/order';
+import { updateOrderItemStatusAction } from '@/app/actions/order/index';
+import { useToast } from '@/app/contexts/ToastContext';
 
 interface OrderListProps {
   filterStatus: 'all' | 'pending' | 'completed';
   orders?: IOrder[];
   loading?: boolean;
+  onOrdersRefresh?: () => void; // Callback to refresh orders after update
 }
 
 interface TransformedOrder {
@@ -45,15 +50,56 @@ interface TransformedOrder {
   method: string;
   date: string;
   address: string;
-  cancellationRequestStatus?: CancellationRequestStatus | string | null;
-  returnRequestStatus?: ReturnRequestStatus | string | null;
+  cancellationRequestStatus?: string | null; // Derived from status field
+  returnRequestStatus?: string | null; // Derived from status field
   originalOrder?: IOrder; // Keep reference to original order
 }
 
-const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loading = false }) => {
+const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loading = false, onOrdersRefresh }) => {
+  const { showSuccess, showError } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<TransformedOrder | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+  // Vendor allowed statuses: pending, accepted, rejected, processing, picked, packed, shipped
+  const vendorAllowedStatuses: Array<{ value: OrderItemStatus; label: string }> = [
+    { value: OrderItemStatus.PENDING, label: 'Pending' },
+    { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
+    { value: OrderItemStatus.REJECTED, label: 'Rejected' },
+    { value: OrderItemStatus.PROCESSING, label: 'Processing' },
+    { value: OrderItemStatus.PICKED, label: 'Picked' },
+    { value: OrderItemStatus.PACKED, label: 'Packed' },
+  ];
+
+  const handleItemStatusUpdate = async (orderItemId: string, newStatus: OrderItemStatus) => {
+    if (!orderItemId || !selectedOrder?.originalOrder) {
+      showError('Order item ID is required');
+      return;
+    }
+
+    setUpdatingItemId(orderItemId);
+    try {
+      const response = await updateOrderItemStatusAction(orderItemId, {
+        orderItemId,
+        status: newStatus,
+      });
+
+      if (response.error) {
+        showError(response.message || 'Failed to update order item status');
+      } else {
+        showSuccess('Order item status updated successfully');
+        if (onOrdersRefresh) {
+          onOrdersRefresh();
+        }
+      }
+    } catch (error: any) {
+      showError(error?.message || 'Failed to update order item status');
+    } finally {
+      setUpdatingItemId(null);
+    }
+  };
 
   // Transform backend orders to frontend format
   const transformedOrders = useMemo(() => {
@@ -105,13 +151,44 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
       // Map status
       const statusMap: Record<string, string> = {
         'pending': 'Processing',
+        'confirmed': 'Processing',
         'processing': 'Processing',
+        'ready_to_ship': 'Ready to Ship',
         'shipped': 'In Transit',
         'delivered': 'Delivered',
         'cancelled': 'Cancelled',
+        'return_in_progress': 'Return in Progress',
         'returned': 'Returned',
+        'refund_pending': 'Refund Pending',
+        'refunded': 'Refunded',
       };
       const frontendStatus = statusMap[order.status.toLowerCase()] || order.status;
+
+      // Derive cancellation request status from status and metadata
+      let cancellationRequestStatus: string | null = null;
+      if (order.cancellationRequestedAt) {
+        if (order.status === OrderStatus.CANCELLED) {
+          cancellationRequestStatus = 'approved';
+        } else if (order.cancellationRejectionReason) {
+          cancellationRequestStatus = 'rejected';
+        } else {
+          cancellationRequestStatus = 'pending';
+        }
+      }
+
+      // Derive return request status from status and metadata
+      let returnRequestStatus: string | null = null;
+      if (order.returnRequestedAt) {
+        if (order.status === OrderStatus.RETURNED || order.status === OrderStatus.REFUNDED) {
+          returnRequestStatus = 'approved';
+        } else if (order.returnRejectionReason) {
+          returnRequestStatus = 'rejected';
+        } else if (order.status === OrderStatus.RETURN_IN_PROGRESS) {
+          returnRequestStatus = 'approved';
+        } else {
+          returnRequestStatus = 'pending';
+        }
+      }
 
       // Format address
       const address = order.shippingAddress 
@@ -132,8 +209,8 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
         method: order.paymentMethod || 'Card',
         date: formattedDate,
         address,
-        cancellationRequestStatus: order.cancellationRequestStatus,
-        returnRequestStatus: order.returnRequestStatus,
+        cancellationRequestStatus,
+        returnRequestStatus,
         originalOrder: order,
       };
     });
@@ -342,9 +419,217 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
         )}
       </div>
 
+      {/* --- ORDER DETAILS DRAWER --- */}
       <AnimatePresence>
         {selectedOrder && (
-          <OrderDetailModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+          <div className="fixed inset-0 z-50 flex justify-end">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => {
+                setSelectedOrder(null);
+                setImageErrors(new Set());
+              }}
+              className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-sm" 
+            />
+            
+            <motion.div 
+              initial={{ x: '100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50 shrink-0">
+                <div>
+                  <h2 className="text-3xl font-black text-jozi-forest tracking-tighter uppercase">{selectedOrder.id}</h2>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <StatusBadge status={selectedOrder.status} />
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Placed {selectedOrder.date.split(' ')[0]}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setSelectedOrder(null);
+                    setImageErrors(new Set());
+                  }}
+                  className="p-3 hover:bg-white rounded-xl transition-colors group shadow-sm"
+                >
+                  <X className="w-6 h-6 text-gray-400 group-hover:text-jozi-forest" />
+                </button>
+              </div>
+
+              <div className="grow overflow-y-auto p-8 space-y-10">
+                
+                {/* Timeline */}
+                <div className="space-y-6">
+                   <h3 className="text-xs font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-3">Fulfillment Journey</h3>
+                   <div className="relative pt-2">
+                      <div className="absolute top-2 bottom-4 left-6 w-[2px] bg-gray-100" />
+                      <div className="space-y-6 relative">
+                        {[
+                          { label: 'Order Received', time: selectedOrder.date.split(' ')[1] || '10:45 AM', active: true, icon: Clock },
+                          { label: 'Payments Verified', time: selectedOrder.payment === 'Paid' ? 'Verified' : 'Pending', active: selectedOrder.payment === 'Paid', icon: CheckCircle2 },
+                          { label: 'Processing', time: 'Pending', active: !['Processing'].includes(selectedOrder.status), icon: Package },
+                          { label: 'Out for Delivery', time: 'Pending', active: ['In Transit', 'Out for Delivery', 'Delivered'].includes(selectedOrder.status), icon: Truck },
+                          { label: 'Delivered', time: 'Pending', active: selectedOrder.status === 'Delivered', icon: MapPin }
+                        ].map((step, i) => (
+                          <div key={i} className="flex items-center space-x-6">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg z-10 transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-gray-100 text-gray-300'}`}>
+                              <step.icon className="w-5 h-5" />
+                            </div>
+                            <div className="grow">
+                              <p className={`font-black text-sm ${step.active ? 'text-jozi-forest' : 'text-gray-300'}`}>{step.label}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{step.active ? step.time : 'Awaiting Stage'}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+                </div>
+
+                {/* Items Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-black text-jozi-forest uppercase tracking-widest">Ordered Items</h3>
+                    <span className="text-[10px] font-black text-gray-400 uppercase bg-gray-50 px-3 py-1 rounded-full">{selectedOrder.items.length} Units</span>
+                  </div>
+                  <div className="space-y-3">
+                    {(selectedOrder.originalOrder?.items || []).map((item: any, idx: number) => {
+                      const imageKey = `${selectedOrder.id}-${idx}`;
+                      const hasImageError = imageErrors.has(imageKey);
+                      const orderItemId = item.id;
+                      const currentStatus = item.status || OrderItemStatus.PENDING;
+                      const isUpdating = updatingItemId === orderItemId;
+                      const product = item.product || {};
+                      const productName = product.title || product.name || item.name || 'Unknown Product';
+                      const productImage = product.images?.[0]?.file || product.images?.[0] || undefined;
+                      
+                      return (
+                        <div key={orderItemId || idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <div className="flex items-center space-x-4 flex-1">
+                            <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex items-center justify-center text-jozi-forest shadow-sm border border-gray-100 shrink-0">
+                              {productImage && !hasImageError ? (
+                                <img 
+                                  src={productImage} 
+                                  alt={productName}
+                                  className="w-full h-full object-cover"
+                                  onError={() => {
+                                    setImageErrors(prev => new Set(prev).add(imageKey));
+                                  }}
+                                />
+                              ) : (
+                                <Package className="w-5 h-5 opacity-40" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-black text-jozi-forest text-sm leading-tight">{productName}</p>
+                              <p className="text-[10px] font-bold  uppercase tracking-widest mt-1 text-jozi-gold">Variant: {item.variant || 'Standard'}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">Qty: {item.quantity || item.qty}</span>
+                                <span className={`text-[9px] px-2 py-0.5 rounded border font-black uppercase ${
+                                  currentStatus === OrderItemStatus.SHIPPED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                  currentStatus === OrderItemStatus.PACKED ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                  currentStatus === OrderItemStatus.PICKED ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                  currentStatus === OrderItemStatus.PROCESSING ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                  currentStatus === OrderItemStatus.ACCEPTED ? 'bg-green-50 text-green-600 border-green-100' :
+                                  currentStatus === OrderItemStatus.REJECTED ? 'bg-red-50 text-red-600 border-red-100' :
+                                  'bg-gray-50 text-gray-600 border-gray-100'
+                                }`}>
+                                  {currentStatus.replace(/_/g, ' ').toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right mr-4">
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
+                              <p className="font-black text-jozi-forest mt-1">R{typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || item.price || 0}</p>
+                            </div>
+                            {orderItemId && (
+                              <div className="relative">
+                                <select
+                                  value={currentStatus}
+                                  onChange={(e) => handleItemStatusUpdate(orderItemId, e.target.value as OrderItemStatus)}
+                                  disabled={isUpdating}
+                                  className={`appearance-none bg-white border-2 rounded-xl px-3 py-2 pr-8 font-black text-[10px] uppercase tracking-widest cursor-pointer transition-all min-w-[140px] text-jozi-forest ${
+                                    isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:border-jozi-gold border-gray-200'
+                                  }`}
+                                >
+                                  {vendorAllowedStatuses.map((status) => (
+                                    <option key={status.value} value={status.value} className="text-jozi-forest">
+                                      {status.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {isUpdating && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                                    <Loader2 className="w-4 h-4 text-jozi-gold animate-spin" />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                <div className="grid grid-cols-1 gap-8">
+                   <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-5">
+                      <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Customer Details</h4>
+                      <div className="flex items-start space-x-4">
+                        <User className="w-5 h-5 text-jozi-gold shrink-0 mt-1" />
+                        <div>
+                          <p className="font-bold text-jozi-forest leading-tight">{selectedOrder.customer}</p>
+                          <p className="text-xs text-gray-500 font-medium">{selectedOrder.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-4">
+                        <MapPin className="w-5 h-5 text-jozi-gold shrink-0 mt-1" />
+                        <p className="text-xs text-gray-500 font-medium leading-relaxed">{selectedOrder.address}</p>
+                      </div>
+                   </div>
+
+                   <div>
+                     <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Payment Summary</h4>
+                     <div className="space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="font-medium text-gray-500">Subtotal</span>
+                          <span className="font-bold text-jozi-forest">R{selectedOrder.total.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="font-medium text-gray-500">Method</span>
+                          <span className="font-bold text-jozi-forest flex items-center gap-2">
+                            <CreditCard className="w-3 h-3" /> {selectedOrder.method}
+                          </span>
+                        </div>
+                        <div className="h-px bg-gray-100 my-2" />
+                        <div className="flex justify-between items-center bg-jozi-forest text-white p-4 rounded-xl shadow-lg">
+                          <span className="text-xs font-black uppercase tracking-widest text-jozi-gold">Total Paid</span>
+                          <span className="text-xl font-black">R{selectedOrder.total.toFixed(2)}</span>
+                        </div>
+                     </div>
+                   </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-white border-t border-gray-100 shrink-0 flex flex-col gap-4">
+                <div className="flex gap-3">
+                  <button className="flex-1 py-3 bg-jozi-forest text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all">
+                    Print Manifest
+                  </button>
+                  <button className="flex-1 py-3 bg-gray-50 text-jozi-forest rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-200">
+                    Generate Invoice
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

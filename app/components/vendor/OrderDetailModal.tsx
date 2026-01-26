@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
@@ -19,16 +19,64 @@ import {
   ChevronRight,
   User,
   Heart,
-  Tag
+  Tag,
+  Loader2
 } from 'lucide-react';
 import StatusBadge from '../StatusBadge';
+import { updateOrderItemStatusAction } from '@/app/actions/order/index';
+import { OrderItemStatus } from '@/interfaces/order/order';
+import { useToast } from '@/app/contexts/ToastContext';
 
 interface OrderDetailModalProps {
   order: any;
   onClose: () => void;
+  onOrderUpdated?: () => void; // Callback to refresh orders after update
 }
 
-const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose }) => {
+const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose, onOrderUpdated }) => {
+  const { showSuccess, showError } = useToast();
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+
+  // Vendor allowed statuses: accepted, rejected, processing, picked, packed, shipped
+  const vendorAllowedStatuses: Array<{ value: OrderItemStatus; label: string }> = [
+    { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
+    { value: OrderItemStatus.REJECTED, label: 'Rejected' },
+    { value: OrderItemStatus.PROCESSING, label: 'Processing' },
+    { value: OrderItemStatus.PICKED, label: 'Picked' },
+    { value: OrderItemStatus.PACKED, label: 'Packed' },
+    { value: OrderItemStatus.SHIPPED, label: 'Shipped' },
+  ];
+
+  const handleStatusUpdate = async (orderItemId: string, newStatus: OrderItemStatus) => {
+    if (!orderItemId || !order.originalOrder) {
+      showError('Order item ID is required');
+      return;
+    }
+
+    setUpdatingItemId(orderItemId);
+    try {
+      const response = await updateOrderItemStatusAction(orderItemId, {
+        orderItemId,
+        status: newStatus,
+      });
+
+      if (response.error) {
+        showError(response.message || 'Failed to update order item status');
+      } else {
+        showSuccess('Order item status updated successfully');
+        if (onOrderUpdated) {
+          onOrderUpdated();
+        }
+      }
+    } catch (error: any) {
+      showError(error?.message || 'Failed to update order item status');
+    } finally {
+      setUpdatingItemId(null);
+    }
+  };
+
+  // Get order items from originalOrder if available
+  const orderItems = order.originalOrder?.items || order.items || [];
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-8">
       <motion.div 
@@ -90,27 +138,69 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ order, onClose }) =
                        <span className="text-xs font-black text-gray-400 uppercase bg-gray-50 px-3 py-1 rounded-full">{order.items.length} Items</span>
                     </div>
                     <div className="space-y-4">
-                       {order.items.map((item: any, idx: number) => (
-                         <div key={idx} className="p-6 bg-jozi-cream/30 rounded-[2.5rem] border border-jozi-forest/5 flex items-center justify-between group hover:bg-jozi-cream transition-colors">
-                            <div className="flex items-center space-x-6">
-                               <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-jozi-forest/5 shadow-sm shrink-0 overflow-hidden">
-                                  <img src="https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=100" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                               </div>
-                               <div>
-                                  <h4 className="text-lg font-black text-jozi-forest leading-tight">{item.name}</h4>
-                                  <p className="text-[10px] font-black uppercase text-jozi-gold tracking-widest mt-1">{item.variant}</p>
-                                  <div className="flex items-center text-[10px] font-bold text-gray-400 uppercase mt-3">
-                                     <span className="bg-white px-2 py-0.5 rounded border border-gray-100 mr-2">SKU: MAB-204-IND</span>
-                                     <span>Qty: {item.qty}</span>
-                                  </div>
-                               </div>
-                            </div>
-                            <div className="text-right">
-                               <p className="font-black text-xl text-jozi-forest leading-none">R{item.price}</p>
-                               <p className="text-[9px] font-bold text-gray-300 uppercase mt-2">Unit Value</p>
-                            </div>
-                         </div>
-                       ))}
+                       {orderItems.map((item: any, idx: number) => {
+                         const orderItemId = item.id;
+                         const currentStatus = item.status || OrderItemStatus.PENDING;
+                         const isUpdating = updatingItemId === orderItemId;
+                         const product = item.product || {};
+                         const productName = product.title || product.name || item.name || 'Unknown Product';
+                         const productImage = product.images?.[0]?.file || product.images?.[0] || 'https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=100';
+                         
+                         return (
+                           <div key={orderItemId || idx} className="p-6 bg-jozi-cream/30 rounded-[2.5rem] border border-jozi-forest/5 flex items-center justify-between group hover:bg-jozi-cream transition-colors">
+                              <div className="flex items-center space-x-6 flex-1">
+                                 <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-jozi-forest/5 shadow-sm shrink-0 overflow-hidden">
+                                    <img src={productImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={productName} />
+                                 </div>
+                                 <div className="flex-1">
+                                    <h4 className="text-lg font-black text-jozi-forest leading-tight">{productName}</h4>
+                                    <p className="text-[10px] font-black uppercase text-jozi-gold tracking-widest mt-1">{item.variant || 'Standard'}</p>
+                                    <div className="flex items-center text-[10px] font-bold text-gray-400 uppercase mt-3 gap-2">
+                                       <span className="bg-white px-2 py-0.5 rounded border border-gray-100">Qty: {item.quantity || item.qty}</span>
+                                       <span className={`px-2 py-0.5 rounded border ${
+                                         currentStatus === OrderItemStatus.SHIPPED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                         currentStatus === OrderItemStatus.PACKED ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                         currentStatus === OrderItemStatus.PICKED ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                         currentStatus === OrderItemStatus.PROCESSING ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                         currentStatus === OrderItemStatus.ACCEPTED ? 'bg-green-50 text-green-600 border-green-100' :
+                                         currentStatus === OrderItemStatus.REJECTED ? 'bg-red-50 text-red-600 border-red-100' :
+                                         'bg-gray-50 text-gray-600 border-gray-100'
+                                       }`}>
+                                         {currentStatus.replace('_', ' ').toUpperCase()}
+                                       </span>
+                                    </div>
+                                 </div>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                 <div className="text-right mr-4">
+                                    <p className="font-black text-xl text-jozi-forest leading-none">R{typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || item.price || 0}</p>
+                                    <p className="text-[9px] font-bold text-gray-300 uppercase mt-2">Unit Value</p>
+                                 </div>
+                                 <div className="relative">
+                                    <select
+                                      value={currentStatus}
+                                      onChange={(e) => handleStatusUpdate(orderItemId, e.target.value as OrderItemStatus)}
+                                      disabled={isUpdating}
+                                      className={`appearance-none bg-white border-2 rounded-xl px-4 py-2 pr-8 font-black text-xs uppercase tracking-widest cursor-pointer transition-all text-jozi-forest ${
+                                        isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:border-jozi-gold border-gray-200'
+                                      }`}
+                                    >
+                                      {vendorAllowedStatuses.map((status) => (
+                                        <option key={status.value} value={status.value} className="text-jozi-forest">
+                                          {status.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {isUpdating && (
+                                      <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                                        <Loader2 className="w-4 h-4 text-jozi-gold animate-spin" />
+                                      </div>
+                                    )}
+                                 </div>
+                              </div>
+                           </div>
+                         );
+                       })}
                     </div>
                  </div>
 

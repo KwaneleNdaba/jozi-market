@@ -1,391 +1,960 @@
-import React, { useState, useMemo } from 'react';
+'use client';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
   Filter, 
-  Download, 
   ChevronDown, 
-  MoreHorizontal, 
+  ChevronUp,
   Eye, 
-  ArrowUpDown, 
   Calendar, 
   X,
   MapPin,
   Package,
-  CreditCard,
   User,
   ExternalLink,
+  ArrowLeft,
+  Store,
+  AlertCircle,
+  Inbox,
+  Clock,
+  CheckCircle2,
+  Truck,
+  CreditCard,
+  ThumbsUp,
+  ThumbsDown,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
-  Truck,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Tag,
-  Store,
-  DollarSign
+  TrendingUp,
+  Ban,
+  RotateCcw,
+  Download,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { MarketOrder, OrderStatus } from '../../types';
+import { getAllOrdersAction, getOrderItemsGroupedByDateAndVendorAction, updateOrderItemStatusAction } from '@/app/actions/order/index';
+import { IOrder, IOrderItemsGroupedResponse, IOrderItemsByVendorAndDate, OrderItemStatus } from '@/interfaces/order/order';
+import { useToast } from '@/app/contexts/ToastContext';
+
+// --- Types ---
+
+export type OrderStatus = 
+  | 'Processing' 
+  | 'Picked' 
+  | 'Out for Delivery' 
+  | 'Delivered' 
+  | 'Cancelled' 
+  | 'Cancellation Requested'
+  | 'Returned'
+  | 'Return Requested'
+  | 'Return in Progress'
+  | 'Ready to Ship'
+  | 'Refund Pending'
+  | 'Refunded';
+
+export interface ProductItem {
+  name: string;
+  quantity: number;
+  price: number;
+  vendorName: string;
+  image?: string; // First product image URL
+  orderItemId?: string; // Database ID for the order item
+  status?: OrderItemStatus | string; // Current status of the order item
+}
+
+export interface MarketOrder {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  products: ProductItem[];
+  totalAmount: number;
+  status: OrderStatus;
+  orderDate: string; // ISO Date YYYY-MM-DD
+  category: string;
+  paymentMethod: string;
+  shippingAddress: string;
+  requestReason?: string;
+}
+
+// --- Mock Data (Expanded for Volume Testing) ---
+
+const generateBulkOrders = (count: number, vendor: string, date: string, status: OrderStatus): MarketOrder[] => {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: `ORD-${date.replace(/-/g, '')}-${vendor.substring(0,3).toUpperCase()}-${i}`,
+    customerName: `Bulk Customer ${i}`,
+    customerEmail: `customer${i}@mail.com`,
+    products: [{ name: 'Bulk Item', quantity: 1, price: 100, vendorName: vendor }],
+    totalAmount: 100,
+    status: status,
+    orderDate: date,
+    category: 'General',
+    paymentMethod: 'Card',
+    shippingAddress: '123 Bulk St, JHB'
+  }));
+};
 
 const MOCK_ORDERS: MarketOrder[] = [
-  { id: 'ORD-2041', vendorName: 'Maboneng Textiles', customerName: 'Lerato Dlamini', customerEmail: 'lerato@jozi.com', products: [{ name: 'Shweshwe Evening Dress', quantity: 1, price: 1250 }, { name: 'Indigo Silk Scarf', quantity: 1, price: 750 }], totalAmount: 2075, status: 'Processing', orderDate: '2024-10-15', category: 'Fashion', paymentMethod: 'Card', shippingAddress: '12 Gwigwi Mrwebi St, Newtown, Joburg' },
-  { id: 'ORD-2042', vendorName: 'Soweto Gold', customerName: 'Kevin Naidoo', customerEmail: 'kevin.n@gmail.com', products: [{ name: 'Zulu Beadwork Necklace', quantity: 2, price: 320 }], totalAmount: 715, status: 'Picked', orderDate: '2024-10-14', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '44 Vilakazi St, Orlando West, Soweto' },
-  { id: 'ORD-2043', vendorName: 'Rosebank Art', customerName: 'Zanele Khumalo', customerEmail: 'zanele.k@outlook.com', products: [{ name: 'Joburg Skyline Print', quantity: 1, price: 850 }], totalAmount: 925, status: 'Out for Delivery', orderDate: '2024-10-15', category: 'Art', paymentMethod: 'Points', shippingAddress: '21 Keys Ave, Rosebank, Joburg' },
-  { id: 'ORD-2044', vendorName: 'Jozi Apothecary', customerName: 'Sarah Smyth', customerEmail: 'sarah.s@web.com', products: [{ name: 'Marula Glow Face Oil', quantity: 3, price: 380 }, { name: 'Baobab Soap', quantity: 2, price: 85 }], totalAmount: 1385, status: 'Delivered', orderDate: '2024-10-12', category: 'Wellness', paymentMethod: 'Card', shippingAddress: '88 4th Ave, Parkhurst, Joburg' },
-  { id: 'ORD-2045', vendorName: 'Maboneng Textiles', customerName: 'Thabo Mokoena', customerEmail: 'thabo.m@gmail.com', products: [{ name: 'Veld Leather Boots', quantity: 1, price: 1850 }], totalAmount: 1925, status: 'Cancelled', orderDate: '2024-10-10', category: 'Fashion', paymentMethod: 'Card', shippingAddress: '55 Fox St, Maboneng, Joburg' },
-  { id: 'ORD-2046', vendorName: 'Soweto Gold', customerName: 'Michael Botha', customerEmail: 'm.botha@corp.za', products: [{ name: 'Silver Fern Earrings', quantity: 1, price: 490 }], totalAmount: 565, status: 'Processing', orderDate: '2024-10-15', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '12 Jan Smuts Ave, Westcliff, Joburg' },
-  { id: 'ORD-2047', vendorName: 'Jozi Apothecary', customerName: 'Lindiwe Sisulu', customerEmail: 'lindi.s@gmail.com', products: [{ name: 'Baobab & Honey Soap', quantity: 5, price: 85 }], totalAmount: 500, status: 'Delivered', orderDate: '2024-10-08', category: 'Wellness', paymentMethod: 'Points', shippingAddress: '101 Juta St, Braamfontein, Joburg' },
-  { id: 'ORD-2048', vendorName: 'Rosebank Art', customerName: 'David Miller', customerEmail: 'david.m@global.com', products: [{ name: 'Protea Ceramic Platter', quantity: 1, price: 520 }, { name: 'Joburg Skyline Print', quantity: 1, price: 850 }], totalAmount: 1445, status: 'Picked', orderDate: '2024-10-14', category: 'Home Decor', paymentMethod: 'Card', shippingAddress: '23 Tyrwhitt Ave, Rosebank, Joburg' },
-  { id: 'ORD-2049', vendorName: 'Maboneng Textiles', customerName: 'Naledi Pandor', customerEmail: 'n.pandor@gov.za', products: [{ name: 'Heritage Silk Scarf', quantity: 1, price: 750 }], totalAmount: 825, status: 'Processing', orderDate: '2024-10-15', category: 'Accessories', paymentMethod: 'Card', shippingAddress: '77 Main St, Joburg CBD' },
-  { id: 'ORD-2050', vendorName: 'Soweto Gold', customerName: 'Pieter Hugo', customerEmail: 'pieter@studio.com', products: [{ name: 'Zebu Leather Wallet', quantity: 1, price: 450 }], totalAmount: 525, status: 'Out for Delivery', orderDate: '2024-10-15', category: 'Accessories', paymentMethod: 'Card', shippingAddress: '14 Vilakazi St, Soweto' },
-  { id: 'ORD-2051', vendorName: 'Jozi Apothecary', customerName: 'Bongani Khumalo', customerEmail: 'bongani.k@jozi.com', products: [{ name: 'Wild Rooibos Tea', quantity: 4, price: 120 }], totalAmount: 555, status: 'Processing', orderDate: '2024-10-16', category: 'Gourmet', paymentMethod: 'Card', shippingAddress: '12 Anderson St, Marshalltown' },
+  // ... existing mock data ...
+  { id: 'ORD-2041', customerName: 'Lerato Dlamini', customerEmail: 'lerato@jozi.com', products: [{ name: 'Shweshwe Evening Dress', quantity: 1, price: 1250, vendorName: 'Maboneng Textiles' }], totalAmount: 1250, status: 'Processing', orderDate: '2024-10-22', category: 'Fashion', paymentMethod: 'Card', shippingAddress: '12 Gwigwi Mrwebi St, Newtown' },
+  { id: 'ORD-2042', customerName: 'Kevin Naidoo', customerEmail: 'kevin.n@gmail.com', products: [{ name: 'Zulu Beadwork Necklace', quantity: 2, price: 320, vendorName: 'Soweto Gold' }], totalAmount: 640, status: 'Cancellation Requested', requestReason: 'Found a cheaper alternative', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '44 Vilakazi St, Soweto' },
+  { id: 'ORD-2046', customerName: 'Michael Botha', customerEmail: 'm.botha@corp.za', products: [{ name: 'Silver Fern Earrings', quantity: 1, price: 490, vendorName: 'Soweto Gold' }], totalAmount: 490, status: 'Return Requested', requestReason: 'Item arrived damaged', orderDate: '2024-10-22', category: 'Accessories', paymentMethod: 'EFT', shippingAddress: '12 Jan Smuts Ave, Westcliff' },
+  
+  // Generating "Volume" for Maboneng Textiles on a specific date to test scalability
+  ...generateBulkOrders(12, 'Maboneng Textiles', '2024-10-22', 'Processing'),
+  ...generateBulkOrders(5, 'Maboneng Textiles', '2024-10-22', 'Delivered'),
+  ...generateBulkOrders(3, 'Maboneng Textiles', '2024-10-22', 'Cancelled'),
+  
+  // Another date
+  ...generateBulkOrders(8, 'Jozi Apothecary', '2024-10-21', 'Delivered'),
 ];
 
+const ITEMS_PER_PAGE = 8;
+
 const AdminOrderManagement: React.FC = () => {
-  const [orders, setOrders] = useState<MarketOrder[]>(MOCK_ORDERS);
+  const { showError, showSuccess } = useToast();
+  const [activeTab, setActiveTab] = useState<'all' | 'vendor_grouped' | 'resolutions'>('all');
+  const [orders, setOrders] = useState<MarketOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [vendorFilter, setVendorFilter] = useState<string>('All');
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<keyof MarketOrder>('orderDate');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedOrder, setSelectedOrder] = useState<MarketOrder | null>(null);
+  
+  // State for Pagination (Master Registry)
   const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 8;
 
-  // Options for filters
-  const vendors = ['All', ...Array.from(new Set(MOCK_ORDERS.map(o => o.vendorName)))];
-  const statuses = ['All', 'Processing', 'Picked', 'Out for Delivery', 'Delivered', 'Cancelled'];
-  const categories = ['All', ...Array.from(new Set(MOCK_ORDERS.map(o => o.category)))];
+  // State for Vendor Accordion (Vendor Manifests)
+  // Store a unique key: "YYYY-MM-DD_VendorName"
+  const [expandedManifest, setExpandedManifest] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  
+  // State for Vendor Grouped Data
+  const [vendorGroupedData, setVendorGroupedData] = useState<IOrderItemsGroupedResponse | null>(null);
+  const [loadingVendorManifests, setLoadingVendorManifests] = useState(false);
+  
+  // State for order item status updates
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  
+  // Store original orders to access item IDs
+  const [originalOrdersMap, setOriginalOrdersMap] = useState<Map<string, IOrder>>(new Map());
 
-  // Filter & Sort Logic
-  const filteredOrders = useMemo(() => {
-    let result = orders.filter(order => {
-      const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          order.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-      const matchesVendor = vendorFilter === 'All' || order.vendorName === vendorFilter;
-      const matchesCategory = categoryFilter === 'All' || order.category === categoryFilter;
-      return matchesSearch && matchesStatus && matchesVendor && matchesCategory;
+  // Transform backend IOrder to MarketOrder format
+  const transformOrder = (order: IOrder): MarketOrder => {
+    // Format order date
+    const orderDate = order.createdAt 
+      ? new Date(order.createdAt).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+
+    // Transform order items to products
+    const products: ProductItem[] = (order.items || []).map(item => {
+      // Get first image from product images array
+      const firstImage = item.product?.images && item.product.images.length > 0
+        ? (typeof item.product.images[0] === 'string' 
+            ? item.product.images[0] 
+            : item.product.images[0].file)
+        : undefined;
+
+      return {
+        name: item.product?.title || 'Unknown Product',
+        quantity: item.quantity,
+        price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+        vendorName: item.product?.vendorName || 'Unknown Vendor',
+        image: firstImage,
+        orderItemId: item.id, // Store the order item ID
+        status: item.status || OrderItemStatus.PENDING // Store the current status
+      };
     });
 
-    return result.sort((a, b) => {
-      const valA = a[sortBy];
-      const valB = b[sortBy];
-      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [orders, searchQuery, statusFilter, vendorFilter, categoryFilter, sortBy, sortOrder]);
+    // Determine status mapping
+    let status: OrderStatus = 'Processing';
+    const orderStatusLower = (order.status || '').toLowerCase();
+    
+    if (orderStatusLower === 'pending' || orderStatusLower === 'processing') {
+      status = 'Processing';
+    } else if (orderStatusLower === 'shipped') {
+      status = 'Out for Delivery';
+    } else if (orderStatusLower === 'delivered') {
+      status = 'Delivered';
+    } else if (orderStatusLower === 'cancelled') {
+      status = 'Cancelled';
+    } else if (orderStatusLower === 'returned') {
+      status = 'Returned';
+    } else if (orderStatusLower === 'return_in_progress') {
+      status = 'Return in Progress';
+    } else if (orderStatusLower === 'ready_to_ship') {
+      status = 'Ready to Ship';
+    } else if (orderStatusLower === 'refund_pending') {
+      status = 'Refund Pending';
+    } else if (orderStatusLower === 'refunded') {
+      status = 'Refunded';
+    }
+    
+    // Check for cancellation request (derived from status and metadata)
+    if (order.cancellationRequestedAt) {
+      if (orderStatusLower === 'cancelled') {
+        status = 'Cancelled';
+      } else if (!order.cancellationRejectionReason) {
+        status = 'Cancellation Requested';
+      }
+    }
+    
+    // Check for return request (derived from status and metadata)
+    if (order.returnRequestedAt) {
+      if (orderStatusLower === 'return_in_progress') {
+        status = 'Return in Progress';
+      } else if (orderStatusLower === 'returned') {
+        status = 'Returned';
+      } else if (!order.returnRejectionReason) {
+        status = 'Return Requested';
+      }
+    }
 
-  const paginatedOrders = filteredOrders.slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage);
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+    // Format shipping address
+    const shippingAddress = order.shippingAddress
+      ? `${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.postal}`
+      : 'Address not provided';
 
-  const handleSort = (field: keyof MarketOrder) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
+    // Get request reason if available
+    const requestReason = order.notes?.includes('Return reason:') 
+      ? order.notes.split('Return reason:')[1]?.trim()
+      : order.notes?.includes('Cancellation reason:')
+      ? order.notes.split('Cancellation reason:')[1]?.trim()
+      : undefined;
+
+    // Format order ID for display (extract number from orderNumber if it follows pattern ORD_timestamp_userId_number)
+    const formatOrderId = (orderNumber?: string, id?: string): string => {
+      if (orderNumber) {
+        const parts = orderNumber.split('_');
+        if (parts.length > 1) {
+          return `ORD_${parts[1]}`;
+        }
+        return orderNumber;
+      }
+      return id || 'ORD-XXXX';
+    };
+
+    return {
+      id: formatOrderId(order.orderNumber, order.id),
+      customerName: order.user?.fullName || order.email || 'Unknown Customer',
+      customerEmail: order.user?.email || order.email || '',
+      products,
+      totalAmount: typeof order.totalAmount === 'string' ? parseFloat(order.totalAmount) : order.totalAmount,
+      status,
+      orderDate,
+      category: products[0]?.vendorName || 'General',
+      paymentMethod: order.paymentMethod || 'Card',
+      shippingAddress,
+      requestReason
+    };
+  };
+
+  // Fetch all orders
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await getAllOrdersAction();
+      
+      if (response.error) {
+        showError(response.message || 'Failed to load orders');
+        setOrders([]);
+      } else {
+        // Transform orders and store original orders map
+        const ordersMap = new Map<string, IOrder>();
+        const transformed = (response.data || []).map((order: IOrder) => {
+          ordersMap.set(order.id || '', order);
+          return transformOrder(order);
+        });
+        setOrders(transformed);
+        setOriginalOrdersMap(ordersMap);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      showError('Failed to load orders');
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateOrderStatus = (id: string, newStatus: OrderStatus) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
-    if (selectedOrder?.id === id) {
-      setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+  useEffect(() => {
+    fetchOrders();
+  }, [showError]);
+
+  // Handle order item status update (admin - full control)
+  const handleItemStatusUpdate = async (orderItemId: string, newStatus: OrderItemStatus) => {
+    if (!orderItemId) {
+      showError('Order item ID is required');
+      return;
+    }
+
+    setUpdatingItemId(orderItemId);
+    try {
+      const response = await updateOrderItemStatusAction(orderItemId, {
+        orderItemId,
+        status: newStatus,
+      });
+
+      if (response.error) {
+        showError(response.message || 'Failed to update order item status');
+      } else {
+        showSuccess('Order item status updated successfully');
+        // Refresh orders to get updated status
+        await fetchOrders();
+      }
+    } catch (error: any) {
+      showError(error?.message || 'Failed to update order item status');
+    } finally {
+      setUpdatingItemId(null);
     }
   };
+
+  // Admin allowed statuses (full control - all OrderItemStatus values)
+  const adminAllowedStatuses: Array<{ value: OrderItemStatus; label: string }> = [
+    { value: OrderItemStatus.PENDING, label: 'Pending' },
+    { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
+    { value: OrderItemStatus.REJECTED, label: 'Rejected' },
+    { value: OrderItemStatus.PROCESSING, label: 'Processing' },
+    { value: OrderItemStatus.PICKED, label: 'Picked' },
+    { value: OrderItemStatus.PACKED, label: 'Packed' },
+    { value: OrderItemStatus.SHIPPED, label: 'Shipped' },
+    { value: OrderItemStatus.DELIVERED, label: 'Delivered' },
+    { value: OrderItemStatus.CANCELLED, label: 'Cancelled' },
+    { value: OrderItemStatus.RETURN_REQUESTED, label: 'Return Requested' },
+    { value: OrderItemStatus.RETURN_APPROVED, label: 'Return Approved' },
+    { value: OrderItemStatus.RETURN_REJECTED, label: 'Return Rejected' },
+    { value: OrderItemStatus.RETURN_IN_TRANSIT, label: 'Return In Transit' },
+    { value: OrderItemStatus.RETURN_RECEIVED, label: 'Return Received' },
+    { value: OrderItemStatus.REFUND_PENDING, label: 'Refund Pending' },
+    { value: OrderItemStatus.REFUNDED, label: 'Refunded' },
+  ];
+
+  // Fetch vendor grouped data when vendor_grouped tab is active
+  useEffect(() => {
+    const fetchVendorGroupedData = async () => {
+      if (activeTab !== 'vendor_grouped') return;
+      
+      setLoadingVendorManifests(true);
+      try {
+        const response = await getOrderItemsGroupedByDateAndVendorAction();
+        
+        if (response.error) {
+          showError(response.message || 'Failed to load vendor manifests');
+          setVendorGroupedData(null);
+        } else {
+          setVendorGroupedData(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching vendor grouped data:', error);
+        showError('Failed to load vendor manifests');
+        setVendorGroupedData(null);
+      } finally {
+        setLoadingVendorManifests(false);
+      }
+    };
+
+    fetchVendorGroupedData();
+  }, [activeTab, showError]);
+
+  // --- Helpers ---
 
   const getStatusStyles = (status: OrderStatus) => {
     switch (status) {
       case 'Processing': return 'bg-blue-50 text-blue-600 border-blue-100';
-      case 'Picked': return 'bg-orange-50 text-orange-600 border-orange-100';
+      case 'Picked': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
       case 'Out for Delivery': return 'bg-purple-50 text-purple-600 border-purple-100';
       case 'Delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      case 'Cancelled': return 'bg-red-50 text-red-600 border-red-100';
+      case 'Cancelled': return 'bg-gray-100 text-gray-500 border-gray-200 line-through';
+      case 'Cancellation Requested': return 'bg-red-50 text-red-600 border-red-100 animate-pulse';
+      case 'Returned': return 'bg-gray-100 text-gray-600 border-gray-200';
+      case 'Return Requested': return 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse';
       default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
 
+  const handleStatusUpdate = (id: string, newStatus: OrderStatus) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+    if (selectedOrder?.id === id) setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+  };
+
+  const toggleManifest = (date: string, vendorName: string) => {
+    const key = `${date}_${vendorName}`;
+    setExpandedManifest(prev => prev === key ? null : key);
+  };
+
+  // --- Filtering & Sorting ---
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      const lowerQuery = searchQuery.toLowerCase();
+      return (
+        order.id.toLowerCase().includes(lowerQuery) || 
+        order.customerName.toLowerCase().includes(lowerQuery) ||
+        order.products.some(p => p.vendorName.toLowerCase().includes(lowerQuery))
+      );
+    });
+  }, [orders, searchQuery]);
+
+  // --- Master Registry Pagination ---
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredOrders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredOrders, currentPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+
+  // --- Vendor Grouping Logic (from API) ---
+  const vendorGroupedOrders = useMemo(() => {
+    if (!vendorGroupedData || !vendorGroupedData.groupedItems) {
+      return [];
+    }
+
+    // Group by date first
+    const byDate: Record<string, IOrderItemsByVendorAndDate[]> = {};
+    vendorGroupedData.groupedItems.forEach(item => {
+      if (!byDate[item.date]) {
+        byDate[item.date] = [];
+      }
+      byDate[item.date].push(item);
+    });
+
+    // Sort dates (newest first)
+    const sortedDates = Object.keys(byDate).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    return sortedDates.map(date => {
+      const vendorGroups = byDate[date];
+      
+      return {
+        date,
+        vendors: vendorGroups.map(vGroup => {
+          // Transform order items to MarketOrder format for display
+          const ordersMap = new Map<string, MarketOrder>();
+          
+          vGroup.orderItems.forEach(item => {
+            const orderId = item.order?.orderNumber || item.order?.id || 'ORD-XXXX';
+            
+            if (!ordersMap.has(orderId)) {
+              // Create a new MarketOrder from the order item
+              const orderDate = item.order?.createdAt 
+                ? new Date(item.order.createdAt).toISOString().split('T')[0]
+                : date;
+
+              // Determine status from order (if available) or default
+              let status: OrderStatus = 'Processing';
+              // Note: Status would need to come from the order if available in the response
+              
+              const productImage = item.product?.images && item.product.images.length > 0
+                ? (typeof item.product.images[0] === 'string' 
+                    ? item.product.images[0] 
+                    : item.product.images[0].file)
+                : undefined;
+
+              const marketOrder: MarketOrder = {
+                id: orderId,
+                customerName: item.order?.customer?.fullName || 'Unknown Customer',
+                customerEmail: item.order?.customer?.email || '',
+                products: [{
+                  name: item.product?.title || 'Unknown Product',
+                  quantity: item.quantity,
+                  price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+                  vendorName: vGroup.vendor.vendorName,
+                  image: productImage
+                }],
+                totalAmount: typeof item.totalPrice === 'string' ? parseFloat(item.totalPrice) : item.totalPrice,
+                status,
+                orderDate,
+                category: vGroup.vendor.vendorName,
+                paymentMethod: 'Card', // Default, not available in grouped response
+                shippingAddress: `${vGroup.vendor.address.street}, ${vGroup.vendor.address.city}, ${vGroup.vendor.address.postal}`
+              };
+              
+              ordersMap.set(orderId, marketOrder);
+            } else {
+              // Add product to existing order
+              const existingOrder = ordersMap.get(orderId)!;
+              const productImage = item.product?.images && item.product.images.length > 0
+                ? (typeof item.product.images[0] === 'string' 
+                    ? item.product.images[0] 
+                    : item.product.images[0].file)
+                : undefined;
+
+              existingOrder.products.push({
+                name: item.product?.title || 'Unknown Product',
+                quantity: item.quantity,
+                price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+                vendorName: vGroup.vendor.vendorName,
+                image: productImage
+              });
+              existingOrder.totalAmount += typeof item.totalPrice === 'string' ? parseFloat(item.totalPrice) : item.totalPrice;
+            }
+          });
+
+          const orders = Array.from(ordersMap.values());
+          
+          // Calculate Stats for Summary
+          const totalValue = vGroup.totalAmount;
+          const pendingCount = orders.filter(o => o.status === 'Processing' || o.status === 'Picked').length;
+          const issuesCount = orders.filter(o => o.status.includes('Requested') || o.status === 'Cancelled' || o.status === 'Returned').length;
+          
+          return { 
+            name: vGroup.vendor.vendorName, 
+            orders, 
+            totalValue, 
+            pendingCount, 
+            issuesCount 
+          };
+        })
+      };
+    });
+  }, [vendorGroupedData]);
+
+  const resolutionOrders = useMemo(() => {
+    return filteredOrders.filter(o => 
+      ['Cancelled', 'Cancellation Requested', 'Returned', 'Return Requested'].includes(o.status)
+    );
+  }, [filteredOrders]);
+
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Page Header */}
-      <section className="bg-jozi-dark text-white pt-12 pb-24 relative overflow-hidden">
+      
+      {/* --- HEADER --- */}
+      <section className="bg-jozi-dark text-white pt-10 pb-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5" />
-        <div className="px-6 lg:px-12 relative z-10 text-left">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-            <div className="space-y-4">
-              <Link href="/admin/dashboard" className="inline-flex items-center text-jozi-gold font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors">
-                <ArrowLeft className="w-4 h-4 mr-2" /> Admin Hub
+        <div className="px-6 lg:px-12 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+            <div className="space-y-2">
+              <Link href="/admin" className="inline-flex items-center text-jozi-gold font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors">
+                <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
               </Link>
               <h1 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase leading-none">
-                Order <br /><span className="text-jozi-gold">Fulfillment.</span>
+                Order <span className="text-jozi-gold">Management</span>
               </h1>
             </div>
-            <div className="flex flex-wrap gap-4">
-              <button className="bg-white/10 hover:bg-white/20 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center transition-all border border-white/10">
-                <Download className="w-4 h-4 mr-2" />
-                Export CSV
-              </button>
-              <button className="bg-jozi-gold text-jozi-dark px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-xl shadow-jozi-gold/20 flex items-center">
-                <Package className="w-4 h-4 mr-2" />
-                Batch Pickup
-              </button>
+            
+            <div className="flex gap-4">
+               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 min-w-[140px]">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-jozi-gold">Total Orders</p>
+                 <p className="text-3xl font-black mt-1">{orders.length}</p>
+               </div>
+               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 min-w-[140px]">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-jozi-gold">Action Required</p>
+                 <p className="text-3xl font-black mt-1">
+                   {orders.filter(o => o.status.includes('Requested')).length}
+                 </p>
+               </div>
             </div>
+          </div>
+
+          <div className="flex space-x-1 bg-white/5 p-1 rounded-2xl inline-flex backdrop-blur-sm border border-white/10 overflow-x-auto">
+            {[
+              { id: 'all', label: 'Master Registry', icon: Inbox },
+              { id: 'vendor_grouped', label: 'Vendor Manifests', icon: Store },
+              { id: 'resolutions', label: 'Resolution Center', icon: AlertCircle }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id as any); setCurrentPage(1); }}
+                className={`px-6 py-3 rounded-xl flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                  activeTab === tab.id 
+                    ? 'bg-jozi-gold text-jozi-dark shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Main Dashboard Section */}
-      <section className="px-6 lg:px-12 -mt-12 relative z-20">
-        <div className="bg-white rounded-5xl p-8 lg:p-12 shadow-soft border border-jozi-forest/5">
+      {/* --- CONTENT --- */}
+      <section className="px-6 lg:px-12 -mt-20 relative z-20">
+        <div className="bg-white rounded-5xl p-8 lg:p-12 shadow-soft border border-jozi-forest/5 min-h-[600px]">
           
-          {/* Filters Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-            <div className="relative">
+          {/* Universal Search */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative grow">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="ID or Customer..." 
+                placeholder="Search by Order ID, Customer Name, or Vendor..." 
                 className="w-full bg-gray-50 border border-transparent focus:border-jozi-gold/20 rounded-2xl pl-12 pr-6 py-4 font-bold text-sm outline-none transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
-            <div className="relative">
-              <Filter className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select 
-                className="w-full bg-gray-50 border border-transparent rounded-2xl pl-12 pr-6 py-4 font-bold text-sm outline-none appearance-none cursor-pointer"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="All">Status: All</option>
-                {statuses.slice(1).map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-            </div>
-
-            <div className="relative">
-              <Store className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select 
-                className="w-full bg-gray-50 border border-transparent rounded-2xl pl-12 pr-6 py-4 font-bold text-sm outline-none appearance-none cursor-pointer"
-                value={vendorFilter}
-                onChange={(e) => setVendorFilter(e.target.value)}
-              >
-                <option value="All">Artisan: All</option>
-                {vendors.slice(1).map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-            </div>
-
-            <div className="relative">
-              <Tag className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select 
-                className="w-full bg-gray-50 border border-transparent rounded-2xl pl-12 pr-6 py-4 font-bold text-sm outline-none appearance-none cursor-pointer"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="All">Category: All</option>
-                {categories.slice(1).map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
-            </div>
-
-            <div className="relative">
-              <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="date" 
-                className="w-full bg-gray-50 border border-transparent rounded-2xl pl-12 pr-6 py-4 font-bold text-sm outline-none cursor-pointer"
-              />
-            </div>
+            <button className="bg-gray-50 hover:bg-jozi-forest hover:text-white text-gray-600 px-6 rounded-2xl flex items-center justify-center transition-all border border-transparent">
+              <Filter className="w-4 h-4 mr-2" />
+              <span className="font-bold text-xs uppercase tracking-widest">Filter</span>
+            </button>
           </div>
 
-          {/* Orders Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[1000px]">
-              <thead>
-                <tr className="border-b border-gray-50">
-                  <th className="pb-6">
-                    <button onClick={() => handleSort('id')} className="flex items-center text-[10px] font-black uppercase text-gray-400 tracking-widest hover:text-jozi-forest transition-colors">
-                      Order ID <ArrowUpDown className="ml-2 w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="pb-6">
-                    <button onClick={() => handleSort('vendorName')} className="flex items-center text-[10px] font-black uppercase text-gray-400 tracking-widest hover:text-jozi-forest transition-colors">
-                      Artisan <ArrowUpDown className="ml-2 w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="pb-6">
-                    <button onClick={() => handleSort('customerName')} className="flex items-center text-[10px] font-black uppercase text-gray-400 tracking-widest hover:text-jozi-forest transition-colors">
-                      Customer <ArrowUpDown className="ml-2 w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Ordered Manifest</th>
-                  <th className="pb-6">
-                    <button onClick={() => handleSort('totalAmount')} className="flex items-center text-[10px] font-black uppercase text-gray-400 tracking-widest hover:text-jozi-forest transition-colors">
-                      Total <ArrowUpDown className="ml-2 w-3 h-3" />
-                    </button>
-                  </th>
-                  <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Status</th>
-                  <th className="pb-6 text-right text-[10px] font-black uppercase text-gray-400 tracking-widest">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {paginatedOrders.map((order) => (
-                  <tr key={order.id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                    <td className="py-6">
-                      <p className="font-black text-jozi-dark text-sm">{order.id}</p>
-                      <p className="text-[10px] text-gray-400 font-bold">{order.orderDate}</p>
-                    </td>
-                    <td className="py-6">
-                      <span className="bg-jozi-cream text-jozi-forest px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-jozi-forest/5">
-                        {order.vendorName}
-                      </span>
-                    </td>
-                    <td className="py-6">
-                      <p className="font-bold text-jozi-dark text-sm">{order.customerName}</p>
-                      <p className="text-[10px] text-gray-400 font-medium">{order.customerEmail}</p>
-                    </td>
-                    <td className="py-6">
-                      <p className="text-jozi-forest font-bold text-xs">
-                        {order.products[0].name}
-                      </p>
-                      {order.products.length > 1 && (
-                        <p className="text-[10px] text-jozi-gold font-black uppercase tracking-widest">
-                          + {order.products.length - 1} more items
-                        </p>
-                      )}
-                    </td>
-                    <td className="py-6 font-black text-jozi-dark text-sm">R{order.totalAmount}</td>
-                    <td className="py-6" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative group/status">
-                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border inline-flex items-center cursor-pointer transition-all hover:scale-105 ${getStatusStyles(order.status)}`}>
-                          {order.status}
-                          <ChevronDown className="ml-2 w-3 h-3 opacity-40" />
-                        </span>
-                        
-                        <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-50 scale-95 group-hover/status:scale-100 origin-top-left">
-                          {statuses.slice(1).map((s) => (
-                            <button 
-                              key={s}
-                              onClick={() => updateOrderStatus(order.id, s as OrderStatus)}
-                              className="w-full text-left px-5 py-2.5 text-xs font-bold hover:bg-jozi-cream transition-colors text-jozi-forest flex items-center justify-between"
-                            >
-                              {s}
-                              {order.status === s && <CheckCircle2 className="w-3 h-3 text-jozi-gold" />}
-                            </button>
+          {/* --- VIEW 1: MASTER REGISTRY (ALL ORDERS) --- */}
+          {activeTab === 'all' && (
+            <div className="space-y-6">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                  <Loader2 className="w-12 h-12 text-jozi-gold animate-spin mb-4" />
+                  <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading Orders...</p>
+                </div>
+              ) : paginatedOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                  <Package className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">No Orders Found</p>
+                  <p className="text-gray-400 font-medium text-xs mt-2">Orders will appear here once customers place them.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left min-w-[1000px]">
+                      <thead>
+                        <tr className="border-b border-gray-100">
+                          {['Order ID', 'Date', 'Customer', 'Items', 'Total', 'Status', 'View'].map((h, i) => (
+                            <th key={i} className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">{h}</th>
                           ))}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-6 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {paginatedOrders.map((order) => (
+                          <tr key={order.id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                            <td className="py-5 font-black text-jozi-dark text-sm"> ORD_{order.id.split('_')[1]}</td>
+                            <td className="py-5 text-xs font-bold text-gray-500">{order.orderDate}</td>
+                            <td className="py-5">
+                              <p className="font-bold text-jozi-dark text-sm">{order.customerName}</p>
+                              <p className="text-[10px] text-gray-400">{order.customerEmail}</p>
+                            </td>
+                            <td className="py-5">
+                              <div className="flex items-center gap-2">
+                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">
+                                  {order.products.reduce((acc, p) => acc + p.quantity, 0)} Items
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-5 font-black text-jozi-dark">R{order.totalAmount}</td>
+                            <td className="py-5">
+                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyles(order.status)}`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="py-5">
+                              <button className="p-2 hover:bg-white rounded-xl transition-colors">
+                                <Eye className="w-4 h-4 text-gray-400 group-hover:text-jozi-forest" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-6">
+                      <p className="text-xs font-bold text-gray-400">
+                        Page {currentPage} of {totalPages}
+                      </p>
+                      <div className="flex gap-2">
                         <button 
-                          className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-jozi-forest hover:bg-white transition-all shadow-sm"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-all"
                         >
-                          <Eye className="w-4 h-4" />
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-all"
+                        >
+                          <ChevronRight className="w-4 h-4" />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="mt-12 pt-12 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <p className="text-sm font-bold text-gray-400 text-left">
-              Showing <span className="text-jozi-dark">{(currentPage - 1) * ordersPerPage + 1}</span> to <span className="text-jozi-dark">{Math.min(currentPage * ordersPerPage, filteredOrders.length)}</span> of <span className="text-jozi-dark">{filteredOrders.length}</span> orders
-            </p>
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="p-3 rounded-xl border border-gray-100 text-gray-400 hover:border-jozi-gold hover:text-jozi-gold transition-all disabled:opacity-30"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-12 h-12 rounded-xl font-black text-sm transition-all ${currentPage === i + 1 ? 'bg-jozi-forest text-white shadow-lg' : 'bg-white border border-gray-100 text-gray-400 hover:border-jozi-gold'}`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="p-3 rounded-xl border border-gray-100 text-gray-400 hover:border-jozi-gold hover:text-jozi-gold transition-all disabled:opacity-30"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* --- VIEW 2: VENDOR MANIFESTS (SCALABLE ACCORDION) --- */}
+          {activeTab === 'vendor_grouped' && (
+            <div className="space-y-12">
+              {loadingVendorManifests ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                  <Loader2 className="w-12 h-12 text-jozi-gold animate-spin mb-4" />
+                  <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading Vendor Manifests...</p>
+                </div>
+              ) : vendorGroupedOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32">
+                  <Package className="w-16 h-16 text-gray-300 mb-4" />
+                  <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">No Vendor Manifests Found</p>
+                  <p className="text-gray-400 font-medium text-xs mt-2">No order items found for the last 30 days.</p>
+                </div>
+              ) : (
+                <>
+                  {vendorGroupedOrders.map((group) => (
+                    <div key={group.date}>
+                      {/* Date Header */}
+                      <div className="flex items-center gap-4 mb-6 sticky top-0 bg-white z-10 py-4">
+                        <div className="h-px bg-gray-100 grow" />
+                        <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+                          <Calendar className="w-4 h-4 text-jozi-gold" />
+                          <span className="text-xs font-black uppercase tracking-widest text-gray-500">{group.date}</span>
+                        </div>
+                        <div className="h-px bg-gray-100 grow" />
+                      </div>
+
+                      {/* Vendor Manifest Rows (Accordion) */}
+                      <div className="space-y-4">
+                        {group.vendors.map((vGroup) => {
+                          const isExpanded = expandedManifest === `${group.date}_${vGroup.name}`;
+                          
+                          return (
+                            <div key={vGroup.name} className="border border-gray-100 rounded-2xl overflow-hidden transition-all hover:border-jozi-forest/10">
+                              {/* Manifest Header (Always Visible) */}
+                              <div 
+                                onClick={() => toggleManifest(group.date, vGroup.name)}
+                                className={`p-6 flex flex-col md:flex-row md:items-center justify-between cursor-pointer transition-colors ${isExpanded ? 'bg-gray-50' : 'bg-white hover:bg-gray-50/50'}`}
+                              >
+                                <div className="flex items-center gap-4">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isExpanded ? 'bg-jozi-forest text-white' : 'bg-jozi-cream text-jozi-forest'}`}>
+                                    <Store className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-black text-jozi-forest text-lg">{vGroup.name}</h3>
+                                    <div className="flex items-center gap-3 mt-1">
+                                      <span className="text-xs text-gray-500 font-bold">{vGroup.orders.length} Orders</span>
+                                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                      <span className="text-xs text-gray-500 font-bold">R{vGroup.totalValue.toLocaleString()}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 mt-4 md:mt-0">
+                                  {/* Status Badges for Manifest Summary */}
+                                  <div className="flex gap-2">
+                                    {vGroup.pendingCount > 0 && (
+                                      <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                                        {vGroup.pendingCount} Pending
+                                      </span>
+                                    )}
+                                    {vGroup.issuesCount > 0 && (
+                                      <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 animate-pulse">
+                                        {vGroup.issuesCount} Action Needed
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                                </div>
+                              </div>
+
+                              {/* Expanded Data Table (Scrollable for scalability) */}
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div 
+                                    initial={{ height: 0 }}
+                                    animate={{ height: 'auto' }}
+                                    exit={{ height: 0 }}
+                                    className="overflow-hidden bg-white border-t border-gray-100"
+                                  >
+                                    <div className="max-h-[500px] overflow-y-auto">
+                                      <table className="w-full text-left">
+                                        <thead className="sticky top-0 bg-gray-50 shadow-sm z-10">
+                                          <tr>
+                                            {['Order ID', 'Customer', 'Items', 'Status', 'Action'].map((h, i) => (
+                                              <th key={i} className="px-6 py-4 text-[9px] font-black uppercase text-gray-400 tracking-widest">{h}</th>
+                                            ))}
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                          {vGroup.orders.map(order => (
+                                            <tr key={order.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
+                                              <td className="px-6 py-4 font-bold text-jozi-forest text-xs">{order.id}</td>
+                                              <td className="px-6 py-4">
+                                                <p className="text-xs font-bold text-gray-700">{order.customerName}</p>
+                                              </td>
+                                              <td className="px-6 py-4 text-xs text-gray-500">
+                                                {order.products.find(p => p.vendorName === vGroup.name)?.name}
+                                                {order.products.length > 1 && <span className="text-[10px] text-gray-400 ml-1">(+ others)</span>}
+                                              </td>
+                                              <td className="px-6 py-4">
+                                                <span className={`text-[9px] px-2 py-0.5 rounded-full border ${getStatusStyles(order.status)}`}>
+                                                  {order.status}
+                                                </span>
+                                              </td>
+                                              <td className="px-6 py-4">
+                                                <button className="text-jozi-gold hover:text-jozi-forest text-[10px] font-black uppercase tracking-widest">
+                                                  View
+                                                </button>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 border-t border-gray-100 text-center">
+                                      <button className="text-xs font-bold text-jozi-forest flex items-center justify-center gap-2 hover:underline">
+                                        <Download className="w-3 h-3" /> Download Manifest PDF
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* --- VIEW 3: RESOLUTION CENTER --- */}
+          {activeTab === 'resolutions' && (
+            <div className="space-y-6">
+               <div className="flex items-center gap-2 mb-4 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 text-sm">
+                 <AlertCircle className="w-5 h-5" />
+                 <span className="font-bold">Attention Needed:</span>
+                 <span>Review cancellation and return requests below. Approve to process refunds automatically.</span>
+               </div>
+
+               <div className="grid gap-4">
+                 {resolutionOrders.length === 0 ? (
+                   <div className="text-center py-20">
+                     <CheckCircle2 className="w-16 h-16 text-emerald-100 mx-auto mb-4" />
+                     <p className="text-gray-400 font-bold uppercase tracking-widest">All caught up! No pending requests.</p>
+                   </div>
+                 ) : (
+                   resolutionOrders.map((order) => (
+                     <div key={order.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow">
+                        {/* Status Column */}
+                        <div className="md:w-1/4">
+                          <span className={`inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(order.status)}`}>
+                            {order.status}
+                          </span>
+                          <p className="mt-4 font-black text-xl text-jozi-forest">{order.id}</p>
+                          <p className="text-xs text-gray-500">{order.orderDate}</p>
+                        </div>
+
+                        {/* Details Column */}
+                        <div className="md:w-1/2 space-y-2 border-l border-gray-100 pl-6">
+                           <div>
+                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reason Provided</p>
+                             <p className="font-medium text-gray-700 mt-1 italic">"{order.requestReason || 'No reason provided'}"</p>
+                           </div>
+                           <div className="flex gap-8 pt-2">
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Customer</p>
+                                <p className="font-bold text-sm text-jozi-forest">{order.customerName}</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Refund Amount</p>
+                                <p className="font-bold text-sm text-jozi-forest">R{order.totalAmount}</p>
+                              </div>
+                           </div>
+                        </div>
+
+                        {/* Action Column */}
+                        <div className="md:w-1/4 flex flex-col gap-3 justify-center pl-6 border-l border-gray-100">
+                          {order.status.includes('Requested') ? (
+                            <>
+                              <button 
+                                onClick={() => handleStatusUpdate(order.id, order.status.includes('Return') ? 'Returned' : 'Cancelled')}
+                                className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                              >
+                                <ThumbsUp className="w-4 h-4" /> Approve
+                              </button>
+                              <button 
+                                onClick={() => handleStatusUpdate(order.id, order.status.includes('Return') ? 'Delivered' : 'Processing')}
+                                className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                              >
+                                <ThumbsDown className="w-4 h-4" /> Reject
+                              </button>
+                            </>
+                          ) : (
+                            <div className="text-center">
+                              <p className="text-xs font-bold text-gray-400 uppercase">Resolution Finalized</p>
+                              <button 
+                                onClick={() => setSelectedOrder(order)} 
+                                className="text-jozi-gold font-black text-xs uppercase tracking-widest hover:underline mt-2"
+                              >
+                                View Details
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                     </div>
+                   ))
+                 )}
+               </div>
+            </div>
+          )}
+
         </div>
       </section>
 
-      {/* Order Details Modal */}
+      {/* --- ORDER DETAILS DRAWER --- */}
       <AnimatePresence>
         {selectedOrder && (
-          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex justify-end">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }} 
-              onClick={() => setSelectedOrder(null)}
-              className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-md" 
+              onClick={() => {
+                setSelectedOrder(null);
+                setImageErrors(new Set()); // Clear image errors when drawer closes
+              }}
+              className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-sm" 
             />
+            
             <motion.div 
               initial={{ x: '100%' }} 
               animate={{ x: 0 }} 
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-white shadow-2xl flex flex-col overflow-hidden"
+              className="relative w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full overflow-hidden"
             >
-              {/* Modal Header */}
-              <div className="p-8 md:p-12 border-b border-gray-100 flex items-center justify-between text-left">
+              <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50 flex-shrink-0">
                 <div>
                   <h2 className="text-3xl font-black text-jozi-forest tracking-tighter uppercase">{selectedOrder.id}</h2>
                   <div className="flex items-center space-x-4 mt-2">
                     <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyles(selectedOrder.status)}`}>
                       {selectedOrder.status}
                     </span>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Manifest Logged {selectedOrder.orderDate}</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Placed {selectedOrder.orderDate}</span>
                   </div>
                 </div>
                 <button 
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-4 hover:bg-gray-100 rounded-2xl transition-colors group"
+                  onClick={() => {
+                    setSelectedOrder(null);
+                    setImageErrors(new Set()); // Clear image errors when drawer closes
+                  }}
+                  className="p-3 hover:bg-white rounded-xl transition-colors group shadow-sm"
                 >
                   <X className="w-6 h-6 text-gray-400 group-hover:text-jozi-forest" />
                 </button>
               </div>
 
-              {/* Modal Body */}
-              <div className="grow overflow-y-auto p-8 md:p-12 space-y-12 text-left">
+              <div className="grow overflow-y-auto p-8 space-y-10">
                 
-                {/* Timeline Visualization */}
-                <div className="space-y-8">
-                   <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-4">Fulfillment Journey</h3>
-                   <div className="relative pt-4 pb-4">
-                      <div className="absolute top-0 bottom-0 left-6 w-[2px] bg-gray-100" />
-                      <div className="space-y-10 relative">
+                {/* Timeline */}
+                <div className="space-y-6">
+                   <h3 className="text-xs font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-3">Fulfillment Journey</h3>
+                   <div className="relative pt-2">
+                      <div className="absolute top-2 bottom-4 left-6 w-[2px] bg-gray-100" />
+                      <div className="space-y-6 relative">
                         {[
                           { label: 'Order Received', time: '10:45 AM', active: true, icon: Clock },
-                          { label: 'Artisan Acknowledged', time: '11:15 AM', active: true, icon: CheckCircle2 },
-                          { label: 'Picked & Packed', time: 'Pending', active: !['Processing'].includes(selectedOrder.status), icon: Package },
-                          { label: 'In Transit', time: 'Pending', active: ['Out for Delivery', 'Delivered'].includes(selectedOrder.status), icon: Truck },
+                          { label: 'Payments Verified', time: '11:15 AM', active: true, icon: CheckCircle2 },
+                          { label: 'Processing', time: 'Pending', active: !['Processing'].includes(selectedOrder.status), icon: Package },
+                          { label: 'Out for Delivery', time: 'Pending', active: ['Out for Delivery', 'Delivered'].includes(selectedOrder.status), icon: Truck },
                           { label: 'Delivered', time: 'Pending', active: selectedOrder.status === 'Delivered', icon: MapPin }
                         ].map((step, i) => (
                           <div key={i} className="flex items-center space-x-6">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-gray-100 text-gray-300'}`}>
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg z-10 transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-gray-100 text-gray-300'}`}>
                               <step.icon className="w-5 h-5" />
                             </div>
                             <div className="grow">
@@ -398,46 +967,100 @@ const AdminOrderManagement: React.FC = () => {
                    </div>
                 </div>
 
-                {/* --- PRODUCTS ORDERED SECTION --- */}
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest flex items-center">
-                      <Package className="w-4 h-4 mr-2 text-jozi-gold" />
-                      Ordered Items
-                    </h3>
+                {/* Items Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-black text-jozi-forest uppercase tracking-widest">Ordered Items</h3>
                     <span className="text-[10px] font-black text-gray-400 uppercase bg-gray-50 px-3 py-1 rounded-full">{selectedOrder.products.length} Units</span>
                   </div>
-                  
                   <div className="space-y-3">
-                    {selectedOrder.products.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-6 bg-jozi-cream/30 rounded-3xl border border-jozi-forest/5 group hover:bg-jozi-cream transition-colors">
-                        <div className="flex items-center space-x-5">
-                          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-jozi-forest shadow-sm group-hover:scale-105 transition-transform border border-jozi-forest/5">
-                            <Package className="w-6 h-6 opacity-40" />
+                    {selectedOrder.products.map((item, idx) => {
+                      const imageKey = `${selectedOrder.id}-${idx}`;
+                      const hasImageError = imageErrors.has(imageKey);
+                      const orderItemId = item.orderItemId;
+                      const currentStatus = item.status || OrderItemStatus.PENDING;
+                      const isUpdating = updatingItemId === orderItemId;
+                      
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <div className="flex items-center space-x-4 flex-1">
+                            <div className="w-16 h-16 bg-white rounded-xl overflow-hidden flex items-center justify-center text-jozi-forest shadow-sm border border-gray-100 shrink-0">
+                              {item.image && !hasImageError ? (
+                                <img 
+                                  src={item.image} 
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                  onError={() => {
+                                    setImageErrors(prev => new Set(prev).add(imageKey));
+                                  }}
+                                />
+                              ) : (
+                                <Package className="w-5 h-5 opacity-40" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-black text-jozi-forest text-sm leading-tight">{item.name}</p>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-jozi-gold">Vendor: {item.vendorName}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <span className="text-[9px] font-black text-gray-400 uppercase">Qty: {item.quantity}</span>
+                                <span className={`text-[9px] px-2 py-0.5 rounded border font-black uppercase ${
+                                  currentStatus === OrderItemStatus.DELIVERED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                  currentStatus === OrderItemStatus.SHIPPED ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                  currentStatus === OrderItemStatus.PACKED ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                  currentStatus === OrderItemStatus.PICKED ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                  currentStatus === OrderItemStatus.PROCESSING ? 'bg-orange-50 text-orange-600 border-orange-100' :
+                                  currentStatus === OrderItemStatus.ACCEPTED ? 'bg-green-50 text-green-600 border-green-100' :
+                                  currentStatus === OrderItemStatus.REJECTED || currentStatus === OrderItemStatus.CANCELLED ? 'bg-red-50 text-red-600 border-red-100' :
+                                  'bg-gray-50 text-gray-600 border-gray-100'
+                                }`}>
+                                  {currentStatus.replace(/_/g, ' ')}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-black text-jozi-forest text-sm leading-tight">{item.name}</p>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Unit Price: R{item.price}</p>
+                          <div className="flex items-center space-x-4">
+                            <div className="text-right mr-4">
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
+                              <p className="font-black text-jozi-forest mt-1">R{item.price}</p>
+                            </div>
+                            {orderItemId && (
+                              <div className="relative">
+                                <select
+                                  value={currentStatus}
+                                  onChange={(e) => handleItemStatusUpdate(orderItemId, e.target.value as OrderItemStatus)}
+                                  disabled={isUpdating}
+                                  className={`appearance-none bg-white border-2 rounded-xl px-3 py-2 pr-8 font-black text-[10px] uppercase tracking-widest cursor-pointer transition-all min-w-[140px] text-jozi-forest ${
+                                    isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:border-jozi-gold border-gray-200'
+                                  }`}
+                                >
+                                  {adminAllowedStatuses.map((status: { value: OrderItemStatus; label: string }) => (
+                                    <option key={status.value} value={status.value} className="text-jozi-forest">
+                                      {status.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {isUpdating && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+                                    <Loader2 className="w-4 h-4 text-jozi-gold animate-spin" />
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-black text-jozi-gold uppercase tracking-widest">Qty: {item.quantity}</p>
-                          <p className="font-black text-jozi-forest mt-1">R{item.price * item.quantity}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Items & Shipping Grid */}
-                <div className="grid md:grid-cols-2 gap-12 pt-4">
-                  <div className="space-y-6">
-                    <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest">Recipient Details</h3>
-                    <div className="p-8 bg-gray-50 rounded-4xl border border-gray-100 space-y-6 relative overflow-hidden">
+                {/* Info Grid */}
+                <div className="grid grid-cols-1 gap-8">
+                   <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 space-y-5">
+                      <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Delivery Details</h4>
                       <div className="flex items-start space-x-4">
                         <User className="w-5 h-5 text-jozi-gold shrink-0 mt-1" />
                         <div>
-                          <p className="font-black text-jozi-forest leading-tight">{selectedOrder.customerName}</p>
+                          <p className="font-bold text-jozi-forest leading-tight">{selectedOrder.customerName}</p>
                           <p className="text-xs text-gray-500 font-medium">{selectedOrder.customerEmail}</p>
                         </div>
                       </div>
@@ -445,73 +1068,71 @@ const AdminOrderManagement: React.FC = () => {
                         <MapPin className="w-5 h-5 text-jozi-gold shrink-0 mt-1" />
                         <p className="text-xs text-gray-500 font-medium leading-relaxed">{selectedOrder.shippingAddress}</p>
                       </div>
-                      <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-                         <span className="text-[10px] font-black uppercase text-gray-400">Payment: {selectedOrder.paymentMethod}</span>
-                         <CreditCard className="w-4 h-4 text-gray-300" />
-                      </div>
-                    </div>
-                  </div>
+                   </div>
 
-                  <div className="space-y-6">
-                    <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest">Payment Breakdown</h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center text-sm font-medium text-gray-500">
-                        <span>Items Subtotal</span>
-                        <span className="font-bold text-jozi-forest">R{selectedOrder.totalAmount - 75}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs text-gray-400 font-bold uppercase tracking-widest">
-                        <span>Hub Logistics</span>
-                        <span>R75</span>
-                      </div>
-                      <div className="h-px bg-gray-100 my-4" />
-                      <div className="flex justify-between items-end pt-2">
-                         <div>
-                            <span className="text-[10px] font-black text-jozi-gold uppercase tracking-[0.2em]">Grand Total</span>
-                            <p className="text-4xl font-black text-jozi-forest tracking-tighter">R{selectedOrder.totalAmount}</p>
-                         </div>
-                         <div className="text-right">
-                           <span className="text-[9px] font-bold text-gray-300 uppercase block">INCL. VAT</span>
-                           <span className="inline-flex items-center text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-md mt-1">
-                             <CheckCircle2 className="w-2 h-2 mr-1" /> Verified
-                           </span>
-                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 p-8 rounded-4xl border border-amber-100 flex items-start space-x-6">
-                   <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />
                    <div>
-                     <h4 className="font-black text-amber-900 text-sm uppercase tracking-widest">Admin Note</h4>
-                     <p className="text-xs text-amber-800 font-medium leading-relaxed mt-1 opacity-80 italic">Verified for Hub Pickup. Ensure fragile protection for {selectedOrder.category} items.</p>
+                     <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Payment Summary</h4>
+                     <div className="space-y-3">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="font-medium text-gray-500">Subtotal</span>
+                          <span className="font-bold text-jozi-forest">R{selectedOrder.totalAmount}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="font-medium text-gray-500">Method</span>
+                          <span className="font-bold text-jozi-forest flex items-center gap-2">
+                            <CreditCard className="w-3 h-3" /> {selectedOrder.paymentMethod}
+                          </span>
+                        </div>
+                        <div className="h-px bg-gray-100 my-2" />
+                        <div className="flex justify-between items-center bg-jozi-forest text-white p-4 rounded-xl shadow-lg">
+                          <span className="text-xs font-black uppercase tracking-widest text-jozi-gold">Total Paid</span>
+                          <span className="text-xl font-black">R{selectedOrder.totalAmount}</span>
+                        </div>
+                     </div>
                    </div>
                 </div>
+                
+                {selectedOrder.requestReason && (
+                   <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex items-start space-x-4">
+                      <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-1" />
+                      <div>
+                        <h4 className="font-black text-amber-900 text-xs uppercase tracking-widest">Customer Request Note</h4>
+                        <p className="text-sm text-amber-800 font-medium leading-relaxed mt-1 italic">"{selectedOrder.requestReason}"</p>
+                      </div>
+                   </div>
+                )}
               </div>
 
-              {/* Modal Footer Actions */}
-              <div className="p-8 md:p-12 bg-gray-50 flex flex-col sm:flex-row gap-4 border-t border-gray-100">
-                <div className="grow flex items-center gap-4">
-                  <div className="relative grow">
-                    <select 
-                      className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 font-bold text-sm outline-none appearance-none cursor-pointer"
-                      value={selectedOrder.status}
-                      onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value as OrderStatus)}
-                    >
-                      {statuses.slice(1).map(s => <option key={s} value={s}>State: {s}</option>)}
-                    </select>
-                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
+              <div className="p-6 bg-white border-t border-gray-100 shrink-0 flex flex-col gap-4">
+                <div className="relative">
+                    <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest block mb-2 ml-1">Update Status</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full bg-gray-50 border text-jozi-forest border-gray-200 rounded-xl px-4 py-3 font-bold text-sm outline-none appearance-none cursor-pointer hover:border-jozi-gold transition-colors"
+                        value={selectedOrder.status}
+                        onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value as OrderStatus)}
+                      >
+                        <option value="Processing">Processing</option>
+                        <option value="Picked">Picked</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                        <option value="Returned">Returned</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
                 </div>
-                <button className="bg-jozi-forest text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center">
+                <button className="w-full bg-jozi-forest text-white px-6 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg shadow-jozi-forest/20 flex items-center justify-center">
                   <ExternalLink className="w-4 h-4 mr-2 text-jozi-gold" />
-                  Generate Invoice
+                  Generate Invoice PDF
                 </button>
               </div>
+
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };
