@@ -75,14 +75,58 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
     'Other'
   ];
 
-  // Vendor allowed statuses: pending, accepted, rejected, processing, picked, packed, shipped
-  const vendorAllowedStatuses: Array<{ value: OrderItemStatus; label: string }> = [
-    { value: OrderItemStatus.PENDING, label: 'Pending' },
-    { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
-    { value: OrderItemStatus.REJECTED, label: 'Rejected' },
-    { value: OrderItemStatus.PROCESSING, label: 'Processed' }, // Display label changed for UX, value remains "processing"
-    { value: OrderItemStatus.PICKED, label: 'Picked' },
-  ];
+  // Get allowed next statuses based on current status (vendor flow)
+  const getAllowedNextStatuses = (currentStatus: OrderItemStatus | string): Array<{ value: OrderItemStatus; label: string }> => {
+    const status = typeof currentStatus === 'string' ? currentStatus : currentStatus;
+    
+    // Vendor status transition flow:
+    // pending > rejected (can reject)
+    // pending > accepted (can accept)
+    // accepted > Processing (can move to processing)
+    // processing > picked (can move to picked)
+    
+    switch (status) {
+      case OrderItemStatus.PENDING:
+      case 'pending':
+        // From pending: can reject or accept
+        return [
+          { value: OrderItemStatus.PENDING, label: 'Pending' },
+          { value: OrderItemStatus.REJECTED, label: 'Rejected' },
+          { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
+        ];
+      case OrderItemStatus.ACCEPTED:
+      case 'accepted':
+        // From accepted: can move to processing
+        return [
+          { value: OrderItemStatus.ACCEPTED, label: 'Accepted' },
+          { value: OrderItemStatus.PROCESSING, label: 'Processed' },
+        ];
+      case OrderItemStatus.PROCESSING:
+      case 'processing':
+        // From processing: can move to picked
+        return [
+          { value: OrderItemStatus.PROCESSING, label: 'Processed' },
+          { value: OrderItemStatus.PICKED, label: 'Picked' },
+        ];
+      case OrderItemStatus.PICKED:
+      case 'picked':
+        // From picked: no further vendor transitions (vendor workflow ends here)
+        return [
+          { value: OrderItemStatus.PICKED, label: 'Picked' },
+        ];
+      case OrderItemStatus.REJECTED:
+      case 'rejected':
+        // From rejected: cannot change (rejection is final)
+        return [
+          { value: OrderItemStatus.REJECTED, label: 'Rejected' },
+        ];
+      default:
+        // Default: show current status only
+        return [
+          { value: currentStatus as OrderItemStatus, label: String(currentStatus).replace(/_/g, ' ') },
+        ];
+    }
+  };
 
   const handleItemStatusUpdate = async (orderItemId: string, newStatus: OrderItemStatus) => {
     if (!orderItemId || !selectedOrder?.originalOrder) {
@@ -90,8 +134,17 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
       return;
     }
 
-    // If rejecting, check if reason is provided
+    // Find the current item to get its current status
+    const currentItem = selectedOrder.originalOrder.items?.find((item: any) => item.id === orderItemId);
+    const currentStatus = currentItem?.status || OrderItemStatus.PENDING;
+
+    // Validate status transition rules
+    // Rejection is only allowed from pending status
     if (newStatus === OrderItemStatus.REJECTED) {
+      if (currentStatus !== OrderItemStatus.PENDING && currentStatus !== 'pending') {
+        showError('Items can only be rejected when they are in pending status');
+        return;
+      }
       const reason = rejectionReasons.get(orderItemId);
       if (!reason || reason.trim() === '') {
         // Show rejection reason dropdown for this item
@@ -99,6 +152,12 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
         return;
       }
     } else {
+      // Validate other transitions
+      const allowedStatuses = getAllowedNextStatuses(currentStatus).map(s => s.value);
+      if (!allowedStatuses.includes(newStatus)) {
+        showError(`Invalid status transition. Current status: ${currentStatus}, cannot transition to: ${newStatus}`);
+        return;
+      }
       // Clear rejection state if changing to non-rejected status
       setRejectingItemId(null);
       rejectionReasons.delete(orderItemId);
@@ -625,7 +684,12 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                                     value={currentStatus}
                                     onChange={(e) => {
                                       const newStatus = e.target.value as OrderItemStatus;
+                                      // Only allow rejection from pending status
                                       if (newStatus === OrderItemStatus.REJECTED) {
+                                        if (currentStatus !== OrderItemStatus.PENDING && currentStatus !== 'pending') {
+                                          showError('Items can only be rejected when they are in pending status');
+                                          return;
+                                        }
                                         setRejectingItemId(orderItemId);
                                         if (!rejectionReasons.has(orderItemId)) {
                                           handleRejectionReasonChange(orderItemId, '');
@@ -650,7 +714,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                                         : 'cursor-pointer hover:border-jozi-gold border-gray-200'
                                     }`}
                                   >
-                                    {vendorAllowedStatuses.map((status) => (
+                                    {getAllowedNextStatuses(currentStatus).map((status) => (
                                       <option key={status.value} value={status.value} className="text-jozi-forest">
                                         {status.label}
                                       </option>
