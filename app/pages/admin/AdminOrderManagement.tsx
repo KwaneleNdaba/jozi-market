@@ -33,7 +33,7 @@ import {
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { getAllOrdersAction, getOrderItemsGroupedByDateAndVendorAction, updateOrderItemStatusAction } from '@/app/actions/order/index';
+import { getAllOrdersAction, getOrderItemsGroupedByDateAndVendorAction, updateOrderItemStatusAction, updateOrderAction } from '@/app/actions/order/index';
 import { IOrder, IOrderItemsGroupedResponse, IOrderItemsByVendorAndDate, OrderItemStatus, OrderStatus } from '@/interfaces/order/order';
 import { useToast } from '@/app/contexts/ToastContext';
 
@@ -138,6 +138,12 @@ const AdminOrderManagement: React.FC = () => {
   
   // Store original orders to access item IDs
   const [originalOrdersMap, setOriginalOrdersMap] = useState<Map<string, IOrder>>(new Map());
+  
+  // State for pending changes (for bulk save)
+  const [pendingOrderStatus, setPendingOrderStatus] = useState<OrderStatus | string | null>(null);
+  const [pendingItemStatuses, setPendingItemStatuses] = useState<Map<string, OrderItemStatus>>(new Map());
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Transform backend IOrder to MarketOrder format
   const transformOrder = (order: IOrder): MarketOrder => {
@@ -276,32 +282,163 @@ const AdminOrderManagement: React.FC = () => {
   }, [showError]);
 
   // Handle order item status update (admin - full control)
-  const handleItemStatusUpdate = async (orderItemId: string, newStatus: OrderItemStatus) => {
-    if (!orderItemId) {
-      showError('Order item ID is required');
-      return;
-    }
-
-    setUpdatingItemId(orderItemId);
-    try {
-      const response = await updateOrderItemStatusAction(orderItemId, {
-        orderItemId,
-        status: newStatus,
+  const handleItemStatusUpdate = (orderItemId: string, newStatus: OrderItemStatus) => {
+    // Track pending change instead of saving immediately
+    setPendingItemStatuses(prev => {
+      const newMap = new Map(prev);
+      newMap.set(orderItemId, newStatus);
+      return newMap;
+    });
+    
+    // Update UI immediately for better UX
+    if (selectedOrder) {
+      setSelectedOrder(prev => {
+        if (!prev) return null;
+        const updatedProducts = prev.products.map(p => 
+          p.orderItemId === orderItemId ? { ...p, status: newStatus } : p
+        );
+        return { ...prev, products: updatedProducts };
       });
-
-      if (response.error) {
-        showError(response.message || 'Failed to update order item status');
+    }
+  };
+  
+  // Bulk save function
+  const handleBulkSave = async () => {
+    if (!selectedOrder) return;
+    
+    setIsSaving(true);
+    const errors: string[] = [];
+    const successes: string[] = [];
+    
+    try {
+      // Get the original order from the selectedOrder
+      const originalOrder = selectedOrder.originalOrder;
+      if (!originalOrder?.id) {
+        showError('Order ID not found. Please refresh and try again.');
+        setIsSaving(false);
+        return;
+      }
+      
+      // Update order status if changed
+      const originalStatus = originalOrder.status;
+      const normalizedPendingStatus = typeof pendingOrderStatus === 'string' ? pendingOrderStatus.toLowerCase() : pendingOrderStatus;
+      const normalizedOriginalStatus = typeof originalStatus === 'string' ? originalStatus.toLowerCase() : originalStatus;
+      
+      if (pendingOrderStatus && normalizedPendingStatus !== normalizedOriginalStatus) {
+        try {
+          const orderResponse = await updateOrderAction({
+            id: originalOrder.id,
+            status: pendingOrderStatus as OrderStatus,
+          });
+          
+          if (orderResponse.error) {
+            errors.push(`Order status: ${orderResponse.message}`);
+          } else {
+            successes.push('Order status updated');
+          }
+        } catch (error: any) {
+          errors.push(`Order status: ${error?.message || 'Failed to update'}`);
+        }
+      }
+      
+      // Update all pending item statuses (only if they actually changed)
+      const itemUpdatePromises = Array.from(pendingItemStatuses.entries())
+        .filter(([orderItemId, newStatus]) => {
+          const originalItem = originalOrder.items?.find(item => item.id === orderItemId);
+          if (!originalItem) return false;
+          const originalStatus = originalItem.status || OrderItemStatus.PENDING;
+          const normalizedNewStatus = typeof newStatus === 'string' ? newStatus.toLowerCase() : newStatus;
+          const normalizedOriginalStatus = typeof originalStatus === 'string' ? originalStatus.toLowerCase() : originalStatus;
+          return normalizedNewStatus !== normalizedOriginalStatus;
+        })
+        .map(async ([orderItemId, newStatus]) => {
+          try {
+            const itemResponse = await updateOrderItemStatusAction(orderItemId, {
+              orderItemId,
+              status: newStatus,
+            });
+            
+            if (itemResponse.error) {
+              errors.push(`Item ${orderItemId}: ${itemResponse.message}`);
+            } else {
+              successes.push(`Item status updated`);
+            }
+          } catch (error: any) {
+            errors.push(`Item ${orderItemId}: ${error?.message || 'Failed to update'}`);
+          }
+        });
+      
+      await Promise.all(itemUpdatePromises);
+      
+      // Show results
+      if (errors.length > 0 && successes.length > 0) {
+        showError(`Some updates failed: ${errors.join(', ')}`);
+      } else if (errors.length > 0) {
+        showError(`Failed to save changes: ${errors.join(', ')}`);
       } else {
-        showSuccess('Order item status updated successfully');
-        // Refresh orders to get updated status
+        showSuccess('All changes saved successfully');
+        // Clear pending changes
+        setPendingOrderStatus(null);
+        setPendingItemStatuses(new Map());
+        setShowConfirmModal(false);
+        // Refresh orders
         await fetchOrders();
       }
     } catch (error: any) {
-      showError(error?.message || 'Failed to update order item status');
+      showError(error?.message || 'Failed to save changes');
     } finally {
-      setUpdatingItemId(null);
+      setIsSaving(false);
     }
   };
+  
+  // Check if there are pending changes
+  const hasPendingChanges = useMemo(() => {
+    if (!selectedOrder?.originalOrder) {
+      // If no original order, check if we have any pending changes
+      return pendingOrderStatus !== null || pendingItemStatuses.size > 0;
+    }
+    
+    const originalOrder = selectedOrder.originalOrder;
+    
+    // Check if order status changed
+    const orderStatusChanged = pendingOrderStatus !== null && 
+      pendingOrderStatus !== originalOrder.status &&
+      pendingOrderStatus !== originalOrder.status?.toLowerCase();
+    
+    // Check if any item statuses changed
+    const itemStatusesChanged = Array.from(pendingItemStatuses.entries()).some(([itemId, newStatus]) => {
+      const originalItem = originalOrder.items?.find(item => item.id === itemId);
+      if (!originalItem) return false;
+      const originalStatus = originalItem.status || OrderItemStatus.PENDING;
+      return newStatus !== originalStatus && newStatus !== originalStatus?.toLowerCase();
+    });
+    
+    return orderStatusChanged || itemStatusesChanged;
+  }, [pendingOrderStatus, pendingItemStatuses, selectedOrder]);
+  
+  // Reset pending changes when drawer closes
+  const handleCloseDrawer = () => {
+    // Check if there are unsaved changes
+    if (hasPendingChanges) {
+      const confirmClose = window.confirm('You have unsaved changes. Are you sure you want to close?');
+      if (!confirmClose) {
+        return;
+      }
+    }
+    setSelectedOrder(null);
+    setImageErrors(new Set());
+    setPendingOrderStatus(null);
+    setPendingItemStatuses(new Map());
+  };
+  
+  // Initialize pending changes when drawer opens
+  useEffect(() => {
+    if (selectedOrder?.id) {
+      // Reset pending changes when a new order is selected
+      setPendingOrderStatus(null);
+      setPendingItemStatuses(new Map());
+    }
+  }, [selectedOrder?.id]);
 
   // Admin allowed statuses (full control - all OrderItemStatus values)
   // Admin can see and update all statuses regardless of cancellation/return requests
@@ -384,8 +521,11 @@ const AdminOrderManagement: React.FC = () => {
   };
 
   const handleStatusUpdate = (id: string, newStatus: OrderStatus | string) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
-    if (selectedOrder?.id === id) setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+    // Track pending change instead of saving immediately
+    if (selectedOrder?.id === id) {
+      setPendingOrderStatus(newStatus);
+      setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
+    }
   };
 
   const toggleManifest = (date: string, vendorName: string) => {
@@ -935,10 +1075,7 @@ const AdminOrderManagement: React.FC = () => {
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }} 
-              onClick={() => {
-                setSelectedOrder(null);
-                setImageErrors(new Set()); // Clear image errors when drawer closes
-              }}
+              onClick={handleCloseDrawer}
               className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-sm" 
             />
             
@@ -960,10 +1097,7 @@ const AdminOrderManagement: React.FC = () => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => {
-                    setSelectedOrder(null);
-                    setImageErrors(new Set()); // Clear image errors when drawer closes
-                  }}
+                  onClick={handleCloseDrawer}
                   className="p-3 hover:bg-white rounded-xl transition-colors group shadow-sm"
                 >
                   <X className="w-6 h-6 text-gray-400 group-hover:text-jozi-forest" />
@@ -1153,12 +1287,139 @@ const AdminOrderManagement: React.FC = () => {
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
                 </div>
+                
+                {/* Bulk Save Button */}
+                {hasPendingChanges && (
+                  <button 
+                    onClick={() => setShowConfirmModal(true)}
+                    disabled={isSaving}
+                    className="w-full bg-jozi-gold text-white px-6 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-gold/90 transition-all shadow-lg shadow-jozi-gold/20 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Save All Changes ({pendingItemStatuses.size + (pendingOrderStatus ? 1 : 0)})
+                      </>
+                    )}
+                  </button>
+                )}
+                
                 <button className="w-full bg-jozi-forest text-white px-6 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg shadow-jozi-forest/20 flex items-center justify-center">
                   <ExternalLink className="w-4 h-4 mr-2 text-jozi-gold" />
                   Generate Invoice PDF
                 </button>
               </div>
 
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => !isSaving && setShowConfirmModal(false)}
+              className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-sm" 
+            />
+            
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black text-jozi-forest uppercase tracking-tight">Confirm Changes</h3>
+                <button 
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={isSaving}
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <p className="text-sm text-gray-600 font-medium">
+                  You are about to save the following changes:
+                </p>
+                
+                <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
+                  {pendingOrderStatus && selectedOrder && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Order Status</span>
+                      <span className="text-sm font-black text-jozi-forest">
+                        {ORDER_STATUS_LABELS[pendingOrderStatus as OrderStatus] || pendingOrderStatus}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {pendingItemStatuses.size > 0 && (
+                    <div>
+                      <span className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">
+                        Order Items ({pendingItemStatuses.size})
+                      </span>
+                      <div className="space-y-2">
+                        {Array.from(pendingItemStatuses.entries()).map(([itemId, status]) => {
+                          const item = selectedOrder?.products.find(p => p.orderItemId === itemId);
+                          return (
+                            <div key={itemId} className="flex items-center justify-between text-xs">
+                              <span className="text-gray-600 truncate flex-1 mr-2">
+                                {item?.name || `Item ${itemId.substring(0, 8)}`}
+                              </span>
+                              <span className="font-black text-jozi-forest shrink-0">
+                                {adminAllowedStatuses.find(s => s.value === status)?.label || status}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <p className="text-xs text-amber-600 font-medium italic">
+                  This action will update the order and all selected items. Continue?
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={isSaving}
+                  className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkSave}
+                  disabled={isSaving}
+                  className="flex-1 py-3 bg-jozi-forest text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg shadow-jozi-forest/20 flex items-center justify-center disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Confirm & Save
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
