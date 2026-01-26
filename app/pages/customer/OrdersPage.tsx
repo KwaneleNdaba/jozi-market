@@ -329,11 +329,65 @@ const OrdersPage: React.FC = () => {
     if (!orderId) { showError('Order ID is required'); return; }
     if (!reason.trim()) { showError('Please provide a reason'); return; }
 
+    // Find the order to get all items
+    const order = orders.find(o => o.orderId === orderId);
+    if (!order) {
+      showError('Order not found');
+      return;
+    }
+
+    // Get all order items that can be returned
+    // Include items that:
+    // 1. Don't have a return request, OR
+    // 2. Have a rejected return request, OR
+    // 3. Have a partial return (returnQuantity < quantity)
+    const itemsToReturn = order.items.filter(item => {
+      if (!item.orderItemId) return false;
+      
+      // If no return request status, can return
+      if (!item.returnRequestStatus) return true;
+      
+      // If rejected, can retry
+      if (item.returnRequestStatus === 'rejected') return true;
+      
+      // If pending or approved but partial return, can return remaining
+      if (item.returnRequestStatus === 'pending' || item.returnRequestStatus === 'approved') {
+        const returnQty = item.returnQuantity || 0;
+        return returnQty < item.quantity;
+      }
+      
+      return false;
+    });
+
+    if (itemsToReturn.length === 0) {
+      showError('No items available to return in this order');
+      return;
+    }
+
     setProcessingRequest(orderId);
     try {
-      const response = await requestReturnAction({ orderId, reason: reason.trim() });
-      if (!response.error && response.data) {
-        showSuccess('Return request submitted successfully');
+      // Bulk update all items with return request using the same reason
+      const returnPromises = itemsToReturn.map(item => {
+        // Calculate return quantity: full quantity minus already returned quantity
+        const alreadyReturned = item.returnQuantity || 0;
+        const returnQuantity = item.quantity - alreadyReturned;
+        
+        return requestItemReturnAction({
+          orderId: orderId,
+          orderItemId: item.orderItemId!,
+          returnQuantity: returnQuantity, // Return remaining quantity for each item
+          reason: reason.trim(),
+        });
+      });
+
+      const responses = await Promise.all(returnPromises);
+      
+      // Check if all requests succeeded
+      const allSucceeded = responses.every(r => !r.error);
+      const errors = responses.filter(r => r.error);
+      
+      if (allSucceeded) {
+        showSuccess(`Return request submitted successfully for ${itemsToReturn.length} item(s)`);
         setShowReasonModal(false);
         // Refresh
         const ordersResponse = await getMyOrdersAction();
@@ -341,7 +395,13 @@ const OrdersPage: React.FC = () => {
           setOrders(transformOrders(ordersResponse.data));
         }
       } else {
-        showError(response.message || 'Failed to submit return request');
+        const errorMessages = errors.map(e => e.message).filter(Boolean);
+        showError(`Failed to submit return request for some items: ${errorMessages.join(', ')}`);
+        // Still refresh to show partial updates
+        const ordersResponse = await getMyOrdersAction();
+        if (!ordersResponse.error && ordersResponse.data) {
+          setOrders(transformOrders(ordersResponse.data));
+        }
       }
     } catch (error: any) {
       showError(error?.message || 'Failed to submit return request');
