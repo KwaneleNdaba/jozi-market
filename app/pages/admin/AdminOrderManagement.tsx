@@ -18,9 +18,7 @@ import {
   Store,
   AlertCircle,
   Inbox,
-  Clock,
   CheckCircle2,
-  Truck,
   CreditCard,
   ThumbsUp,
   ThumbsDown,
@@ -493,6 +491,12 @@ const AdminOrderManagement: React.FC = () => {
       case 'cancellation_requested': return 'bg-red-100 text-red-700 border-red-300 line-through';
       default: return 'bg-gray-200 text-gray-800 border-gray-400';
     }
+  };
+
+  const isOrderDelivered = (order: MarketOrder | null): boolean => {
+    if (!order) return false;
+    const s = typeof order.status === 'string' ? order.status.toLowerCase() : '';
+    return s === 'delivered' || order.status === OrderStatus.DELIVERED;
   };
 
   const handleStatusUpdate = (id: string, newStatus: OrderStatus | string) => {
@@ -1069,34 +1073,6 @@ const AdminOrderManagement: React.FC = () => {
               </div>
 
               <div className="grow overflow-y-auto p-8 space-y-10">
-                
-                {/* Timeline */}
-                <div className="space-y-6">
-                   <h3 className="text-xs font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-3">Fulfillment Journey</h3>
-                   <div className="relative pt-2">
-                      <div className="absolute top-2 bottom-4 left-6 w-[2px] bg-gray-100" />
-                      <div className="space-y-6 relative">
-                        {[
-                          { label: 'Order Received', time: '10:45 AM', active: true, icon: Clock },
-                          { label: 'Payments Verified', time: '11:15 AM', active: true, icon: CheckCircle2 },
-                          { label: 'Processing', time: 'Pending', active: !['Processing'].includes(selectedOrder.status), icon: Package },
-                          { label: 'Out for Delivery', time: 'Pending', active: ['Out for Delivery', 'Delivered'].includes(selectedOrder.status), icon: Truck },
-                          { label: 'Delivered', time: 'Pending', active: selectedOrder.status === 'Delivered', icon: MapPin }
-                        ].map((step, i) => (
-                          <div key={i} className="flex items-center space-x-6">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg z-10 transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-gray-100 text-gray-300'}`}>
-                              <step.icon className="w-5 h-5" />
-                            </div>
-                            <div className="grow">
-                              <p className={`font-black text-sm ${step.active ? 'text-jozi-forest' : 'text-gray-300'}`}>{step.label}</p>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{step.active ? step.time : 'Awaiting Stage'}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                </div>
-
                 {/* Items Section */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -1153,7 +1129,7 @@ const AdminOrderManagement: React.FC = () => {
                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
                               <p className="font-black text-jozi-forest mt-1">R{item.price}</p>
                             </div>
-                            {orderItemId && (
+                            {orderItemId && !isOrderDelivered(selectedOrder) && (
                               <div className="relative">
                                 <select
                                   value={currentStatus}
@@ -1234,7 +1210,13 @@ const AdminOrderManagement: React.FC = () => {
               </div>
 
               <div className="p-6 bg-white border-t border-gray-100 shrink-0 flex flex-col gap-4">
-                <div className="relative">
+                {isOrderDelivered(selectedOrder) ? (
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <p className="text-sm font-bold text-emerald-800">Order delivered — view only. Status and items are not editable.</p>
+                  </div>
+                ) : (
+                  <div className="relative">
                     <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest block mb-2 ml-1">Update Status</label>
                     <div className="relative">
                       <select 
@@ -1252,10 +1234,11 @@ const AdminOrderManagement: React.FC = () => {
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     </div>
-                </div>
+                  </div>
+                )}
                 
                 {/* Bulk Save Button */}
-                {hasPendingChanges && (
+                {!isOrderDelivered(selectedOrder) && hasPendingChanges && (
                   <button 
                     onClick={() => setShowConfirmModal(true)}
                     disabled={isSaving}

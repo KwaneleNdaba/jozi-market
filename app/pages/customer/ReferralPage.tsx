@@ -89,7 +89,7 @@ const ReferralPage: React.FC = () => {
   ];
 
   return (
-    <div className="bg-jozi-cream min-h-screen pb-32">
+    <div className="pb-32">
       {/* Dynamic Campaign Header */}
       <section className="bg-jozi-forest py-24 relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />

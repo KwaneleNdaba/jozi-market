@@ -23,13 +23,12 @@ import {
   CheckSquare,
   Square,
   ShoppingBag,
-  Info
+  Info,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
-import CustomerSidebar from '../../components/CustomerSidebar';
-import { getCurrentUserAction } from '@/app/actions/auth/auth';
 import { getMyOrdersAction, requestCancellationAction } from '@/app/actions/order/index';
 import { createReturnAction } from '@/app/actions/return/index';
-import { IUser } from '@/interfaces/auth/auth';
 import { useToast } from '@/app/contexts/ToastContext';
 import { IOrder } from '@/interfaces/order/order';
 import type { ICreateReturnItemInput } from '@/interfaces/return/return';
@@ -51,6 +50,8 @@ interface OrderDetail {
   deliveryAddress: string;
   trackingNumber: string;
   cancellationRequestStatus?: string | null;
+  isReturnRequested?: boolean;
+  isReturnApproved?: boolean;
   items: {
     id: string;
     name: string;
@@ -61,21 +62,50 @@ interface OrderDetail {
     orderItemId?: string;
     rejectionReason?: string | null;
     status?: string;
+    isReturnRequested?: boolean;
+    isReturnApproved?: boolean;
   }[];
 }
 
-const OrdersPage: React.FC = () => {
+export interface OrdersPageProps {
+  /** When provided, use instead of fetching. Parent fetches orders + returns together. */
+  initialOrders?: IOrder[];
+  ordersLoading?: boolean;
+  onOrdersRefetch?: () => Promise<void>;
+  /** After creating a return, parent should refetch returns too. */
+  onReturnsRefetch?: () => Promise<void>;
+}
+
+/** Treat API booleans that may come as true/"true"/1 or false/"false"/0. */
+function isReturnRequested(item: { isReturnRequested?: boolean | string | number }): boolean {
+  const v = item.isReturnRequested;
+  return v === true || v === 'true' || v === 1;
+}
+function isReturnApproved(item: { isReturnApproved?: boolean | string | number }): boolean {
+  const v = item.isReturnApproved;
+  return v === true || v === 'true' || v === 1;
+}
+function isReturnDeclined(item: { isReturnRequested?: boolean | string | number; isReturnApproved?: boolean | string | number }): boolean {
+  if (!isReturnRequested(item)) return false;
+  const v = item.isReturnApproved;
+  return v === false || v === 'false' || v === 0;
+}
+
+const OrdersPage: React.FC<OrdersPageProps> = ({
+  initialOrders,
+  ordersLoading = false,
+  onOrdersRefetch,
+  onReturnsRefetch,
+}) => {
   // --- State ---
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [user, setUser] = useState<IUser | null>(null);
   const [orders, setOrders] = useState<OrderDetail[]>([]);
   
   // Search and Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const [loading, setLoading] = useState(true);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(initialOrders === undefined ? true : !!ordersLoading);
   
   // Action Modal State
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
@@ -105,29 +135,22 @@ const OrdersPage: React.FC = () => {
 
   // --- Effects ---
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await getCurrentUserAction();
-        if (!response.error && response.data) setUser(response.data);
-      } catch (error) { console.error('Error fetching user:', error); } 
-      finally { setLoading(false); }
-    };
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
+    if (initialOrders !== undefined) {
+      setOrders(transformOrders(initialOrders));
+      setLoadingOrders(ordersLoading);
+      return;
+    }
     const fetchOrders = async () => {
       try {
         const response = await getMyOrdersAction();
         if (!response.error && response.data) {
-          const transformedOrders = transformOrders(response.data);
-          setOrders(transformedOrders);
+          setOrders(transformOrders(response.data));
         }
       } catch (error) { console.error('Error fetching orders:', error); } 
       finally { setLoadingOrders(false); }
     };
     fetchOrders();
-  }, []);
+  }, [initialOrders, ordersLoading]);
 
   // --- Helpers ---
   const formatCurrency = (amount: number | string) => {
@@ -190,6 +213,13 @@ const OrdersPage: React.FC = () => {
         const vendorName = product.vendorName || product.vendor?.name || 'Unknown Vendor';
         const unitPrice = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || 0;
         
+        const req = item.isReturnRequested as unknown;
+        const app = item.isReturnApproved as unknown;
+        const isReq = req === true || req === 'true' || req === 1;
+        let isApp: boolean | undefined = undefined;
+        if (app === true || app === 'true' || app === 1) isApp = true;
+        else if (app === false || app === 'false' || app === 0) isApp = false;
+
         return {
           id: item.id || `item-${idx}`,
           name: product.title || product.name || 'Unknown Product',
@@ -200,6 +230,8 @@ const OrdersPage: React.FC = () => {
           orderItemId: item.id,
           rejectionReason: item.rejectionReason || undefined,
           status: item.status || undefined,
+          isReturnRequested: isReq,
+          isReturnApproved: isApp,
         };
       });
 
@@ -221,6 +253,8 @@ const OrdersPage: React.FC = () => {
         deliveryAddress,
         trackingNumber: order.orderNumber,
         cancellationRequestStatus,
+        isReturnRequested: order.isReturnRequested,
+        isReturnApproved: order.isReturnApproved,
         items,
       };
     });
@@ -276,8 +310,11 @@ const OrdersPage: React.FC = () => {
       if (!response.error && response.data) {
         showSuccess('Cancellation request submitted');
         setShowReasonModal(false);
-        const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+        if (onOrdersRefetch) await onOrdersRefetch();
+        else {
+          const ordersResponse = await getMyOrdersAction();
+          if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+        }
       } else showError(response.message || 'Failed to submit request');
     } catch (error: any) { showError(error?.message || 'Failed to submit request'); } 
     finally { setProcessingRequest(null); }
@@ -325,8 +362,13 @@ const OrdersPage: React.FC = () => {
         setReturnOrderId(null);
         setReturnReason('');
         setSelectedReturnItems(new Map());
-        const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+        if (onOrdersRefetch) {
+          await onOrdersRefetch();
+          if (onReturnsRefetch) await onReturnsRefetch();
+        } else {
+          const ordersResponse = await getMyOrdersAction();
+          if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+        }
       } else showError(response.message || 'Failed to submit request');
     } catch (error: any) { showError(error?.message || 'Failed to submit request'); } 
     finally { setProcessingRequest(null); }
@@ -352,8 +394,13 @@ const OrdersPage: React.FC = () => {
         showSuccess('Item return request submitted');
         setShowItemReturnModal(false);
         setSelectedItemForReturn(null);
-        const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+        if (onOrdersRefetch) {
+          await onOrdersRefetch();
+          if (onReturnsRefetch) await onReturnsRefetch();
+        } else {
+          const ordersResponse = await getMyOrdersAction();
+          if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+        }
       } else showError(response.message || 'Failed to submit request');
     } catch (error: any) { showError(error?.message || 'Failed to submit request'); } 
     finally { setProcessingRequest(null); }
@@ -378,14 +425,6 @@ const OrdersPage: React.FC = () => {
 
   const selectedOrder = useMemo(() => orders.find(o => o.id === selectedOrderId || o.fullId === selectedOrderId), [selectedOrderId, orders]);
 
-  const sidebarUser = user ? {
-    name: user.fullName || 'User',
-    email: user.email || '',
-    avatar: user.profileUrl || 'https://picsum.photos/seed/user/200/200',
-    level: 22,
-    points: 1250,
-  } : { name: 'Loading...', email: '', avatar: '', level: 0, points: 0 };
-
   // --- UI Components ---
   const renderStatusBadge = (label: string, code: string) => {
     let styles = "bg-slate-100 text-slate-600 border-slate-200";
@@ -407,16 +446,8 @@ const OrdersPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#FAFAFA] min-h-screen pb-24 font-sans text-slate-800">
-      <div className="container mx-auto px-4 py-8 lg:py-12 max-w-7xl">
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          <div className="lg:w-80 flex-shrink-0">
-             <CustomerSidebar user={sidebarUser} />
-          </div>
-
-          <main className="grow min-w-0">
-            <AnimatePresence mode="wait">
+    <div className="font-sans text-slate-800">
+      <AnimatePresence mode="wait">
               {selectedOrder ? (
                 // --- DETAIL VIEW ---
                 <motion.div
@@ -506,6 +537,16 @@ const OrdersPage: React.FC = () => {
                                   <Ban className="w-3 h-3" /> Rejected: {item.rejectionReason}
                                 </div>
                               )}
+                              {isReturnRequested(item) && isReturnApproved(item) && (
+                                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold uppercase tracking-wide">
+                                  <CheckCircle className="w-3 h-3 shrink-0" /> Return approved
+                                </div>
+                              )}
+                              {isReturnRequested(item) && isReturnDeclined(item) && (
+                                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wide">
+                                  <XCircle className="w-3 h-3 shrink-0" /> Return declined
+                                </div>
+                              )}
                             </div>
                             <div className="flex items-center gap-8 w-full sm:w-auto justify-between sm:justify-end px-4 sm:px-0">
                               <div className="text-center">
@@ -524,12 +565,12 @@ const OrdersPage: React.FC = () => {
                                     e.stopPropagation();
                                     openItemReturnModal(selectedOrder.orderId, item.orderItemId!, item.name, item.quantity);
                                   }}
-                                  disabled={processingRequest === selectedOrder.orderId}
+                                  disabled={processingRequest === selectedOrder.orderId || isReturnRequested(item)}
+                                  title={isReturnRequested(item) ? 'Return already requested for this item' : 'Return Item'}
                                   className="px-3 py-2 bg-white border border-slate-200 text-slate-600 hover:text-jozi-forest hover:border-jozi-forest rounded-lg text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
-                                  title="Return Item"
                                 >
                                   <RotateCcw className="w-3.5 h-3.5" />
-                                  <span className="hidden sm:inline">Return</span>
+                                  <span className="hidden sm:inline">{isReturnRequested(item) ? 'Requested' : 'Return'}</span>
                                 </button>
                               )}
                             </div>
@@ -612,10 +653,11 @@ const OrdersPage: React.FC = () => {
                           {selectedOrder.statusCode === 'delivered' && (
                             <button
                               onClick={() => selectedOrder.orderId && openReturnModal(selectedOrder.orderId)}
-                              disabled={processingRequest === selectedOrder.orderId}
+                              disabled={processingRequest === selectedOrder.orderId || selectedOrder.isReturnRequested === true}
+                              title={selectedOrder.isReturnRequested ? 'Return already requested for this order' : undefined}
                               className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm hover:border-jozi-forest hover:text-jozi-forest transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
                             >
-                              <RotateCcw className="w-4 h-4" /> Return Order
+                              <RotateCcw className="w-4 h-4" /> {selectedOrder.isReturnRequested ? 'Return Requested' : 'Return Order'}
                             </button>
                           )}
                         </div>
@@ -751,9 +793,6 @@ const OrdersPage: React.FC = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </main>
-        </div>
-      </div>
 
       {/* --- Modals --- */}
       

@@ -54,7 +54,7 @@ const GamificationPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-jozi-cream pb-20">
+    <div className="pb-20">
       {/* Dynamic Header / Stats Bar */}
       <section className="bg-white border-b border-jozi-forest/5 sticky top-20 z-30 py-4 shadow-sm">
         <div className="container mx-auto px-4 flex flex-wrap items-center justify-between gap-4">

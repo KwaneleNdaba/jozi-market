@@ -21,8 +21,6 @@ import {
   Gift,
   X
 } from 'lucide-react';
-import CustomerSidebar from '../../components/CustomerSidebar';
-
 type NotificationCategory = 'All' | 'Orders' | 'Rewards' | 'Promotions' | 'System' | 'Referral';
 
 interface CustomerNotification {
@@ -38,14 +36,6 @@ interface CustomerNotification {
   };
 }
 
-const MOCK_USER = {
-  name: "Lerato Dlamini",
-  email: "lerato.d@jozimail.com",
-  avatar: "https://picsum.photos/seed/lerato/200/200",
-  level: 22,
-  points: 1250
-};
-
 const MOCK_NOTIFICATIONS: CustomerNotification[] = [
   {
     id: 'n1',
@@ -54,7 +44,7 @@ const MOCK_NOTIFICATIONS: CustomerNotification[] = [
     category: 'Orders',
     timestamp: '2 hours ago',
     isRead: false,
-    cta: { label: 'View Order', link: '/profile?tab=orders' }
+    cta: { label: 'View Order', link: '/orders' }
   },
   {
     id: 'n2',
@@ -152,14 +142,8 @@ const CustomerNotificationsPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#FDFCFB] min-h-screen pb-32">
-      <div className="container mx-auto px-4 pt-12 max-w-[1600px]">
-        <div className="flex flex-col lg:flex-row gap-12 items-start">
-          
-          <CustomerSidebar user={MOCK_USER} />
-
-          <main className="grow space-y-8">
-            {/* Header */}
+    <div className="space-y-8">
+      {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="text-left space-y-2">
                 <div className="inline-flex items-center space-x-2 bg-jozi-forest/5 text-jozi-forest px-3 py-1 rounded-full border border-jozi-forest/10">
@@ -384,9 +368,6 @@ const CustomerNotificationsPage: React.FC = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </main>
-        </div>
-      </div>
     </div>
   );
 };

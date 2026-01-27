@@ -13,8 +13,7 @@ import {
   LogOut,
   Award,
   Gamepad2,
-  Bell,
-  RotateCcw
+  Bell
 } from 'lucide-react';
 
 interface CustomerSidebarProps {
@@ -35,7 +34,6 @@ const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ user }) => {
   const menuItems = [
     { id: 'overview', label: 'My Dashboard', icon: User, path: '/profile' },
     { id: 'orders', label: 'Order History', icon: Package, path: '/orders' },
-    { id: 'returns', label: 'Returns', icon: RotateCcw, path: '/profile?tab=returns' },
     { id: 'notifications', label: 'Notifications', icon: Bell, path: '/notifications' },
     { id: 'rewards', label: 'Loyalty Rewards', icon: Star, path: '/rewards' },
     { id: 'games', label: 'Play & Earn', icon: Gamepad2, path: '/games' },

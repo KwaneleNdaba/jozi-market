@@ -1,6 +1,6 @@
 'use client';
 
-import CustomerLoyaltyPage from '../../pages/customer/CustomerLoyaltyPage';
+import CustomerLoyaltyPage from '@/app/pages/customer/CustomerLoyaltyPage';
 
 export default function Rewards() {
   return <CustomerLoyaltyPage />;

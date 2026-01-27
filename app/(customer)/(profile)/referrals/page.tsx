@@ -1,6 +1,6 @@
 'use client';
 
-import ReferralPage from '../../pages/customer/ReferralPage';
+import ReferralPage from '@/app/pages/customer/ReferralPage';
 
 export default function Referrals() {
   return <ReferralPage />;

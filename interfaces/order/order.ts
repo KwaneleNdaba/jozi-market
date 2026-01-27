@@ -44,6 +44,8 @@ export interface IOrderItem {
   unitPrice: number;
   totalPrice: number;
   status?: OrderItemStatus | string;
+  isReturnRequested?: boolean;
+  isReturnApproved?: boolean;
   rejectionReason?: string | null;
   rejectedBy?: string | null;
   rejectedAt?: Date | null;
@@ -64,6 +66,8 @@ export interface IOrder {
   email: string;
   phone?: string;
   notes?: string;
+  isReturnRequested?: boolean;
+  isReturnApproved?: boolean;
   cancellationRequestedAt?: Date | null;
   cancellationReviewedBy?: string | null;
   cancellationReviewedAt?: Date | null;

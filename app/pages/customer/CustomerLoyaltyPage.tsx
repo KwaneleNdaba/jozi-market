@@ -12,8 +12,6 @@ import RewardsStore from '../../components/loyalty/RewardsStore';
 import WaysToEarn from '../../components/loyalty/WaysToEarn';
 import LoyaltyHistory from '../../components/loyalty/LoyaltyHistory';
 import AchievementsSection from '../../components/loyalty/AchievementsSection';
-import CustomerSidebar from '../../components/CustomerSidebar';
-
 const MOCK_USER = {
   name: "Lerato Dlamini",
   email: "lerato.d@jozimail.com",
@@ -36,14 +34,8 @@ const CustomerLoyaltyPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'rewards' | 'history'>('rewards');
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] pb-32">
-      <div className="container mx-auto px-4 pt-12 max-w-[1600px]">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          
-          <CustomerSidebar user={MOCK_USER} />
-
-          <main className="grow space-y-12">
-            {/* Header Section */}
+    <div className="space-y-12">
+      {/* Header Section */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
               <div className="text-left space-y-2">
                 <div className="inline-flex items-center space-x-2 bg-jozi-gold/10 text-jozi-gold px-3 py-1 rounded-full border border-jozi-gold/20">
@@ -143,9 +135,6 @@ const CustomerLoyaltyPage: React.FC = () => {
                 </div>
               </aside>
             </div>
-          </main>
-        </div>
-      </div>
     </div>
   );
 };
