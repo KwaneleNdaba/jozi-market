@@ -7,7 +7,6 @@ import {
   ChevronRight, 
   Clock, 
   MapPin, 
-  ShieldCheck, 
   Award,
   Zap,
   ArrowLeft,
@@ -19,15 +18,21 @@ import {
   Search,
   Filter,
   Receipt,
-  Ban
+  Ban,
+  RotateCcw,
+  CheckSquare,
+  Square,
+  ShoppingBag,
+  Info
 } from 'lucide-react';
 import CustomerSidebar from '../../components/CustomerSidebar';
 import { getCurrentUserAction } from '@/app/actions/auth/auth';
 import { getMyOrdersAction, requestCancellationAction } from '@/app/actions/order/index';
+import { createReturnAction } from '@/app/actions/return/index';
 import { IUser } from '@/interfaces/auth/auth';
 import { useToast } from '@/app/contexts/ToastContext';
 import { IOrder } from '@/interfaces/order/order';
-
+import type { ICreateReturnItemInput } from '@/interfaces/return/return';
 
 // Frontend transformed interface for display
 interface OrderDetail {
@@ -35,8 +40,8 @@ interface OrderDetail {
   fullId: string;    // Full Order Number
   orderId: string;   // Database UUID
   date: string;
-  statusLabel: string; // The pretty string to show (e.g., "Cancellation Pending")
-  statusCode: string;  // For logic (e.g., 'cancellation_pending')
+  statusLabel: string; // The pretty string to show
+  statusCode: string;  // For logic
   total: string;
   subtotal: string;
   shipping: string;
@@ -60,6 +65,7 @@ interface OrderDetail {
 }
 
 const OrdersPage: React.FC = () => {
+  // --- State ---
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [user, setUser] = useState<IUser | null>(null);
   const [orders, setOrders] = useState<OrderDetail[]>([]);
@@ -71,33 +77,44 @@ const OrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(true);
   
-  // Action Modal State (cancellation only; returns handled in Profile → Returns)
+  // Action Modal State
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
-  const [reasonType, setReasonType] = useState<'cancellation' | null>(null);
+  const [reasonType, setReasonType] = useState<'cancellation' | 'return' | null>(null);
   const [reasonOrderId, setReasonOrderId] = useState<string | null>(null);
   const [reasonText, setReasonText] = useState('');
   
+  // Return Modal State
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnOrderId, setReturnOrderId] = useState<string | null>(null);
+  const [returnReason, setReturnReason] = useState('');
+  const [selectedReturnItems, setSelectedReturnItems] = useState<Map<string, { quantity: number; itemReason?: string }>>(new Map());
+  
+  // Item Return Modal State
+  const [showItemReturnModal, setShowItemReturnModal] = useState(false);
+  const [selectedItemForReturn, setSelectedItemForReturn] = useState<{
+    orderId: string;
+    orderItemId: string;
+    itemName: string;
+    maxQuantity: number;
+  } | null>(null);
+  const [itemReturnQuantity, setItemReturnQuantity] = useState(1);
+  const [itemReturnReason, setItemReturnReason] = useState('');
+  
   const { showSuccess, showError } = useToast();
 
-  // Fetch user data
+  // --- Effects ---
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await getCurrentUserAction();
-        if (!response.error && response.data) {
-          setUser(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      } finally {
-        setLoading(false);
-      }
+        if (!response.error && response.data) setUser(response.data);
+      } catch (error) { console.error('Error fetching user:', error); } 
+      finally { setLoading(false); }
     };
     fetchUser();
   }, []);
 
-  // Fetch orders
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -106,50 +123,38 @@ const OrdersPage: React.FC = () => {
           const transformedOrders = transformOrders(response.data);
           setOrders(transformedOrders);
         }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setLoadingOrders(false);
-      }
+      } catch (error) { console.error('Error fetching orders:', error); } 
+      finally { setLoadingOrders(false); }
     };
     fetchOrders();
   }, []);
 
-  // Helper to format currency
+  // --- Helpers ---
   const formatCurrency = (amount: number | string) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
     return `R${(num || 0).toFixed(2)}`;
   };
 
-  // Helper to capitalize
   const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
 
-  // Helper to truncate order number
   const truncateOrderNumber = (orderNumber: string) => {
     if (!orderNumber || orderNumber.length < 15) return orderNumber;
-    // Keep first 8 and last 4
     return `${orderNumber.substring(0, 8)}...${orderNumber.substring(orderNumber.length - 4)}`;
   };
 
-  // Transform backend orders to frontend format
   const transformOrders = (backendOrders: IOrder[]): OrderDetail[] => {
     return backendOrders.map((order) => {
       const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
       const formattedDate = orderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       
-      // --- Determine Display Status Logic ---
       let statusLabel = capitalize(order.status);
       let statusCode = order.status.toLowerCase();
 
       let cancellationRequestStatus: string | null = null;
       if (order.cancellationRequestedAt) {
-        if (order.status === 'cancelled') {
-          cancellationRequestStatus = 'approved';
-        } else if (order.cancellationRejectionReason) {
-          cancellationRequestStatus = 'rejected';
-        } else {
-          cancellationRequestStatus = 'pending';
-        }
+        if (order.status === 'cancelled') cancellationRequestStatus = 'approved';
+        else if (order.cancellationRejectionReason) cancellationRequestStatus = 'rejected';
+        else cancellationRequestStatus = 'pending';
       }
 
       if (cancellationRequestStatus) {
@@ -168,27 +173,18 @@ const OrdersPage: React.FC = () => {
         statusLabel = statusMap[order.status.toLowerCase()] || 'Processing';
       }
 
-      const totalAmount = typeof order.totalAmount === 'string' 
-        ? parseFloat(order.totalAmount) 
-        : order.totalAmount || 0;
-
-      // Logic: If total < 500, shipping is R75, else 0. 
+      const totalAmount = typeof order.totalAmount === 'string' ? parseFloat(order.totalAmount) : order.totalAmount || 0;
       const shippingCost = totalAmount < 500 ? 75 : 0;
       const subtotal = totalAmount - shippingCost;
       const discount = 0; 
 
       const items = (order.items || []).map((item, idx) => {
         const product = item.product || {};
-        
-        // Handle images
         let firstImage = '/placeholder-image.jpg';
         if (product.images && Array.isArray(product.images) && product.images.length > 0) {
           const imageObj = product.images[0];
-          if (typeof imageObj === 'object' && imageObj.file) {
-            firstImage = imageObj.file;
-          } else if (typeof imageObj === 'string') {
-            firstImage = imageObj;
-          }
+          if (typeof imageObj === 'object' && imageObj.file) firstImage = imageObj.file;
+          else if (typeof imageObj === 'string') firstImage = imageObj;
         }
         
         const vendorName = product.vendorName || product.vendor?.name || 'Unknown Vendor';
@@ -202,30 +198,26 @@ const OrdersPage: React.FC = () => {
           quantity: item.quantity,
           image: firstImage,
           orderItemId: item.id,
-          rejectionReason: item.rejectionReason || undefined, // Vendor rejection reason
-          status: item.status || undefined, // Order item status
+          rejectionReason: item.rejectionReason || undefined,
+          status: item.status || undefined,
         };
       });
 
       const address = order.shippingAddress;
-      const deliveryAddress = address 
-        ? `${address.street}, ${address.city}, ${address.postal || ''}`
-        : 'No address provided';
-
-      const pointsEarned = Math.floor(totalAmount * 0.1);
+      const deliveryAddress = address ? `${address.street}, ${address.city}, ${address.postal || ''}` : 'No address provided';
 
       return {
         id: truncateOrderNumber(order.orderNumber),
         fullId: order.orderNumber,
         orderId: order.id || '',
         date: formattedDate,
-        statusLabel: statusLabel,
-        statusCode: statusCode,
+        statusLabel,
+        statusCode,
         total: formatCurrency(totalAmount),
         subtotal: formatCurrency(subtotal),
         shipping: formatCurrency(shippingCost),
         discount: formatCurrency(discount),
-        pointsEarned,
+        pointsEarned: Math.floor(totalAmount * 0.1),
         deliveryAddress,
         trackingNumber: order.orderNumber,
         cancellationRequestStatus,
@@ -234,32 +226,20 @@ const OrdersPage: React.FC = () => {
     });
   };
 
-  // Helper to check if order has rejected or returned items
   const getOrderItemStatus = (order: OrderDetail) => {
-    const hasRejectedItems = order.items.some(item => 
-      item.status === 'rejected' || 
-      item.rejectionReason
-    );
-    if (hasRejectedItems) {
-      return { hasRejected: true, hasReturned: false, message: 'Some items rejected' };
-    }
+    const hasRejectedItems = order.items.some(item => item.status === 'rejected' || item.rejectionReason);
+    if (hasRejectedItems) return { hasRejected: true, hasReturned: false, message: 'Items Rejected' };
     return { hasRejected: false, hasReturned: false, message: null };
   };
 
-  // Filter Logic
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      // 1. Search Filter
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = 
-        order.fullId.toLowerCase().includes(searchLower) ||
-        order.items.some(item => item.name.toLowerCase().includes(searchLower));
+      const matchesSearch = order.fullId.toLowerCase().includes(searchLower) || order.items.some(item => item.name.toLowerCase().includes(searchLower));
 
-      // 2. Status Filter
       let matchesFilter = true;
       if (statusFilter !== 'all') {
         if (statusFilter === 'active') {
-          // Active = Pending, Processing, In Transit
           const activeStatuses = ['pending', 'processing', 'shipped', 'in transit'];
           matchesFilter = activeStatuses.some(s => order.statusCode.includes(s)) && !order.statusCode.includes('cancellation') && !order.statusCode.includes('return');
         } else if (statusFilter === 'requests') {
@@ -268,13 +248,11 @@ const OrdersPage: React.FC = () => {
           matchesFilter = order.statusCode.includes(statusFilter);
         }
       }
-
       return matchesSearch && matchesFilter;
     });
   }, [orders, searchQuery, statusFilter]);
 
   // --- Handlers ---
-
   const openCancellationModal = (orderId: string) => {
     setReasonType('cancellation');
     setReasonOrderId(orderId);
@@ -282,153 +260,228 @@ const OrdersPage: React.FC = () => {
     setShowReasonModal(true);
   };
 
-  const handleRequestCancellation = async (orderId: string, reason: string) => {
-    if (!orderId) { showError('Order ID is required'); return; }
-    if (!reason.trim()) { showError('Please provide a reason'); return; }
+  // Not strictly used directly but kept for logic consistency if needed
+  const openReturnReasonModal = (orderId: string) => {
+    setReasonType('return');
+    setReasonOrderId(orderId);
+    setReasonText('');
+    setShowReasonModal(true);
+  };
 
+  const handleRequestCancellation = async (orderId: string, reason: string) => {
+    if (!orderId || !reason.trim()) { showError('Please provide a reason'); return; }
     setProcessingRequest(orderId);
     try {
       const response = await requestCancellationAction({ orderId, reason: reason.trim() });
       if (!response.error && response.data) {
-        showSuccess('Cancellation request submitted successfully');
+        showSuccess('Cancellation request submitted');
         setShowReasonModal(false);
-        // Refresh
         const ordersResponse = await getMyOrdersAction();
-        if (!ordersResponse.error && ordersResponse.data) {
-          setOrders(transformOrders(ordersResponse.data));
-        }
-      } else {
-        showError(response.message || 'Failed to submit cancellation request');
-      }
-    } catch (error: any) {
-      showError(error?.message || 'Failed to submit cancellation request');
-    } finally {
-      setProcessingRequest(null);
-    }
+        if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+      } else showError(response.message || 'Failed to submit request');
+    } catch (error: any) { showError(error?.message || 'Failed to submit request'); } 
+    finally { setProcessingRequest(null); }
   };
 
-  const handleSubmitReason = () => {
+  const handleSubmitReason = async () => {
     if (!reasonOrderId) return;
     if (reasonType === 'cancellation') handleRequestCancellation(reasonOrderId, reasonText);
+    else if (reasonType === 'return') { setShowReasonModal(false); openReturnModal(reasonOrderId); }
+  };
+
+  // Return Handlers
+  const openReturnModal = (orderId: string) => {
+    setReturnOrderId(orderId);
+    setReturnReason('');
+    setSelectedReturnItems(new Map());
+    setShowReturnModal(true);
+  };
+
+  const openItemReturnModal = (orderId: string, orderItemId: string, itemName: string, maxQuantity: number) => {
+    setSelectedItemForReturn({ orderId, orderItemId, itemName, maxQuantity });
+    setItemReturnQuantity(1);
+    setItemReturnReason('');
+    setShowItemReturnModal(true);
+  };
+
+  const handleRequestReturn = async () => {
+    if (!returnOrderId) { showError('Order ID required'); return; }
+    if (!returnReason.trim() || returnReason.trim().length < 10) { showError('Provide a reason (min 10 chars)'); return; }
+    if (selectedReturnItems.size === 0) { showError('Select at least one item'); return; }
+
+    setProcessingRequest(returnOrderId);
+    try {
+      const items: ICreateReturnItemInput[] = Array.from(selectedReturnItems.entries()).map(([orderItemId, data]) => ({
+        orderItemId,
+        quantity: data.quantity,
+        reason: data.itemReason || undefined,
+      }));
+
+      const response = await createReturnAction({ orderId: returnOrderId, reason: returnReason.trim(), items });
+
+      if (!response.error && response.data) {
+        showSuccess('Return request submitted');
+        setShowReturnModal(false);
+        setReturnOrderId(null);
+        setReturnReason('');
+        setSelectedReturnItems(new Map());
+        const ordersResponse = await getMyOrdersAction();
+        if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+      } else showError(response.message || 'Failed to submit request');
+    } catch (error: any) { showError(error?.message || 'Failed to submit request'); } 
+    finally { setProcessingRequest(null); }
+  };
+
+  const handleRequestItemReturn = async () => {
+    if (!selectedItemForReturn) return;
+    if (!itemReturnReason.trim() || itemReturnReason.trim().length < 10) { showError('Provide a reason (min 10 chars)'); return; }
+    
+    setProcessingRequest(selectedItemForReturn.orderId);
+    try {
+      const response = await createReturnAction({
+        orderId: selectedItemForReturn.orderId,
+        reason: itemReturnReason.trim(),
+        items: [{
+          orderItemId: selectedItemForReturn.orderItemId,
+          quantity: itemReturnQuantity,
+          reason: itemReturnReason.trim(),
+        }],
+      });
+
+      if (!response.error && response.data) {
+        showSuccess('Item return request submitted');
+        setShowItemReturnModal(false);
+        setSelectedItemForReturn(null);
+        const ordersResponse = await getMyOrdersAction();
+        if (!ordersResponse.error && ordersResponse.data) setOrders(transformOrders(ordersResponse.data));
+      } else showError(response.message || 'Failed to submit request');
+    } catch (error: any) { showError(error?.message || 'Failed to submit request'); } 
+    finally { setProcessingRequest(null); }
+  };
+
+  const toggleReturnItem = (orderItemId: string, maxQuantity: number) => {
+    const newMap = new Map(selectedReturnItems);
+    if (newMap.has(orderItemId)) newMap.delete(orderItemId);
+    else newMap.set(orderItemId, { quantity: maxQuantity });
+    setSelectedReturnItems(newMap);
+  };
+
+  const updateReturnItemQuantity = (orderItemId: string, quantity: number, maxQuantity: number) => {
+    if (quantity < 1 || quantity > maxQuantity) return;
+    const newMap = new Map(selectedReturnItems);
+    const existing = newMap.get(orderItemId);
+    if (existing) {
+      newMap.set(orderItemId, { ...existing, quantity });
+      setSelectedReturnItems(newMap);
+    }
   };
 
   const selectedOrder = useMemo(() => orders.find(o => o.id === selectedOrderId || o.fullId === selectedOrderId), [selectedOrderId, orders]);
 
-  // Sidebar User Data
   const sidebarUser = user ? {
     name: user.fullName || 'User',
     email: user.email || '',
     avatar: user.profileUrl || 'https://picsum.photos/seed/user/200/200',
     level: 22,
     points: 1250,
-  } : {
-    name: 'Loading...',
-    email: '',
-    avatar: 'https://picsum.photos/seed/user/200/200',
-    level: 0,
-    points: 0,
-  };
+  } : { name: 'Loading...', email: '', avatar: '', level: 0, points: 0 };
 
-  // UI Components
+  // --- UI Components ---
   const renderStatusBadge = (label: string, code: string) => {
-    let styles = "bg-gray-100 text-gray-600";
+    let styles = "bg-slate-100 text-slate-600 border-slate-200";
+    let dotColor = "bg-slate-400";
     
-    if (code.includes('delivered')) styles = "bg-emerald-100 text-emerald-600";
-    else if (code.includes('transit') || code.includes('shipped')) styles = "bg-blue-100 text-blue-600";
-    else if (code.includes('processing')) styles = "bg-amber-100 text-amber-600";
-    else if (code.includes('cancelled') || code.includes('cancellation_approved')) styles = "bg-red-100 text-red-600";
-    else if (code === 'returned' || code.includes('return_completed')) styles = "bg-purple-100 text-purple-600"; // Return completed
-    else if (code === 'return_in_progress') styles = "bg-blue-100 text-blue-600"; // Return in progress
-    else if (code.includes('return_rejected')) styles = "bg-red-100 text-red-600"; // Return rejected
-    else if (code.includes('cancellation') || code.includes('return')) styles = "bg-orange-100 text-orange-600"; // Pending requests
+    if (code.includes('delivered')) { styles = "bg-emerald-50 text-emerald-700 border-emerald-200"; dotColor = "bg-emerald-500"; }
+    else if (code.includes('transit') || code.includes('shipped')) { styles = "bg-blue-50 text-blue-700 border-blue-200"; dotColor = "bg-blue-500"; }
+    else if (code.includes('processing')) { styles = "bg-amber-50 text-amber-700 border-amber-200"; dotColor = "bg-amber-500"; }
+    else if (code.includes('cancelled') || code.includes('cancellation_approved')) { styles = "bg-red-50 text-red-700 border-red-200"; dotColor = "bg-red-500"; }
+    else if (code === 'returned' || code.includes('return_completed')) { styles = "bg-purple-50 text-purple-700 border-purple-200"; dotColor = "bg-purple-500"; }
+    else if (code.includes('return') || code.includes('cancellation')) { styles = "bg-orange-50 text-orange-700 border-orange-200"; dotColor = "bg-orange-500"; }
 
     return (
-      <span className={`${styles} px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5`}>
-        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+      <span className={`${styles} border px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
         {label}
       </span>
     );
   };
 
   return (
-    <div className="bg-jozi-cream min-h-screen pb-24 font-sans">
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
+    <div className="bg-[#FAFAFA] min-h-screen pb-24 font-sans text-slate-800">
+      <div className="container mx-auto px-4 py-8 lg:py-12 max-w-7xl">
+        <div className="flex flex-col lg:flex-row gap-8">
           
           <div className="lg:w-80 flex-shrink-0">
              <CustomerSidebar user={sidebarUser} />
           </div>
 
-          <main className="grow min-w-0"> {/* min-w-0 prevents flex items from overflowing */}
+          <main className="grow min-w-0">
             <AnimatePresence mode="wait">
               {selectedOrder ? (
                 // --- DETAIL VIEW ---
                 <motion.div
                   key="order-detail"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-8"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
                 >
                   <button 
                     onClick={() => setSelectedOrderId(null)}
-                    className="inline-flex items-center text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-jozi-forest transition-colors group"
+                    className="inline-flex items-center text-slate-500 font-semibold text-sm hover:text-jozi-forest transition-colors group px-1"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                    Back to History
+                    Back to Order History
                   </button>
 
-                  <div className="bg-white rounded-[2rem] p-8 lg:p-10 shadow-sm border border-jozi-forest/5 space-y-10">
-                    {/* Detail Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-gray-100 pb-8">
-                      <div className="space-y-3 text-left">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h2 className="text-3xl font-black text-jozi-forest tracking-tight break-all">
-                             {/* Show truncated ID on mobile, full on large screens if needed, or stick to truncated with full in title */}
-                             <span title={selectedOrder.fullId}>{selectedOrder.id}</span>
+                  <div className="bg-white rounded-3xl p-6 lg:p-10 shadow-sm border border-slate-200 space-y-8">
+                    {/* Header */}
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-slate-100">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-4 mb-2">
+                          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
+                             Order <span className="text-slate-400 font-normal">#{selectedOrder.id}</span>
                           </h2>
                           {renderStatusBadge(selectedOrder.statusLabel, selectedOrder.statusCode)}
                         </div>
-                        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">
+                        <p className="text-slate-500 text-sm font-medium">
                           Placed on {selectedOrder.date}
                         </p>
                       </div>
-                      <div className="text-left md:text-right space-y-1 w-full md:w-auto">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tracking Number</p>
-                        <div className="flex items-center md:justify-end text-jozi-forest font-bold text-lg break-all">
+                      <div className="flex flex-col items-start lg:items-end gap-1 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tracking Number</p>
+                        <div className="flex items-center text-jozi-forest font-bold font-mono">
                           {selectedOrder.trackingNumber}
-                          <ExternalLink className="w-4 h-4 ml-2 text-jozi-gold cursor-pointer shrink-0" />
+                          <ExternalLink className="w-3.5 h-3.5 ml-2 text-jozi-gold cursor-pointer hover:scale-110 transition-transform" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Progress Bar (Only for non-cancelled/returned standard flows) */}
+                    {/* Progress Tracker (Only for non-cancelled/returned standard flows) */}
                     {!selectedOrder.statusCode.includes('cancel') && !selectedOrder.statusCode.includes('return') && (
-                      <div className="space-y-6 text-left">
-                         <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest">Shipment Status</h3>
+                      <div className="py-2">
                          <div className="relative py-4">
-                           {/* Line */}
-                           <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 rounded-full overflow-hidden">
-                             <div className={`h-full bg-jozi-gold transition-all duration-1000 ${
-                               selectedOrder.statusCode.includes('delivered') ? 'w-full' : 
-                               selectedOrder.statusCode.includes('transit') || selectedOrder.statusCode.includes('shipped') ? 'w-3/4' : 
-                               selectedOrder.statusCode.includes('processing') ? 'w-1/2' : 
-                               'w-1/4'
-                             }`} />
+                           <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-slate-100 -translate-y-1/2 rounded-full overflow-hidden">
+                             <motion.div 
+                               initial={{ width: 0 }}
+                               animate={{ width: selectedOrder.statusCode.includes('delivered') ? '100%' : selectedOrder.statusCode.includes('transit') || selectedOrder.statusCode.includes('shipped') ? '75%' : selectedOrder.statusCode.includes('processing') ? '50%' : '25%' }}
+                               transition={{ duration: 1, ease: "easeOut" }}
+                               className="h-full bg-jozi-forest rounded-full" 
+                             />
                            </div>
-                           {/* Steps */}
                            <div className="relative flex justify-between">
                               {[
-                                { label: 'Ordered', icon: Clock, active: true },
+                                { label: 'Placed', icon: Clock, active: true },
                                 { label: 'Processing', icon: Package, active: !selectedOrder.statusCode.includes('pending') },
                                 { label: 'In Transit', icon: Truck, active: ['shipped', 'in transit', 'delivered'].some(s => selectedOrder.statusCode.includes(s)) },
                                 { label: 'Delivered', icon: MapPin, active: selectedOrder.statusCode.includes('delivered') }
                               ].map((step, i) => (
-                                <div key={i} className="flex flex-col items-center gap-3">
-                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center relative z-10 border-4 border-white shadow-md transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-white text-gray-200'}`}>
-                                    <step.icon className="w-4 h-4" />
+                                <div key={i} className="flex flex-col items-center gap-3 w-20">
+                                  <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center relative z-10 border-4 border-white shadow-md transition-all duration-500 ${step.active ? 'bg-jozi-forest text-white scale-110' : 'bg-slate-100 text-slate-300'}`}>
+                                    <step.icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                   </div>
-                                  <span className={`text-[9px] font-bold uppercase tracking-widest hidden sm:block ${step.active ? 'text-jozi-forest' : 'text-gray-300'}`}>{step.label}</span>
+                                  <span className={`text-[10px] lg:text-xs font-semibold uppercase tracking-wide text-center transition-colors ${step.active ? 'text-jozi-forest' : 'text-slate-300'}`}>{step.label}</span>
                                 </div>
                               ))}
                            </div>
@@ -437,117 +490,132 @@ const OrdersPage: React.FC = () => {
                     )}
 
                     {/* Items */}
-                    <div className="space-y-6 text-left">
-                      <h3 className="text-sm font-black text-jozi-forest uppercase tracking-widest">Ordered Items</h3>
-                      <div className="grid gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800 mb-4">Items in Order</h3>
+                      <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
                         {selectedOrder.items.map((item) => (
-                            <div key={item.id} className="bg-gray-50/50 p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-6 border border-gray-100">
-                              <div className="w-20 h-20 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
-                                <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
-                              </div>
-                              <div className="grow text-center sm:text-left">
-                                <h4 className="text-lg font-black text-jozi-forest leading-tight">{item.name}</h4>
-                                <p className="text-[10px] font-bold text-jozi-gold uppercase tracking-widest mt-1">by {item.vendor}</p>
-                                {item.status === 'rejected' && item.rejectionReason && (
-                                  <div className="mt-2 inline-flex flex-col gap-1 px-3 py-2 rounded-lg bg-red-50 border border-red-100">
-                                    <div className="flex items-center gap-1">
-                                      <Ban className="w-3 h-3 text-red-500" />
-                                      <span className="text-[9px] font-black uppercase tracking-wider text-red-600">Item Rejected</span>
-                                    </div>
-                                    <p className="text-[10px] font-medium text-red-700 italic leading-relaxed">Reason: {item.rejectionReason}</p>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-8 sm:gap-12 w-full sm:w-auto justify-between sm:justify-end px-4 sm:px-0">
-                                <div className="text-center">
-                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Qty</p>
-                                  <p className="font-bold text-jozi-forest">{item.quantity}</p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Price</p>
-                                  <p className="font-bold text-jozi-forest text-lg">{item.price}</p>
-                                </div>
-                              </div>
+                          <div key={item.id} className="bg-white p-5 flex flex-col sm:flex-row items-center gap-6 hover:bg-slate-50 transition-colors">
+                            <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                              <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
                             </div>
+                            <div className="grow text-center sm:text-left space-y-1">
+                              <h4 className="text-base font-bold text-slate-900 leading-tight">{item.name}</h4>
+                              <p className="text-xs font-medium text-slate-500">Vendor: <span className="text-jozi-forest">{item.vendor}</span></p>
+                              {item.status === 'rejected' && item.rejectionReason && (
+                                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-600 border border-red-100 text-[10px] font-bold uppercase tracking-wide">
+                                  <Ban className="w-3 h-3" /> Rejected: {item.rejectionReason}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-8 w-full sm:w-auto justify-between sm:justify-end px-4 sm:px-0">
+                              <div className="text-center">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Qty</p>
+                                <p className="font-bold text-slate-800">{item.quantity}</p>
+                              </div>
+                              <div className="text-right min-w-[80px]">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Price</p>
+                                <p className="font-bold text-slate-800 text-lg">{item.price}</p>
+                              </div>
+                              {selectedOrder.statusCode === 'delivered' && 
+                               !selectedOrder.statusCode.includes('cancel') && 
+                               item.orderItemId && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openItemReturnModal(selectedOrder.orderId, item.orderItemId!, item.name, item.quantity);
+                                  }}
+                                  disabled={processingRequest === selectedOrder.orderId}
+                                  className="px-3 py-2 bg-white border border-slate-200 text-slate-600 hover:text-jozi-forest hover:border-jozi-forest rounded-lg text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
+                                  title="Return Item"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Return</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Bottom Grid */}
-                    <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 pt-8 border-t border-gray-100 text-left">
+                    {/* Info Grid */}
+                    <div className="grid lg:grid-cols-2 gap-8 pt-6">
                       <div className="space-y-6">
-                        <div className="space-y-3">
-                          <h4 className="text-xs font-black text-jozi-forest uppercase tracking-widest flex items-center">
-                            <MapPin className="w-3 h-3 mr-2 text-jozi-gold" /> Delivery Destination
+                        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide flex items-center mb-3">
+                            <MapPin className="w-3.5 h-3.5 mr-2 text-jozi-forest" /> Delivery Address
                           </h4>
-                          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <p className="font-bold text-gray-600 leading-relaxed text-sm">{selectedOrder.deliveryAddress}</p>
-                          </div>
+                          <p className="font-semibold text-slate-700 leading-relaxed text-sm">{selectedOrder.deliveryAddress}</p>
                         </div>
-                        {/* Loyalty Card */}
-                        <div className="bg-gradient-to-br from-jozi-forest to-[#1a3a2a] p-6 rounded-3xl text-white relative overflow-hidden group shadow-lg">
-                          <Award className="absolute -bottom-4 -right-4 w-24 h-24 opacity-5 group-hover:scale-110 transition-transform duration-700" />
-                          <div className="relative z-10 flex items-center gap-5">
-                            <div className="w-12 h-12 bg-jozi-gold rounded-xl flex items-center justify-center text-jozi-forest shadow-md">
-                              <Zap className="w-6 h-6 fill-current" />
+                        
+                        <div className="bg-gradient-to-br from-jozi-forest to-emerald-900 p-6 rounded-2xl text-white relative overflow-hidden shadow-lg group">
+                          <Award className="absolute -bottom-6 -right-6 w-32 h-32 opacity-10 group-hover:scale-110 transition-transform duration-700 rotate-12" />
+                          <div className="relative z-10 flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-jozi-gold border border-white/20">
+                              <Zap className="w-5 h-5 fill-current" />
                             </div>
                             <div>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-jozi-gold opacity-80">Neighbors Loyalty</p>
-                              <p className="text-xl font-black">+{selectedOrder.pointsEarned} Pts</p>
+                              <p className="text-xs font-bold uppercase tracking-wider text-emerald-200">Loyalty Points Earned</p>
+                              <p className="text-2xl font-bold">+{selectedOrder.pointsEarned}</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="space-y-5">
-                        <h4 className="text-xs font-black text-jozi-forest uppercase tracking-widest">Payment Breakdown</h4>
-                        <div className="bg-gray-50/50 rounded-2xl p-6 space-y-3">
-                           <div className="flex justify-between items-center text-gray-500 font-bold text-xs">
-                             <span>Original Subtotal</span>
-                             <span>{selectedOrder.subtotal}</span>
-                           </div>
-                           <div className="flex justify-between items-center text-gray-500 font-bold text-xs">
-                             <span>Hub Logistics & Shipping</span>
-                             <span>{selectedOrder.shipping}</span>
-                           </div>
-                           {selectedOrder.voucherCode && (
-                             <div className="flex justify-between items-center text-emerald-600 font-bold text-xs">
-                               <div className="flex items-center">
-                                 <Tag className="w-3 h-3 mr-1.5" />
-                                 <span>Discount</span>
-                               </div>
-                               <span>-{selectedOrder.discount}</span>
+                      <div className="space-y-4">
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4">Payment Summary</h4>
+                           <div className="space-y-3">
+                             <div className="flex justify-between text-sm text-slate-600">
+                               <span>Subtotal</span>
+                               <span className="font-semibold">{selectedOrder.subtotal}</span>
                              </div>
-                           )}
-                           <div className="h-px bg-gray-200 w-full my-2" />
-                           <div className="flex justify-between items-center">
-                             <span className="text-[10px] font-black uppercase tracking-widest text-jozi-forest">Total Paid</span>
-                             <span className="text-2xl font-black text-jozi-forest tracking-tight">{selectedOrder.total}</span>
+                             <div className="flex justify-between text-sm text-slate-600">
+                               <span>Shipping</span>
+                               <span className="font-semibold">{selectedOrder.shipping}</span>
+                             </div>
+                             {selectedOrder.voucherCode && (
+                               <div className="flex justify-between text-sm text-emerald-600">
+                                 <div className="flex items-center"><Tag className="w-3 h-3 mr-1" /> Discount</div>
+                                 <span className="font-semibold">-{selectedOrder.discount}</span>
+                               </div>
+                             )}
+                             <div className="h-px bg-slate-100 w-full my-2" />
+                             <div className="flex justify-between items-center text-slate-900">
+                               <span className="font-bold text-base">Total</span>
+                               <span className="text-2xl font-bold">{selectedOrder.total}</span>
+                             </div>
                            </div>
                         </div>
                         
-                        <button className="w-full py-4 bg-white border border-gray-200 rounded-xl font-bold text-xs uppercase tracking-widest text-jozi-forest hover:bg-jozi-forest hover:text-white hover:border-jozi-forest transition-all shadow-sm flex items-center justify-center gap-2">
+                        <button className="w-full py-3 bg-white border border-slate-200 rounded-xl font-semibold text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all flex items-center justify-center gap-2">
                           <Receipt className="w-4 h-4" /> Download Invoice
                         </button>
                       </div>
                     </div>
 
-                    {/* Actions Area */}
+                    {/* Main Actions */}
                     {(['pending', 'processing', 'delivered'].some(s => selectedOrder.statusCode.includes(s))) && 
                       !selectedOrder.statusCode.includes('cancel') && 
                       !selectedOrder.statusCode.includes('return') && (
-                      <div className="pt-8 border-t border-gray-100 space-y-4">
-                        <h4 className="text-xs font-black text-jozi-forest uppercase tracking-widest">Order Actions</h4>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          {/* Cancel Logic */}
+                      <div className="pt-6 border-t border-slate-100">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-end">
                           {(selectedOrder.statusCode === 'pending' || selectedOrder.statusCode === 'processing') && (
                             <button
                               onClick={() => selectedOrder.orderId && openCancellationModal(selectedOrder.orderId)}
                               disabled={processingRequest === selectedOrder.orderId}
-                              className="flex-1 flex items-center justify-center space-x-2 py-4 bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all disabled:opacity-50"
+                              className="px-6 py-3 bg-red-50 text-red-600 border border-red-100 rounded-xl font-semibold text-sm hover:bg-red-100 hover:border-red-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                              <X className="w-4 h-4" />
-                              <span>Request Cancellation</span>
+                              <X className="w-4 h-4" /> Cancel Order
+                            </button>
+                          )}
+                          {selectedOrder.statusCode === 'delivered' && (
+                            <button
+                              onClick={() => selectedOrder.orderId && openReturnModal(selectedOrder.orderId)}
+                              disabled={processingRequest === selectedOrder.orderId}
+                              className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm hover:border-jozi-forest hover:text-jozi-forest transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                            >
+                              <RotateCcw className="w-4 h-4" /> Return Order
                             </button>
                           )}
                         </div>
@@ -559,118 +627,125 @@ const OrdersPage: React.FC = () => {
                 // --- LIST VIEW ---
                 <motion.div
                   key="orders-list"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6 text-left"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-8"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                    <h3 className="text-3xl font-black text-jozi-forest uppercase tracking-tight">Artisan Orders</h3>
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                      <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Orders</h1>
+                      <p className="text-slate-500 mt-1">Manage and track your recent purchases.</p>
+                    </div>
                   </div>
 
-                  {/* Filter & Search Bar */}
-                  <div className="bg-white p-2 rounded-2xl shadow-sm border border-jozi-forest/5 flex flex-col md:flex-row gap-2">
+                  {/* Filter Bar */}
+                  <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-2">
                     <div className="relative grow">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input 
                         type="text" 
-                        placeholder="Search by Order ID or Product Name..." 
+                        placeholder="Search order ID or product..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 rounded-xl bg-transparent font-medium text-jozi-forest placeholder-gray-400 outline-none focus:bg-gray-50 transition-colors text-sm"
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-transparent text-sm font-medium text-slate-800 placeholder-slate-400 outline-none focus:bg-slate-50 transition-colors"
                       />
                     </div>
-                    <div className="h-px md:h-auto md:w-px bg-gray-100" />
-                    <div className="relative min-w-[200px]">
-                      <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <div className="h-px md:h-auto md:w-px bg-slate-100 mx-1" />
+                    <div className="relative min-w-[220px]">
+                      <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <select 
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full pl-11 pr-8 py-3 rounded-xl bg-transparent font-bold text-xs uppercase tracking-widest text-gray-600 outline-none focus:bg-gray-50 appearance-none cursor-pointer"
+                        className="w-full pl-11 pr-10 py-2.5 rounded-xl bg-transparent text-xs font-bold uppercase tracking-wide text-slate-600 outline-none focus:bg-slate-50 appearance-none cursor-pointer"
                       >
-                        <option value="all">All Orders</option>
-                        <option value="active">Active Orders</option>
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active (Processing/Ship)</option>
                         <option value="delivered">Delivered</option>
-                        <option value="requests">Cancellations</option>
+                        <option value="requests">Returns & Cancels</option>
                       </select>
-                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 rotate-90" />
+                      <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 rotate-90 pointer-events-none" />
                     </div>
                   </div>
 
-                  {/* Orders List */}
-                  <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-jozi-forest/5 shadow-soft min-h-[400px]">
+                  {/* List Content */}
+                  <div className="space-y-4">
                     {loadingOrders ? (
-                      <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
-                        <div className="w-10 h-10 border-4 border-jozi-forest/20 border-t-jozi-forest rounded-full animate-spin" />
-                        <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Loading history...</p>
+                      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                        <div className="w-8 h-8 border-2 border-slate-200 border-t-jozi-forest rounded-full animate-spin" />
+                        <p className="text-slate-400 text-sm font-medium">Loading your history...</p>
                       </div>
                     ) : filteredOrders.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-                          <Package className="w-6 h-6 text-gray-300" />
+                      <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-slate-200 border-dashed">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                          <ShoppingBag className="w-8 h-8 text-slate-300" />
                         </div>
-                        <div>
-                          <p className="text-jozi-forest font-black text-lg">No orders found</p>
-                          <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or search.</p>
-                        </div>
+                        <h3 className="text-slate-900 font-bold text-lg">No orders found</h3>
+                        <p className="text-slate-500 text-sm mt-1 max-w-xs mx-auto">
+                          We couldn't find any orders matching your filters. Try clearing them to see more results.
+                        </p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                       {filteredOrders.map((order) => {
+                      filteredOrders.map((order) => {
                          const itemStatus = getOrderItemStatus(order);
                          return (
-                         <div 
+                         <motion.div 
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
                           key={order.fullId} 
                           onClick={() => setSelectedOrderId(order.fullId)}
-                          className="border border-gray-100 rounded-3xl p-6 hover:border-jozi-gold/30 hover:shadow-md transition-all cursor-pointer group bg-white"
+                          className="bg-white border border-slate-200 rounded-2xl p-6 cursor-pointer hover:shadow-lg hover:border-jozi-forest/30 transition-all duration-300 group relative overflow-hidden"
                          >
-                           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
-                             <div className="space-y-1.5">
+                           <div className="absolute top-0 left-0 w-1 h-full bg-jozi-forest opacity-0 group-hover:opacity-100 transition-opacity" />
+                           <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
+                             <div className="space-y-2">
                                <div className="flex items-center gap-3 flex-wrap">
-                                  <p className="text-lg font-black text-jozi-forest group-hover:text-jozi-gold transition-colors font-mono tracking-tight">
+                                  <span className="text-lg font-bold text-slate-900 group-hover:text-jozi-forest transition-colors">
                                     {order.id}
-                                  </p>
+                                  </span>
                                   {renderStatusBadge(order.statusLabel, order.statusCode)}
                                </div>
-                               <div className="flex items-center gap-3 flex-wrap">
-                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                                   <Clock className="w-3 h-3" /> {order.date}
-                                 </p>
-                                 {itemStatus.message && (
-                                   <span className="text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md bg-red-100 text-red-700">
+                               <div className="flex items-center gap-4 text-sm text-slate-500">
+                                 <span className="flex items-center gap-1.5 font-medium">
+                                   <Clock className="w-3.5 h-3.5" /> {order.date}
+                                 </span>
+                                 <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                                 <span>{order.items.length} {order.items.length === 1 ? 'Item' : 'Items'}</span>
+                               </div>
+                               {itemStatus.message && (
+                                 <div className="flex mt-1">
+                                   <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-red-50 text-red-600 border-red-100">
                                      {itemStatus.message}
                                    </span>
+                                 </div>
+                               )}
+                             </div>
+                             <div className="flex items-center justify-between md:justify-end gap-6 grow md:grow-0">
+                               <div className="flex -space-x-3">
+                                 {order.items.slice(0, 3).map((item, idx) => (
+                                   <div key={idx} className="w-12 h-12 rounded-lg border-2 border-white shadow-sm overflow-hidden bg-slate-100 relative z-0 hover:z-10 transition-all hover:scale-110">
+                                     <img src={item.image} className="w-full h-full object-cover" alt="" />
+                                   </div>
+                                 ))}
+                                 {order.items.length > 3 && (
+                                   <div className="w-12 h-12 rounded-lg border-2 border-white shadow-sm bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-500 z-0">
+                                     +{order.items.length - 3}
+                                   </div>
                                  )}
                                </div>
-                             </div>
-                             <div className="flex items-center justify-between sm:justify-end gap-6 min-w-[150px]">
-                               <p className="text-xl font-black text-jozi-forest">{order.total}</p>
-                               <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-jozi-forest group-hover:text-white transition-colors">
+                               <div className="text-right">
+                                 <p className="text-xl font-bold text-slate-900">{order.total}</p>
+                               </div>
+                               <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-jozi-forest group-hover:text-white transition-colors">
                                   <ChevronRight className="w-4 h-4" />
                                </div>
                              </div>
                            </div>
-                           
-                           {/* Mini Items Preview */}
-                           <div className="flex items-center gap-3 overflow-hidden pt-4 border-t border-gray-50">
-                             {order.items.slice(0, 4).map((item, idx) => (
-                               <div key={idx} className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden shrink-0 relative">
-                                 <img src={item.image} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" alt={item.name} />
-                               </div>
-                             ))}
-                             {order.items.length > 4 && (
-                               <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-bold text-gray-400">+{order.items.length - 4}</span>
-                               </div>
-                             )}
-                             <div className="ml-auto text-right hidden sm:block">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{order.items.length} {order.items.length === 1 ? 'Item' : 'Items'}</p>
-                             </div>
-                           </div>
-                         </div>
+                         </motion.div>
                          );
-                       })}
-                      </div>
+                       })
                     )}
                   </div>
                 </motion.div>
@@ -680,96 +755,343 @@ const OrdersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Reason Modal */}
+      {/* --- Modals --- */}
+      
+      {/* Reason Modal (Cancellation/Generic) */}
       <AnimatePresence>
         {showReasonModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-jozi-forest/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => {
-              if (!processingRequest) {
-                setShowReasonModal(false);
-                setReasonText('');
-                setReasonType(null);
-                setReasonOrderId(null);
-              }
-            }}
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => !processingRequest && setShowReasonModal(false)}
+            />
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-[2rem] p-8 md:p-10 max-w-lg w-full shadow-2xl"
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100"
             >
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-red-100 text-red-600">
-                    <X className="w-5 h-5" />
+                  <div className={`p-3 rounded-xl ${reasonType === 'cancellation' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                    {reasonType === 'cancellation' ? <AlertCircle className="w-6 h-6" /> : <RotateCcw className="w-6 h-6" />}
                   </div>
-                  <h3 className="text-xl font-black text-jozi-forest uppercase tracking-tight">Cancel Order</h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {reasonType === 'cancellation' ? 'Cancel Order' : 'Return Order'}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {reasonType === 'cancellation' ? 'Confirm cancellation request' : 'Initiate return process'}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => !processingRequest && setShowReasonModal(false)}
-                  disabled={processingRequest !== null}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-400" />
+                  <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p className="text-xs font-bold text-gray-500 leading-relaxed">
-                    Please let us know why you wish to cancel. This helps us improve our service for future orders.
+              <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-600 leading-relaxed border border-slate-100 flex gap-3">
+                  <Info className="w-5 h-5 text-slate-400 shrink-0" />
+                  <p>
+                    {reasonType === 'cancellation' 
+                      ? 'Cancellation is only possible if the order hasn\'t shipped. Funds will be returned to your wallet.'
+                      : 'Please describe why you wish to return this. This helps us serve you better.'}
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-jozi-forest ml-1">
-                    Reason
-                  </label>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5 block">Reason</label>
                   <textarea
                     value={reasonText}
                     onChange={(e) => setReasonText(e.target.value)}
                     placeholder="Type your reason here..."
                     rows={4}
-                    className="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 font-medium text-sm text-jozi-forest outline-none focus:border-jozi-gold/50 transition-all resize-none placeholder-gray-300"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-jozi-forest/20 focus:border-jozi-forest outline-none transition-all resize-none"
                     disabled={processingRequest !== null}
                   />
-                  <p className="text-[9px] text-gray-400 font-bold ml-1 text-right">
-                    {reasonText.length}/10 min chars
-                  </p>
+                  <div className="flex justify-end mt-1">
+                    <span className={`text-[10px] font-bold ${reasonText.length < 10 ? 'text-red-400' : 'text-emerald-500'}`}>
+                      {reasonText.length} / 10 characters
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-4">
                   <button
                     onClick={() => !processingRequest && setShowReasonModal(false)}
                     disabled={processingRequest !== null}
-                    className="flex-1 py-4 bg-gray-50 text-gray-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all"
+                    className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all"
                   >
                     Keep Order
                   </button>
                   <button
                     onClick={handleSubmitReason}
                     disabled={processingRequest !== null || !reasonText.trim() || reasonText.trim().length < 10}
-                    className="flex-1 py-4 bg-jozi-forest text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg shadow-jozi-forest/20"
+                    className="flex-1 py-3 bg-jozi-forest text-white rounded-xl font-bold text-sm hover:bg-emerald-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-jozi-forest/20"
                   >
-                    {processingRequest ? (
-                      <>
-                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Processing</span>
-                      </>
-                    ) : (
-                      <span>Confirm Request</span>
-                    )}
+                    {processingRequest ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Confirm Request'}
                   </button>
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Return Modal - Select Items */}
+      <AnimatePresence>
+        {showReturnModal && returnOrderId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => !processingRequest && setShowReturnModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+                    <RotateCcw className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Request Return</h3>
+                    <p className="text-sm text-slate-500">Select items to return</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => !processingRequest && setShowReturnModal(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-600 border border-slate-100">
+                  Select the items you want to return and provide a reason. You can return all or specific items from this order.
+                </div>
+
+                {/* Items Selection */}
+                {(() => {
+                  const order = orders.find(o => o.orderId === returnOrderId);
+                  if (!order) return null;
+                  
+                  return (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Items</h4>
+                      <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                        {order.items.map((item) => {
+                          const isSelected = selectedReturnItems.has(item.orderItemId || '');
+                          const selectedData = selectedReturnItems.get(item.orderItemId || '');
+                          const quantity = selectedData?.quantity || item.quantity;
+                          
+                          return (
+                            <div
+                              key={item.id}
+                              className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500'
+                                  : 'border-slate-200 bg-white hover:border-blue-300'
+                              }`}
+                              onClick={() => item.orderItemId && toggleReturnItem(item.orderItemId, item.quantity)}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={`flex items-center justify-center w-6 h-6 rounded shrink-0 transition-colors ${isSelected ? 'text-blue-600' : 'text-slate-300'}`}>
+                                  {isSelected ? <CheckSquare className="w-6 h-6 fill-current" /> : <Square className="w-6 h-6" />}
+                                </div>
+                                <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                                    <img src={item.image} alt="" className="w-full h-full object-cover"/>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`font-bold text-sm truncate ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>{item.name}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">Purchased Qty: {item.quantity}</p>
+                                </div>
+                                {isSelected && item.orderItemId && (
+                                  <div className="flex items-center gap-2 bg-white rounded-lg border border-blue-200 p-1 shadow-sm" onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateReturnItemQuantity(item.orderItemId!, Math.max(1, quantity - 1), item.quantity)}
+                                      disabled={quantity <= 1}
+                                      className="w-7 h-7 flex items-center justify-center rounded bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                                    >
+                                      <X className="w-3 h-3 rotate-45" />
+                                    </button>
+                                    <span className="w-8 text-center font-bold text-sm text-slate-800">{quantity}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateReturnItemQuantity(item.orderItemId!, Math.min(item.quantity, quantity + 1), item.quantity)}
+                                      disabled={quantity >= item.quantity}
+                                      className="w-7 h-7 flex items-center justify-center rounded bg-slate-50 text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                                    >
+                                      <X className="w-3 h-3 -rotate-45" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Return Reason */}
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5 block">Reason for Return</label>
+                  <textarea
+                    value={returnReason}
+                    onChange={(e) => setReturnReason(e.target.value)}
+                    placeholder="Please explain why you are returning these items..."
+                    rows={4}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-jozi-forest/20 focus:border-jozi-forest outline-none transition-all resize-none"
+                    disabled={processingRequest !== null}
+                  />
+                  <div className="flex justify-end mt-1">
+                    <span className={`text-[10px] font-bold ${returnReason.length < 10 ? 'text-red-400' : 'text-emerald-500'}`}>
+                      {returnReason.length} / 10
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => !processingRequest && setShowReturnModal(false)}
+                    disabled={processingRequest !== null}
+                    className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRequestReturn}
+                    disabled={processingRequest !== null || !returnReason.trim() || returnReason.trim().length < 10 || selectedReturnItems.size === 0}
+                    className="flex-1 py-3 bg-jozi-forest text-white rounded-xl font-bold text-sm hover:bg-emerald-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-jozi-forest/20"
+                  >
+                    {processingRequest ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Submit Request'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Item Return Modal */}
+      <AnimatePresence>
+        {showItemReturnModal && selectedItemForReturn && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => !processingRequest && setShowItemReturnModal(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-slate-100"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+                    <Package className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Return Item</h3>
+                    <p className="text-sm text-slate-500">{selectedItemForReturn.itemName}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => !processingRequest && setShowItemReturnModal(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2 block">Quantity to Return</label>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setItemReturnQuantity(Math.max(1, itemReturnQuantity - 1))}
+                      disabled={processingRequest !== null || itemReturnQuantity <= 1}
+                      className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                    >
+                      <span className="text-xl font-bold">-</span>
+                    </button>
+                    <div className="flex-1 text-center">
+                      <input
+                        type="number"
+                        min="1"
+                        max={selectedItemForReturn.maxQuantity}
+                        value={itemReturnQuantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1;
+                          setItemReturnQuantity(Math.max(1, Math.min(val, selectedItemForReturn.maxQuantity)));
+                        }}
+                        className="w-full text-center py-2 bg-transparent font-bold text-2xl text-slate-800 outline-none"
+                        disabled={processingRequest !== null}
+                      />
+                      <p className="text-xs text-slate-400 mt-1">Max: {selectedItemForReturn.maxQuantity}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setItemReturnQuantity(Math.min(selectedItemForReturn.maxQuantity, itemReturnQuantity + 1))}
+                      disabled={processingRequest !== null || itemReturnQuantity >= selectedItemForReturn.maxQuantity}
+                      className="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                    >
+                      <span className="text-xl font-bold">+</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1.5 block">Reason</label>
+                  <textarea
+                    value={itemReturnReason}
+                    onChange={(e) => setItemReturnReason(e.target.value)}
+                    placeholder="Why are you returning this item?"
+                    rows={3}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-jozi-forest/20 focus:border-jozi-forest outline-none transition-all resize-none"
+                    disabled={processingRequest !== null}
+                  />
+                  <div className="flex justify-end mt-1">
+                     <span className={`text-[10px] font-bold ${itemReturnReason.length < 10 ? 'text-red-400' : 'text-emerald-500'}`}>
+                      {itemReturnReason.length} / 10
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => !processingRequest && setShowItemReturnModal(false)}
+                    className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRequestItemReturn}
+                    disabled={processingRequest !== null || itemReturnReason.length < 10}
+                    className="flex-1 py-3 bg-jozi-forest text-white rounded-xl font-bold text-sm hover:bg-emerald-900 transition-all disabled:opacity-50 shadow-lg shadow-jozi-forest/20 flex items-center justify-center gap-2"
+                  >
+                    {processingRequest ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Submit'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
