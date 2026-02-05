@@ -217,21 +217,7 @@ export const AUTH_API = {
     }
   },
 
-  GET_ALL_STAFF: async (): Promise<CustomResponse<IUser[]>> => {
-    try {
-      logger.info(`[AUTH_API] Getting all staff`);
-      const response = await GET(`${AuthbaseURL}/getStaffUsers`);
-      logger.info(`[AUTH_API] Staff retrieved successfully`);
-      return response;
-    } catch (err) {
-      logger.error("[AUTH_API] Error getting all staff:", err);
-      return {
-        data: [] as IUser[],
-        message: err instanceof Error ? err.message : "Failed to get staff",
-        error: true,
-      };
-    }
-  },
+
   BLOCK_USER_ACCOUNT: async (userId: string): Promise<CustomResponse<IUser>> => {
     try {
       logger.info(`[AUTH_API] Blocking user account ${userId}`);
@@ -328,6 +314,44 @@ export const AUTH_API = {
       return {
         data: [] as IVendorWithApplication[],
         message: err instanceof Error ? err.message : "Failed to get active vendors",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Update email with password verification
+   */
+  UPDATE_EMAIL: async (data: { userId: string; email: string; password: string }): Promise<CustomResponse<any>> => {
+    try {
+      logger.info(`[AUTH_API] Updating email for user ${data.userId}`);
+      const response = await PUT(`${AuthbaseURL}/update-email`, data);
+      logger.info(`[AUTH_API] Email update successful`);
+      return response;
+    } catch (err) {
+      logger.error("[AUTH_API] Error updating email:", err);
+      return {
+        data: null as any,
+        message: err instanceof Error ? err.message : "Failed to update email",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Update phone with password verification
+   */
+  UPDATE_PHONE: async (data: { userId: string; phone: string; password: string }): Promise<CustomResponse<any>> => {
+    try {
+      logger.info(`[AUTH_API] Updating phone for user ${data.userId}`);
+      const response = await PUT(`${AuthbaseURL}/update-phone`, data);
+      logger.info(`[AUTH_API] Phone update successful`);
+      return response;
+    } catch (err) {
+      logger.error("[AUTH_API] Error updating phone:", err);
+      return {
+        data: null as any,
+        message: err instanceof Error ? err.message : "Failed to update phone",
         error: true,
       };
     }

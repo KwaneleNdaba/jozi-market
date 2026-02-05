@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Package, 
+  PackageCheck,
   ChevronRight, 
   Clock, 
   MapPin, 
@@ -52,6 +53,9 @@ interface OrderDetail {
   cancellationRequestStatus?: string | null;
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
+  isReturnReviewed?: boolean;
+  returnReviewedBy?: string | null;
+  returnReviewedAt?: string | null;
   items: {
     id: string;
     name: string;
@@ -64,6 +68,9 @@ interface OrderDetail {
     status?: string;
     isReturnRequested?: boolean;
     isReturnApproved?: boolean;
+    isReturnReviewed?: boolean;
+    returnReviewedBy?: string | null;
+    returnReviewedAt?: string | null;
   }[];
 }
 
@@ -85,10 +92,42 @@ function isReturnApproved(item: { isReturnApproved?: boolean | string | number }
   const v = item.isReturnApproved;
   return v === true || v === 'true' || v === 1;
 }
-function isReturnDeclined(item: { isReturnRequested?: boolean | string | number; isReturnApproved?: boolean | string | number }): boolean {
+
+type ReviewedFields = { returnReviewedBy?: string | null; returnReviewedAt?: string | null };
+/** True only when both returnReviewedBy and returnReviewedAt are non-null (admin has reviewed). */
+function hasBeenReturnReviewed(item: ReviewedFields): boolean {
+  const by = item.returnReviewedBy;
+  const at = item.returnReviewedAt;
+  if (by == null || at == null) return false;
+  if (typeof by === 'string' && by.trim() === '') return false;
+  return true;
+}
+
+/** Declined only when requested AND admin has reviewed (both non-null) AND not approved. Never show "declined" when not reviewed. */
+function isReturnDeclined(item: {
+  isReturnRequested?: boolean | string | number;
+  isReturnApproved?: boolean | string | number;
+} & ReviewedFields): boolean {
   if (!isReturnRequested(item)) return false;
+  if (isReturnApproved(item)) return false;
+  if (!hasBeenReturnReviewed(item)) return false;
   const v = item.isReturnApproved;
   return v === false || v === 'false' || v === 0;
+}
+
+function isReturnReviewed(item: { isReturnReviewed?: boolean | string | number }): boolean {
+  const v = item.isReturnReviewed;
+  return v === true || v === 'true' || v === 1;
+}
+
+/** Return requested but not yet reviewed (reviewedBy/reviewedAt both null). */
+function isReturnInReview(item: {
+  isReturnRequested?: boolean | string | number;
+  isReturnApproved?: boolean | string | number;
+} & ReviewedFields): boolean {
+  if (!isReturnRequested(item)) return false;
+  if (isReturnApproved(item)) return false;
+  return !hasBeenReturnReviewed(item);
 }
 
 const OrdersPage: React.FC<OrdersPageProps> = ({
@@ -215,10 +254,14 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         
         const req = item.isReturnRequested as unknown;
         const app = item.isReturnApproved as unknown;
+        const rev = item.isReturnReviewed as unknown;
         const isReq = req === true || req === 'true' || req === 1;
         let isApp: boolean | undefined = undefined;
         if (app === true || app === 'true' || app === 1) isApp = true;
         else if (app === false || app === 'false' || app === 0) isApp = false;
+        const isRev = rev === true || rev === 'true' || rev === 1;
+        const by = (item as any).returnReviewedBy ?? (item as any).reviewedBy ?? null;
+        const at = (item as any).returnReviewedAt ?? (item as any).reviewedAt ?? null;
 
         return {
           id: item.id || `item-${idx}`,
@@ -232,6 +275,9 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
           status: item.status || undefined,
           isReturnRequested: isReq,
           isReturnApproved: isApp,
+          isReturnReviewed: isRev,
+          returnReviewedBy: by,
+          returnReviewedAt: at,
         };
       });
 
@@ -255,6 +301,12 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
         cancellationRequestStatus,
         isReturnRequested: order.isReturnRequested,
         isReturnApproved: order.isReturnApproved,
+        isReturnReviewed: (() => {
+          const v = order.isReturnReviewed as unknown;
+          return v === true || v === 'true' || v === 1;
+        })(),
+        returnReviewedBy: (order as any).returnReviewedBy ?? (order as any).reviewedBy ?? null,
+        returnReviewedAt: (order as any).returnReviewedAt ?? (order as any).reviewedAt ?? null,
         items,
       };
     });
@@ -496,7 +548,13 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                            <div className="absolute top-1/2 left-0 right-0 h-1.5 bg-slate-100 -translate-y-1/2 rounded-full overflow-hidden">
                              <motion.div 
                                initial={{ width: 0 }}
-                               animate={{ width: selectedOrder.statusCode.includes('delivered') ? '100%' : selectedOrder.statusCode.includes('transit') || selectedOrder.statusCode.includes('shipped') ? '75%' : selectedOrder.statusCode.includes('processing') ? '50%' : '25%' }}
+                               animate={{
+                                 width: selectedOrder.statusCode.includes('delivered') ? '100%'
+                                   : selectedOrder.statusCode.includes('transit') || selectedOrder.statusCode.includes('shipped') ? '80%'
+                                   : selectedOrder.statusCode.includes('ready_to_ship') ? '60%'
+                                   : selectedOrder.statusCode.includes('processing') || selectedOrder.statusCode.includes('confirmed') ? '40%'
+                                   : '20%'
+                               }}
                                transition={{ duration: 1, ease: "easeOut" }}
                                className="h-full bg-jozi-forest rounded-full" 
                              />
@@ -505,6 +563,7 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                               {[
                                 { label: 'Placed', icon: Clock, active: true },
                                 { label: 'Processing', icon: Package, active: !selectedOrder.statusCode.includes('pending') },
+                                { label: 'Ready to Ship', icon: PackageCheck, active: ['ready_to_ship', 'shipped', 'in transit', 'delivered'].some(s => selectedOrder.statusCode.includes(s)) },
                                 { label: 'In Transit', icon: Truck, active: ['shipped', 'in transit', 'delivered'].some(s => selectedOrder.statusCode.includes(s)) },
                                 { label: 'Delivered', icon: MapPin, active: selectedOrder.statusCode.includes('delivered') }
                               ].map((step, i) => (
@@ -545,6 +604,11 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                               {isReturnRequested(item) && isReturnDeclined(item) && (
                                 <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wide">
                                   <XCircle className="w-3 h-3 shrink-0" /> Return declined
+                                </div>
+                              )}
+                              {isReturnInReview(item) && (
+                                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-bold uppercase tracking-wide">
+                                  <Clock className="w-3 h-3 shrink-0" /> Return in review
                                 </div>
                               )}
                             </div>
@@ -635,6 +699,19 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                       </div>
                     </div>
 
+                    {/* Order-level return in review */}
+                    {selectedOrder.statusCode === 'delivered' &&
+                      !selectedOrder.statusCode.includes('cancel') &&
+                      !selectedOrder.statusCode.includes('return') &&
+                      isReturnInReview(selectedOrder) && (
+                      <div className="pt-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-50 text-sky-700 border border-sky-200">
+                          <Clock className="w-4 h-4 shrink-0" />
+                          <span className="text-sm font-semibold">Return request for this order is under review.</span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Main Actions */}
                     {(['pending', 'processing', 'delivered'].some(s => selectedOrder.statusCode.includes(s))) && 
                       !selectedOrder.statusCode.includes('cancel') && 
@@ -653,11 +730,11 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                           {selectedOrder.statusCode === 'delivered' && (
                             <button
                               onClick={() => selectedOrder.orderId && openReturnModal(selectedOrder.orderId)}
-                              disabled={processingRequest === selectedOrder.orderId || selectedOrder.isReturnRequested === true}
-                              title={selectedOrder.isReturnRequested ? 'Return already requested for this order' : undefined}
+                              disabled={processingRequest === selectedOrder.orderId || isReturnRequested(selectedOrder)}
+                              title={isReturnRequested(selectedOrder) ? (isReturnInReview(selectedOrder) ? 'Return request is under review' : 'Return already requested for this order') : undefined}
                               className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm hover:border-jozi-forest hover:text-jozi-forest transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
                             >
-                              <RotateCcw className="w-4 h-4" /> {selectedOrder.isReturnRequested ? 'Return Requested' : 'Return Order'}
+                              <RotateCcw className="w-4 h-4" /> {isReturnRequested(selectedOrder) ? (isReturnInReview(selectedOrder) ? 'Return in review' : 'Return Requested') : 'Return Order'}
                             </button>
                           )}
                         </div>

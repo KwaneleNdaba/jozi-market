@@ -16,31 +16,31 @@ interface AdminSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { group: 'Intelligence', items: [
-    { id: 'overview', label: 'Market Overview', icon: LayoutDashboard, path: '/admin/overview' },
-    { id: 'stats', label: 'Platform Analytics', icon: Globe, path: '/admin/platform-analytics' },
-    { id: 'vendor-stats', label: 'Artisan Insights', icon: BarChart3, path: '/admin/analytics' },
-  ]},
+  // { group: 'Intelligence', items: [
+  //   { id: 'overview', label: 'Market Overview', icon: LayoutDashboard, path: '/admin/overview' },
+  //   { id: 'stats', label: 'Platform Analytics', icon: Globe, path: '/admin/platform-analytics' },
+  //   { id: 'vendor-stats', label: 'Artisan Insights', icon: BarChart3, path: '/admin/analytics' },
+  // ]},
   { group: 'Governance', items: [
     { id: 'onboarding', label: 'Vendor Onboarding', icon: UserPlus, path: '/admin/onboarding' },
-    { id: 'influencers', label: 'Collab Approvals', icon: Megaphone, path: '/admin/influencer-approvals' },
+    // { id: 'influencers', label: 'Collab Approvals', icon: Megaphone, path: '/admin/influencer-approvals' },
     { id: 'orders', label: 'Order Manifests', icon: ShoppingCart, path: '/admin/orders' },
-    { id: 'payouts', label: 'Payout Ledger', icon: CreditCard, path: '/admin/vendors/payouts' },
+    // { id: 'payouts', label: 'Payout Ledger', icon: CreditCard, path: '/admin/vendors/payouts' },
   ]},
-  { group: 'Growth', items: [
-    { id: 'exposure', label: 'Social Exposure', icon: Share2, path: '/admin/social-exposure' },
-    { id: 'gamification', label: 'Economy Logic', icon: Gamepad2, path: '/admin/gamification' },
-    { id: 'rewards', label: 'Rewards Catalog', icon: Gift, path: '/admin/rewards' },
-    { id: 'vouchers', label: 'Voucher Hub', icon: Tag, path: '/admin/vouchers' },
-  ]},
-  { group: 'Infrastructure', items: [
-    { id: 'categories', label: 'Category Orchestrator', icon: ListTree, path: '/admin/categories' },
-    { id: 'features', label: 'Capability Config', icon: Layers, path: '/admin/features' },
-    { id: 'matrix', label: 'Plan Matrix', icon: Grid, path: '/admin/plan-matrix' },
-    { id: 'plans', label: 'Tiers & Pricing', icon: CreditCard, path: '/admin/plans' },
-    { id: 'notifications', label: 'Global Alerts', icon: Bell, path: '/admin/notifications' },
-    { id: 'content', label: 'CMS Orchestrator', icon: Monitor, path: '/admin/content' },
-  ]}
+  // { group: 'Growth', items: [
+  //   { id: 'exposure', label: 'Social Exposure', icon: Share2, path: '/admin/social-exposure' },
+  //   { id: 'gamification', label: 'Economy Logic', icon: Gamepad2, path: '/admin/gamification' },
+  //   { id: 'rewards', label: 'Rewards Catalog', icon: Gift, path: '/admin/rewards' },
+  //   { id: 'vouchers', label: 'Voucher Hub', icon: Tag, path: '/admin/vouchers' },
+  // ]},
+  // { group: 'Infrastructure', items: [
+  //   { id: 'categories', label: 'Category Orchestrator', icon: ListTree, path: '/admin/categories' },
+  //   { id: 'features', label: 'Capability Config', icon: Layers, path: '/admin/features' },
+  //   { id: 'matrix', label: 'Plan Matrix', icon: Grid, path: '/admin/plan-matrix' },
+  //   { id: 'plans', label: 'Tiers & Pricing', icon: CreditCard, path: '/admin/plans' },
+  //   { id: 'notifications', label: 'Global Alerts', icon: Bell, path: '/admin/notifications' },
+  //   { id: 'content', label: 'CMS Orchestrator', icon: Monitor, path: '/admin/content' },
+  // ]}
 ];
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ onClose }) => {

@@ -46,6 +46,9 @@ export interface IOrderItem {
   status?: OrderItemStatus | string;
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
+  isReturnReviewed?: boolean;
+  returnReviewedBy?: string | null;
+  returnReviewedAt?: Date | string | null;
   rejectionReason?: string | null;
   rejectedBy?: string | null;
   rejectedAt?: Date | null;
@@ -68,6 +71,9 @@ export interface IOrder {
   notes?: string;
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
+  isReturnReviewed?: boolean;
+  returnReviewedBy?: string | null;
+  returnReviewedAt?: Date | string | null;
   cancellationRequestedAt?: Date | null;
   cancellationReviewedBy?: string | null;
   cancellationReviewedAt?: Date | null;
@@ -154,6 +160,13 @@ export interface IOrderItemWithDetails extends IOrderItem {
     id: string;
     orderNumber: string;
     createdAt: Date | string;
+    status?: OrderStatus | string;
+    paymentStatus?: PaymentStatus | string;
+    totalAmount?: number | string;
+    shippingAddress?: IShippingAddress;
+    email?: string;
+    phone?: string;
+    notes?: string;
     customer?: IOrderUser;
   };
   product?: {

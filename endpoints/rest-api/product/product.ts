@@ -65,12 +65,20 @@ export const PRODUCT_API = {
   },
 
   /**
-   * Get products by category ID
+   * Get products by category ID with pagination
    */
-  GET_PRODUCTS_BY_CATEGORY_ID: async (categoryId: string): Promise<CustomResponse<IProduct[]>> => {
+  GET_PRODUCTS_BY_CATEGORY_ID: async (
+    categoryId: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<CustomResponse<IProduct[]>> => {
     try {
+      const queryParams = new URLSearchParams();
+      if (params?.page) queryParams.set('page', params.page.toString());
+      if (params?.limit) queryParams.set('limit', params.limit.toString());
+      
+      const url = `${ProductBaseURL}/category/${categoryId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       logger.info(`[PRODUCT_API] Fetching products by category ID: ${categoryId}`);
-      const response = await GET(`${ProductBaseURL}/category/${categoryId}`);
+      const response = await GET(url);
       logger.info(`[PRODUCT_API] Products fetched successfully`);
       return response;
     } catch (err: any) {
@@ -84,12 +92,20 @@ export const PRODUCT_API = {
   },
 
   /**
-   * Get products by subcategory ID
+   * Get products by subcategory ID with pagination
    */
-  GET_PRODUCTS_BY_SUBCATEGORY_ID: async (subcategoryId: string): Promise<CustomResponse<IProduct[]>> => {
+  GET_PRODUCTS_BY_SUBCATEGORY_ID: async (
+    subcategoryId: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<CustomResponse<IProduct[]>> => {
     try {
+      const queryParams = new URLSearchParams();
+      if (params?.page) queryParams.set('page', params.page.toString());
+      if (params?.limit) queryParams.set('limit', params.limit.toString());
+      
+      const url = `${ProductBaseURL}/subcategory/${subcategoryId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       logger.info(`[PRODUCT_API] Fetching products by subcategory ID: ${subcategoryId}`);
-      const response = await GET(`${ProductBaseURL}/subcategory/${subcategoryId}`);
+      const response = await GET(url);
       logger.info(`[PRODUCT_API] Products fetched successfully`);
       return response;
     } catch (err: any) {
@@ -103,14 +119,20 @@ export const PRODUCT_API = {
   },
 
   /**
-   * Get products by user ID (vendor's products)
+   * Get products by user ID (vendor's products) with pagination
    */
-  GET_PRODUCTS_BY_USER_ID: async (userId: string, status?: string): Promise<CustomResponse<IProduct[]>> => {
+  GET_PRODUCTS_BY_USER_ID: async (
+    userId: string,
+    params?: { status?: string; page?: number; limit?: number }
+  ): Promise<CustomResponse<IProduct[]>> => {
     try {
-      const url = status
-        ? `${ProductBaseURL}/user/${userId}?status=${encodeURIComponent(status)}`
-        : `${ProductBaseURL}/user/${userId}`;
-      logger.info(`[PRODUCT_API] Fetching products by user ID: ${userId}${status ? ` with status: ${status}` : ''}`);
+      const queryParams = new URLSearchParams();
+      if (params?.status) queryParams.set('status', params.status);
+      if (params?.page) queryParams.set('page', params.page.toString());
+      if (params?.limit) queryParams.set('limit', params.limit.toString());
+      
+      const url = `${ProductBaseURL}/user/${userId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      logger.info(`[PRODUCT_API] Fetching products by user ID: ${userId}${params?.status ? ` with status: ${params.status}` : ''}`);
       const response = await GET(url);
       logger.info(`[PRODUCT_API] Products fetched successfully`);
       return response;
@@ -125,14 +147,19 @@ export const PRODUCT_API = {
   },
 
   /**
-   * Get all products with optional status filter
+   * Get all products with optional status filter and pagination
    */
-  GET_ALL_PRODUCTS: async (status?: string): Promise<CustomResponse<IProduct[]>> => {
+  GET_ALL_PRODUCTS: async (
+    params?: { status?: string; page?: number; limit?: number }
+  ): Promise<CustomResponse<IProduct[]>> => {
     try {
-      const url = status
-        ? `${baseUrl}/products?status=${encodeURIComponent(status)}`
-        : `${baseUrl}/products`;
-      logger.info(`[PRODUCT_API] Fetching all products${status ? ` with status: ${status}` : ''}`);
+      const queryParams = new URLSearchParams();
+      if (params?.status) queryParams.set('status', params.status);
+      if (params?.page) queryParams.set('page', params.page.toString());
+      if (params?.limit) queryParams.set('limit', params.limit.toString());
+      
+      const url = `${baseUrl}/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      logger.info(`[PRODUCT_API] Fetching all products${params?.status ? ` with status: ${params.status}` : ''}`);
       const response = await GET(url);
       logger.info(`[PRODUCT_API] Products fetched successfully`);
       return response;

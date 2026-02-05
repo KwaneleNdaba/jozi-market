@@ -100,11 +100,17 @@ export async function getProductBySkuAction(
  * Server action to get products by category ID
  */
 export async function getProductsByCategoryIdAction(
-  categoryId: string
+  categoryId: string,
+  params?: { page?: number; limit?: number }
 ): Promise<CustomResponse<IProduct[]>> {
   try {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams.set('limit', params.limit.toString());
+    
+    const url = `${baseUrl}/product/category/${categoryId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     logger.info('[Product Action] Fetching products by category ID:', categoryId);
-    const response = await serverGET(`${baseUrl}/product/category/${categoryId}`);
+    const response = await serverGET(url);
     logger.info('[Product Action] Products fetched successfully');
     return response;
   } catch (err: any) {
@@ -121,11 +127,17 @@ export async function getProductsByCategoryIdAction(
  * Server action to get products by subcategory ID
  */
 export async function getProductsBySubcategoryIdAction(
-  subcategoryId: string
+  subcategoryId: string,
+  params?: { page?: number; limit?: number }
 ): Promise<CustomResponse<IProduct[]>> {
   try {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams.set('limit', params.limit.toString());
+    
+    const url = `${baseUrl}/product/subcategory/${subcategoryId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     logger.info('[Product Action] Fetching products by subcategory ID:', subcategoryId);
-    const response = await serverGET(`${baseUrl}/product/subcategory/${subcategoryId}`);
+    const response = await serverGET(url);
     logger.info('[Product Action] Products fetched successfully');
     return response;
   } catch (err: any) {
@@ -196,14 +208,17 @@ export async function getMyProductsAction(
  * Server action to get all products with optional status filter
  */
 export async function getAllProductsAction(
-  status?: string
+  params?: { status?: string; page?: number; limit?: number }
 ): Promise<CustomResponse<IProduct[]>> {
   try {
-    const url = status
-      ? `${baseUrl}/products?status=${encodeURIComponent(status)}`
-      : `${baseUrl}/products`;
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.set('status', params.status);
+    if (params?.page) queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams.set('limit', params.limit.toString());
     
-    logger.info('[Product Action] Fetching all products', status ? `with status: ${status}` : '');
+    const url = `${baseUrl}/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    logger.info('[Product Action] Fetching all products', params?.status ? `with status: ${params.status}` : '');
     const response = await serverGET(url);
     logger.info('[Product Action] Products fetched successfully');
     return response;

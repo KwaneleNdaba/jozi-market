@@ -51,17 +51,17 @@ const ReturnsTable: React.FC<ReturnsTableProps> = ({
     );
   }
 
-  const headers = ['Return ID', 'Order', 'Date', 'Status', 'Refund', ...(showCustomer ? ['Customer'] : []), ''];
+  const headers = ['Order ID', 'Date', ...(showCustomer ? ['Customer'] : []), 'Items', 'Refund', 'Status', 'View'];
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left min-w-[800px]">
+      <table className="w-full text-left min-w-[1000px]">
         <thead>
           <tr className="border-b border-gray-100">
             {headers.map((h) => (
               <th
                 key={h}
-                className="pb-4 text-[10px] font-black uppercase text-gray-400 tracking-widest whitespace-nowrap"
+                className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest"
               >
                 {h}
               </th>
@@ -72,36 +72,23 @@ const ReturnsTable: React.FC<ReturnsTableProps> = ({
           {returns.map((r) => {
             const status = (r.status as string)?.toLowerCase() ?? '';
             const label = RETURN_STATUS_LABELS[status] ?? r.status;
+            const items = r.items || [];
+            const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
             return (
               <tr
                 key={r.id}
                 className="group hover:bg-gray-50/50 transition-colors cursor-pointer"
                 onClick={() => onView(r)}
               >
-                <td className="py-4 font-mono font-black text-jozi-forest text-sm">
-                  {r.id ? truncateId(r.id, 8, 4) : '—'}
+                <td className="py-5 font-black text-jozi-dark text-sm">
+                  {getReturnOrderNumber(r) ? `ORDER_${getReturnOrderNumber(r)?.split('_')[1] || r.id}` : r.id}
                 </td>
-                <td className="py-4 text-sm font-bold text-gray-700">
-                  {getReturnOrderNumber(r)}
-                </td>
-                <td className="py-4 text-xs font-bold text-gray-500 whitespace-nowrap">
+                <td className="py-5 text-xs font-bold text-gray-500">
                   {getReturnRequestedDate(r)}
                 </td>
-                <td className="py-4">
-                  <span
-                    className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getReturnStatusStyles(
-                      r.status as string
-                    )}`}
-                  >
-                    {label}
-                  </span>
-                </td>
-                <td className="py-4 font-black text-jozi-forest">
-                  {formatReturnRefundAmount(r.refundAmount)}
-                </td>
                 {showCustomer && (
-                  <td className="py-4">
-                    <p className="font-bold text-jozi-forest text-sm">
+                  <td className="py-5">
+                    <p className="font-bold text-jozi-dark text-sm">
                       {(r.user as { fullName?: string })?.fullName ?? '—'}
                     </p>
                     <p className="text-[10px] text-gray-400">
@@ -109,13 +96,32 @@ const ReturnsTable: React.FC<ReturnsTableProps> = ({
                     </p>
                   </td>
                 )}
-                <td className="py-4">
+                <td className="py-5">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">
+                      {totalItems} Items
+                    </span>
+                  </div>
+                </td>
+                <td className="py-5 font-black text-jozi-dark">
+                  {formatReturnRefundAmount(r.refundAmount)}
+                </td>
+                <td className="py-5">
+                  <span
+                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getReturnStatusStyles(
+                      r.status as string
+                    )}`}
+                  >
+                    {label}
+                  </span>
+                </td>
+                <td className="py-5">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onView(r);
                     }}
-                    className="p-2 hover:bg-jozi-forest/10 rounded-xl transition-colors"
+                    className="p-2 hover:bg-white rounded-xl transition-colors"
                     aria-label="View return"
                   >
                     <Eye className="w-4 h-4 text-gray-400 group-hover:text-jozi-forest" />

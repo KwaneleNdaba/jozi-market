@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Lock, Eye, EyeOff, Smartphone, Activity, ArrowUpRight, History } from 'lucide-react';
+import { ShieldCheck, Lock, Eye, EyeOff, Smartphone, Activity, ArrowUpRight, History, Mail, Phone, Loader2 } from 'lucide-react';
 import SectionHeader from '../SectionHeader';
 import StatusBadge from '../StatusBadge';
+import { useProfileUser } from '@/app/contexts/ProfileUserContext';
+import { useToast } from '@/app/contexts/ToastContext';
+import { updateOldPasswordAction, updateEmailAction, updatePhoneAction } from '@/app/actions/auth/auth';
 
 const LOGIN_HISTORY = [
   { device: 'iPhone 15 Pro', location: 'Johannesburg, ZA', date: 'Oct 15, 14:30', ip: '102.221.xx.xx' },
@@ -11,8 +14,136 @@ const LOGIN_HISTORY = [
 ];
 
 const SettingsSecurity: React.FC = () => {
+  const { user, refetch } = useProfileUser();
+  const { showSuccess, showError } = useToast();
+  
   const [showPass, setShowPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(true);
+  
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Email form state
+  const [emailForm, setEmailForm] = useState({
+    newEmail: '',
+    password: ''
+  });
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+
+  // Phone form state
+  const [phoneForm, setPhoneForm] = useState({
+    newPhone: '',
+    password: ''
+  });
+  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id) {
+      showError('User not found');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showError('New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      showError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const response = await updateOldPasswordAction(
+        user.id,
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+
+      if (response.error) {
+        showError(response.message || 'Failed to update password');
+      } else {
+        showSuccess('Password updated successfully');
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        await refetch(); // Refresh user data
+      }
+    } catch (error) {
+      showError('An error occurred while updating password');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleEmailUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id) {
+      showError('User not found');
+      return;
+    }
+
+    setIsUpdatingEmail(true);
+    try {
+      const response = await updateEmailAction(
+        user.id,
+        emailForm.newEmail,
+        emailForm.password
+      );
+
+      if (response.error) {
+        showError(response.message || 'Failed to update email');
+      } else {
+        showSuccess('Email updated successfully. Please log in again.');
+        setEmailForm({ newEmail: '', password: '' });
+        // Optionally redirect to login
+        window.location.href = '/auth/login';
+      }
+    } catch (error) {
+      showError('An error occurred while updating email');
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
+
+  const handlePhoneUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id) {
+      showError('User not found');
+      return;
+    }
+
+    setIsUpdatingPhone(true);
+    try {
+      const response = await updatePhoneAction(
+        user.id,
+        phoneForm.newPhone,
+        phoneForm.password
+      );
+
+      if (response.error) {
+        showError(response.message || 'Failed to update phone');
+      } else {
+        showSuccess('Phone number updated successfully');
+        setPhoneForm({ newPhone: '', password: '' });
+        await refetch(); // Refresh user data
+      }
+    } catch (error) {
+      showError('An error occurred while updating phone');
+    } finally {
+      setIsUpdatingPhone(false);
+    }
+  };
 
   return (
     <div className="space-y-8 text-left">
@@ -27,14 +158,17 @@ const SettingsSecurity: React.FC = () => {
           {/* Change Password */}
           <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100">
             <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight mb-8">Refine Cipher</h3>
-            <form className="space-y-6" onSubmit={e => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handlePasswordUpdate}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Current Password</label>
                   <div className="relative">
                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input 
-                      type={showPass ? 'text' : 'password'} 
+                      type={showPass ? 'text' : 'password'}
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      required
                       className="w-full bg-gray-50 rounded-2xl pl-12 pr-12 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
                     />
                     <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300">
@@ -44,16 +178,160 @@ const SettingsSecurity: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-gray-400 ml-1">New Cipher</label>
-                  <input type="password" placeholder="Min 8 characters" className="w-full bg-gray-50 rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none" />
+                  <div className="relative">
+                    <input 
+                      type={showNewPass ? 'text' : 'password'} 
+                      placeholder="Min 8 characters"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      required
+                      minLength={8}
+                      className="w-full bg-gray-50 rounded-2xl pl-6 pr-12 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                    />
+                    <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300">
+                      {showNewPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Repeat New Cipher</label>
-                  <input type="password" placeholder="Verify entry" className="w-full bg-gray-50 rounded-2xl px-6 py-4 font-bold text-jozi-forest outline-none" />
+                  <div className="relative">
+                    <input 
+                      type={showConfirmPass ? 'text' : 'password'} 
+                      placeholder="Verify entry"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      required
+                      className="w-full bg-gray-50 rounded-2xl pl-6 pr-12 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                    />
+                    <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300">
+                      {showConfirmPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="pt-4">
-                <button className="bg-jozi-forest text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg">
+                <button 
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="bg-jozi-forest text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {isUpdatingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Update Email */}
+          <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100">
+            <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight mb-8">Update Email Address</h3>
+            <form className="space-y-6" onSubmit={handleEmailUpdate}>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Current Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="email" 
+                    value={user?.email || ''}
+                    disabled
+                    className="w-full bg-gray-100 rounded-2xl pl-12 pr-6 py-4 font-bold text-gray-400 outline-none cursor-not-allowed" 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">New Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="email"
+                    placeholder="new.email@example.com"
+                    value={emailForm.newEmail}
+                    onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
+                    required
+                    className="w-full bg-gray-50 rounded-2xl pl-12 pr-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Confirm with Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="password"
+                    placeholder="Enter your password"
+                    value={emailForm.password}
+                    onChange={(e) => setEmailForm({ ...emailForm, password: e.target.value })}
+                    required
+                    className="w-full bg-gray-50 rounded-2xl pl-12 pr-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                  />
+                </div>
+              </div>
+              <div className="pt-4">
+                <button 
+                  type="submit"
+                  disabled={isUpdatingEmail}
+                  className="bg-jozi-forest text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {isUpdatingEmail && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Update Email
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Update Phone */}
+          <div className="bg-white rounded-[3rem] p-10 lg:p-12 shadow-soft border border-gray-100">
+            <h3 className="text-xl font-black text-jozi-dark uppercase tracking-tight mb-8">Update Phone Number</h3>
+            <form className="space-y-6" onSubmit={handlePhoneUpdate}>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Current Phone</label>
+                <div className="relative">
+                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="tel" 
+                    value={user?.phone || 'Not set'}
+                    disabled
+                    className="w-full bg-gray-100 rounded-2xl pl-12 pr-6 py-4 font-bold text-gray-400 outline-none cursor-not-allowed" 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">New Phone Number</label>
+                <div className="relative">
+                  <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="tel"
+                    placeholder="+27 XX XXX XXXX"
+                    value={phoneForm.newPhone}
+                    onChange={(e) => setPhoneForm({ ...phoneForm, newPhone: e.target.value })}
+                    required
+                    className="w-full bg-gray-50 rounded-2xl pl-12 pr-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Confirm with Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="password"
+                    placeholder="Enter your password"
+                    value={phoneForm.password}
+                    onChange={(e) => setPhoneForm({ ...phoneForm, password: e.target.value })}
+                    required
+                    className="w-full bg-gray-50 rounded-2xl pl-12 pr-6 py-4 font-bold text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20" 
+                  />
+                </div>
+              </div>
+              <div className="pt-4">
+                <button 
+                  type="submit"
+                  disabled={isUpdatingPhone}
+                  className="bg-jozi-forest text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                >
+                  {isUpdatingPhone && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Update Phone
                 </button>
               </div>
             </form>

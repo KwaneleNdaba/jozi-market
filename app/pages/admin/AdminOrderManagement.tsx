@@ -28,7 +28,9 @@ import {
   Ban,
   RotateCcw,
   Download,
-  Loader2
+  Loader2,
+  Clock,
+  XCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { getAllOrdersAction, getOrderItemsGroupedByDateAndVendorAction, updateOrderItemStatusAction, updateOrderAction } from '@/app/actions/order/index';
@@ -57,6 +59,11 @@ export interface ProductItem {
   image?: string; // First product image URL
   orderItemId?: string; // Database ID for the order item
   status?: OrderItemStatus | string; // Current status of the order item
+  isReturnRequested?: boolean;
+  isReturnApproved?: boolean;
+  isReturnReviewed?: boolean;
+  returnReviewedBy?: string | null;
+  returnReviewedAt?: string | null;
 }
 
 export interface MarketOrder {
@@ -111,6 +118,7 @@ const ITEMS_PER_PAGE = 8;
 const AdminOrderManagement: React.FC = () => {
   const { showError, showSuccess } = useToast();
   const [activeTab, setActiveTab] = useState<'all' | 'vendor_grouped' | 'resolutions'>('all');
+  const [resolutionSubTab, setResolutionSubTab] = useState<'cancellations' | 'returns'>('cancellations');
   const [orders, setOrders] = useState<MarketOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,14 +164,31 @@ const AdminOrderManagement: React.FC = () => {
             : item.product.images[0].file)
         : undefined;
 
+      const req = item.isReturnRequested as unknown;
+      const app = item.isReturnApproved as unknown;
+      const rev = item.isReturnReviewed as unknown;
+      const isReq = req === true || req === 'true' || req === 1;
+      let isApp: boolean | undefined;
+      if (app === true || app === 'true' || app === 1) isApp = true;
+      else if (app === false || app === 'false' || app === 0) isApp = false;
+      else isApp = undefined;
+      const isRev = rev === true || rev === 'true' || rev === 1;
+      const by = (item as any).returnReviewedBy ?? (item as any).reviewedBy ?? null;
+      const at = (item as any).returnReviewedAt ?? (item as any).reviewedAt ?? null;
+
       return {
         name: item.product?.title || 'Unknown Product',
         quantity: item.quantity,
         price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
         vendorName: item.product?.vendorName || 'Unknown Vendor',
         image: firstImage,
-        orderItemId: item.id, // Store the order item ID
-        status: item.status || OrderItemStatus.PENDING // Store the current status
+        orderItemId: item.id,
+        status: item.status || OrderItemStatus.PENDING,
+        isReturnRequested: isReq,
+        isReturnApproved: isApp,
+        isReturnReviewed: isRev,
+        returnReviewedBy: by,
+        returnReviewedAt: at,
       };
     });
 
@@ -495,9 +520,35 @@ const AdminOrderManagement: React.FC = () => {
 
   const isOrderDelivered = (order: MarketOrder | null): boolean => {
     if (!order) return false;
-    const s = typeof order.status === 'string' ? order.status.toLowerCase() : '';
-    return s === 'delivered' || order.status === OrderStatus.DELIVERED;
+    const status = order.originalOrder?.status ?? order.status;
+    const s = typeof status === 'string' ? status.toLowerCase() : '';
+    return s === 'delivered' || status === OrderStatus.DELIVERED;
   };
+
+  const isOrderCancelled = (order: MarketOrder | null): boolean => {
+    if (!order) return false;
+    const status = order.originalOrder?.status ?? order.status;
+    const s = typeof status === 'string' ? status.toLowerCase() : '';
+    return s === 'cancelled' || status === OrderStatus.CANCELLED;
+  };
+
+  const isOrderViewOnly = (order: MarketOrder | null): boolean =>
+    isOrderDelivered(order) || isOrderCancelled(order);
+
+  type ProductItemReturn = Pick<ProductItem, 'isReturnRequested' | 'isReturnApproved' | 'returnReviewedBy' | 'returnReviewedAt'>;
+  const isReturnRequested = (p: ProductItemReturn) => p.isReturnRequested === true;
+  const isReturnApproved = (p: ProductItemReturn) => p.isReturnApproved === true;
+  const hasBeenReturnReviewed = (p: ProductItemReturn) => {
+    const by = p.returnReviewedBy;
+    const at = p.returnReviewedAt;
+    if (by == null || at == null) return false;
+    if (typeof by === 'string' && by.trim() === '') return false;
+    return true;
+  };
+  const isReturnDeclined = (p: ProductItemReturn) =>
+    isReturnRequested(p) && hasBeenReturnReviewed(p) && p.isReturnApproved === false;
+  const isReturnInReview = (p: ProductItemReturn) =>
+    isReturnRequested(p) && !isReturnApproved(p) && !hasBeenReturnReviewed(p);
 
   const handleStatusUpdate = (id: string, newStatus: OrderStatus | string) => {
     // Track pending change instead of saving immediately
@@ -570,8 +621,23 @@ const AdminOrderManagement: React.FC = () => {
                 : date;
 
               // Determine status from order (if available) or default
-              let status: OrderStatus = OrderStatus.PROCESSING;
-              // Note: Status would need to come from the order if available in the response
+              let status: OrderStatus | string = OrderStatus.PROCESSING;
+              if (item.order?.status) {
+                const orderStatusValue = item.order.status;
+                if (typeof orderStatusValue === 'string') {
+                  const normalizedStatus = orderStatusValue.toLowerCase();
+                  if (normalizedStatus === 'pending') status = OrderStatus.PENDING;
+                  else if (normalizedStatus === 'confirmed') status = OrderStatus.CONFIRMED;
+                  else if (normalizedStatus === 'processing') status = OrderStatus.PROCESSING;
+                  else if (normalizedStatus === 'ready_to_ship') status = OrderStatus.READY_TO_SHIP;
+                  else if (normalizedStatus === 'shipped') status = OrderStatus.SHIPPED;
+                  else if (normalizedStatus === 'delivered') status = OrderStatus.DELIVERED;
+                  else if (normalizedStatus === 'cancelled') status = OrderStatus.CANCELLED;
+                  else status = orderStatusValue;
+                } else {
+                  status = orderStatusValue;
+                }
+              }
               
               const productImage = item.product?.images && item.product.images.length > 0
                 ? (typeof item.product.images[0] === 'string' 
@@ -579,23 +645,54 @@ const AdminOrderManagement: React.FC = () => {
                     : item.product.images[0].file)
                 : undefined;
 
+              const req = (item as any).isReturnRequested as unknown;
+              const app = (item as any).isReturnApproved as unknown;
+              const rev = (item as any).isReturnReviewed as unknown;
+              const isReq = req === true || req === 'true' || req === 1;
+              let isApp: boolean | undefined;
+              if (app === true || app === 'true' || app === 1) isApp = true;
+              else if (app === false || app === 'false' || app === 0) isApp = false;
+              else isApp = undefined;
+              const by = (item as any).returnReviewedBy ?? (item as any).reviewedBy ?? null;
+              const at = (item as any).returnReviewedAt ?? (item as any).reviewedAt ?? null;
+
+              // Get shipping address from order if available
+              const orderShippingAddress = item.order?.shippingAddress
+                ? `${item.order.shippingAddress.street}, ${item.order.shippingAddress.city}, ${item.order.shippingAddress.postal || ''}`
+                : `${vGroup.vendor.address.street}, ${vGroup.vendor.address.city}, ${vGroup.vendor.address.postal}`;
+
+              // Get order total if available
+              const orderTotalAmount = item.order?.totalAmount
+                ? (typeof item.order.totalAmount === 'string' ? parseFloat(item.order.totalAmount) : item.order.totalAmount)
+                : (typeof item.totalPrice === 'string' ? parseFloat(item.totalPrice) : item.totalPrice);
+
               const marketOrder: MarketOrder = {
                 id: orderId,
                 customerName: item.order?.customer?.fullName || 'Unknown Customer',
-                customerEmail: item.order?.customer?.email || '',
+                customerEmail: item.order?.customer?.email || item.order?.email || '',
                 products: [{
                   name: item.product?.title || 'Unknown Product',
                   quantity: item.quantity,
                   price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
                   vendorName: vGroup.vendor.vendorName,
-                  image: productImage
+                  image: productImage,
+                  orderItemId: item.id,
+                  status: item.status || OrderItemStatus.PENDING,
+                  isReturnRequested: isReq,
+                  isReturnApproved: isApp,
+                  isReturnReviewed: rev === true || rev === 'true' || rev === 1,
+                  returnReviewedBy: by,
+                  returnReviewedAt: at,
                 }],
-                totalAmount: typeof item.totalPrice === 'string' ? parseFloat(item.totalPrice) : item.totalPrice,
+                totalAmount: orderTotalAmount,
                 status,
                 orderDate,
                 category: vGroup.vendor.vendorName,
-                paymentMethod: 'Card', // Default, not available in grouped response
-                shippingAddress: `${vGroup.vendor.address.street}, ${vGroup.vendor.address.city}, ${vGroup.vendor.address.postal}`
+                paymentMethod: (item.order as any)?.paymentMethod || 'Card',
+                shippingAddress: orderShippingAddress,
+                requestReason: item.order?.notes?.includes('Cancellation reason:')
+                  ? item.order.notes.split('Cancellation reason:')[1]?.trim()
+                  : undefined,
               };
               
               ordersMap.set(orderId, marketOrder);
@@ -608,14 +705,37 @@ const AdminOrderManagement: React.FC = () => {
                     : item.product.images[0].file)
                 : undefined;
 
+              const req = (item as any).isReturnRequested as unknown;
+              const app = (item as any).isReturnApproved as unknown;
+              const rev = (item as any).isReturnReviewed as unknown;
+              const isReq = req === true || req === 'true' || req === 1;
+              let isApp: boolean | undefined;
+              if (app === true || app === 'true' || app === 1) isApp = true;
+              else if (app === false || app === 'false' || app === 0) isApp = false;
+              else isApp = undefined;
+              const by = (item as any).returnReviewedBy ?? (item as any).reviewedBy ?? null;
+              const at = (item as any).returnReviewedAt ?? (item as any).reviewedAt ?? null;
+
               existingOrder.products.push({
                 name: item.product?.title || 'Unknown Product',
                 quantity: item.quantity,
                 price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
                 vendorName: vGroup.vendor.vendorName,
-                image: productImage
+                image: productImage,
+                orderItemId: item.id,
+                status: item.status || OrderItemStatus.PENDING,
+                isReturnRequested: isReq,
+                isReturnApproved: isApp,
+                isReturnReviewed: rev === true || rev === 'true' || rev === 1,
+                returnReviewedBy: by,
+                returnReviewedAt: at,
               });
-              existingOrder.totalAmount += typeof item.totalPrice === 'string' ? parseFloat(item.totalPrice) : item.totalPrice;
+              // Use order total if available (only set once), otherwise accumulate item totals
+              if (item.order?.totalAmount && !existingOrder.originalOrder) {
+                existingOrder.totalAmount = typeof item.order.totalAmount === 'string' 
+                  ? parseFloat(item.order.totalAmount) 
+                  : item.order.totalAmount;
+              }
             }
           });
 
@@ -892,37 +1012,54 @@ const AdminOrderManagement: React.FC = () => {
                                     className="overflow-hidden bg-white border-t border-gray-100"
                                   >
                                     <div className="max-h-[500px] overflow-y-auto">
-                                      <table className="w-full text-left">
+                                      <table className="w-full text-left min-w-[800px]">
                                         <thead className="sticky top-0 bg-gray-50 shadow-sm z-10">
                                           <tr>
-                                            {['Order ID', 'Customer', 'Items', 'Status', 'Action'].map((h, i) => (
+                                            {['Order ID', 'Date', 'Customer', 'Items', 'Total', 'Status', 'View'].map((h, i) => (
                                               <th key={i} className="px-6 py-4 text-[9px] font-black uppercase text-gray-400 tracking-widest">{h}</th>
                                             ))}
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
-                                          {vGroup.orders.map(order => (
+                                          {vGroup.orders.map(order => {
+                                            const orderCancelled = order.status === OrderStatus.CANCELLED ||
+                                              (typeof order.status === 'string' && order.status.toLowerCase() === 'cancelled');
+                                            const orderDelivered = order.status === OrderStatus.DELIVERED ||
+                                              (typeof order.status === 'string' && order.status.toLowerCase() === 'delivered');
+                                            const isViewOnly = orderCancelled || orderDelivered;
+
+                                            return (
                                             <tr key={order.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                                              <td className="px-6 py-4 font-bold text-jozi-forest text-xs">{order.id}</td>
+                                              <td className="px-6 py-4 font-black text-jozi-dark text-sm">ORD_{order.id.split('_')[1] || order.id}</td>
+                                              <td className="px-6 py-4 text-xs font-bold text-gray-500">{order.orderDate}</td>
                                               <td className="px-6 py-4">
-                                                <p className="text-xs font-bold text-gray-700">{order.customerName}</p>
-                                              </td>
-                                              <td className="px-6 py-4 text-xs text-gray-500">
-                                                {order.products.find(p => p.vendorName === vGroup.name)?.name}
-                                                {order.products.length > 1 && <span className="text-[10px] text-gray-400 ml-1">(+ others)</span>}
+                                                <p className="font-bold text-jozi-dark text-sm">{order.customerName}</p>
+                                                <p className="text-[10px] text-gray-400">{order.customerEmail}</p>
                                               </td>
                                               <td className="px-6 py-4">
-                                                <span className={`text-[9px] px-2 py-0.5 rounded-full border ${getStatusStyles(order.status)}`}>
+                                                <div className="flex items-center gap-2">
+                                                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">
+                                                    {order.products.reduce((acc, p) => acc + p.quantity, 0)} Items
+                                                  </span>
+                                                </div>
+                                              </td>
+                                              <td className="px-6 py-4 font-black text-jozi-dark">R{order.totalAmount.toLocaleString()}</td>
+                                              <td className="px-6 py-4">
+                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyles(order.status)}`}>
                                                   {ORDER_STATUS_LABELS[String(order.status)] || order.status}
                                                 </span>
+                                                {isViewOnly && (
+                                                  <span className="block mt-1 text-[8px] font-bold text-gray-400 uppercase">View Only</span>
+                                                )}
                                               </td>
                                               <td className="px-6 py-4">
-                                                <button className="text-jozi-gold hover:text-jozi-forest text-[10px] font-black uppercase tracking-widest">
-                                                  View
+                                                <button className="p-2 hover:bg-white rounded-xl transition-colors">
+                                                  <Eye className="w-4 h-4 text-gray-400 hover:text-jozi-forest" />
                                                 </button>
                                               </td>
                                             </tr>
-                                          ))}
+                                          );
+                                          })}
                                         </tbody>
                                       </table>
                                     </div>
@@ -951,84 +1088,125 @@ const AdminOrderManagement: React.FC = () => {
                <div className="flex items-center gap-2 mb-4 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 text-sm">
                  <AlertCircle className="w-5 h-5" />
                  <span className="font-bold">Attention Needed:</span>
-                 <span>Review cancellation requests below. Return requests are in the Returns section.</span>
+                 <span>Review cancellation requests and return requests below.</span>
                </div>
 
-               <div className="grid gap-4">
-                 {resolutionOrders.length === 0 ? (
-                   <div className="text-center py-20">
-                     <CheckCircle2 className="w-16 h-16 text-emerald-100 mx-auto mb-4" />
-                     <p className="text-gray-400 font-bold uppercase tracking-widest">All caught up! No pending requests.</p>
-                   </div>
-                 ) : (
-                   resolutionOrders.map((order) => (
-                     <div key={order.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow">
-                        {/* Status Column */}
-                        <div className="md:w-1/4">
-                          <span className={`inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${getStatusStyles(order.status)}`}>
-                            {order.status}
-                          </span>
-                          <p className="mt-4 font-black text-xl text-jozi-forest">{order.id}</p>
-                          <p className="text-xs text-gray-500">{order.orderDate}</p>
-                        </div>
+               {/* Resolution sub-tabs */}
+               <div className="inline-flex items-center bg-gray-100 rounded-2xl p-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                 <button
+                   type="button"
+                   onClick={() => setResolutionSubTab('cancellations')}
+                   className={`px-4 py-2 rounded-2xl transition-all ${
+                     resolutionSubTab === 'cancellations'
+                       ? 'bg-white text-jozi-forest shadow-sm'
+                       : 'text-gray-500 hover:text-jozi-forest'
+                   }`}
+                 >
+                   Cancelled Orders
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => setResolutionSubTab('returns')}
+                   className={`px-4 py-2 rounded-2xl transition-all ${
+                     resolutionSubTab === 'returns'
+                       ? 'bg-white text-jozi-forest shadow-sm'
+                       : 'text-gray-500 hover:text-jozi-forest'
+                   }`}
+                 >
+                   Returns
+                 </button>
+               </div>
 
-                        {/* Details Column */}
-                        <div className="md:w-1/2 space-y-2 border-l border-gray-100 pl-6">
-                           <div>
-                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Reason Provided</p>
-                             <p className="font-medium text-gray-700 mt-1 italic">"{order.requestReason || 'No reason provided'}"</p>
-                           </div>
-                           <div className="flex gap-8 pt-2">
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Customer</p>
-                                <p className="font-bold text-sm text-jozi-forest">{order.customerName}</p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Refund Amount</p>
-                                <p className="font-bold text-sm text-jozi-forest">R{order.totalAmount}</p>
-                              </div>
-                           </div>
-                        </div>
-
-                        {/* Action Column — cancellations only; returns handled in Returns section below */}
-                        <div className="md:w-1/4 flex flex-col gap-3 justify-center pl-6 border-l border-gray-100">
-                          {(order.status === OrderStatus.CANCELLED || 
-                            (typeof order.status === 'string' && order.status.toLowerCase() === 'cancelled')) ? (
-                            <div className="text-center">
-                              <p className="text-xs font-bold text-gray-400 uppercase">Resolution Finalized</p>
-                              <button 
-                                onClick={() => setSelectedOrder(order)} 
-                                className="text-jozi-gold font-black text-xs uppercase tracking-widest hover:underline mt-2"
-                              >
-                                View Details
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <button 
-                                onClick={() => handleStatusUpdate(order.id, OrderStatus.CANCELLED)}
-                                className="w-full py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                              >
-                                <ThumbsUp className="w-4 h-4" /> Approve
-                              </button>
-                              <button 
-                                onClick={() => handleStatusUpdate(order.id, OrderStatus.PROCESSING)}
-                                className="w-full py-3 bg-red-50 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                              >
-                                <ThumbsDown className="w-4 h-4" /> Reject
-                              </button>
-                            </>
-                          )}
-                        </div>
+               {/* Cancelled orders view */}
+               {resolutionSubTab === 'cancellations' && (
+                 <div className="space-y-6">
+                   {resolutionOrders.length === 0 ? (
+                     <div className="flex flex-col items-center justify-center py-32">
+                       <CheckCircle2 className="w-16 h-16 text-emerald-100 mx-auto mb-4" />
+                       <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">All caught up! No pending cancellation requests.</p>
                      </div>
-                   ))
-                 )}
-               </div>
+                   ) : (
+                     <div className="overflow-x-auto">
+                       <table className="w-full text-left min-w-[1000px]">
+                        <thead>
+                           <tr className="border-b border-gray-100">
+                             {['Order ID', 'Date', 'Customer', 'Items', 'Total', 'Status', 'Action'].map((h, i) => (
+                               <th key={i} className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">{h}</th>
+                             ))}
+                           </tr>
+                         </thead>
+                         <tbody className="divide-y divide-gray-50">
+                           {resolutionOrders.map((order) => {
+                             const isFinalized = order.status === OrderStatus.CANCELLED || 
+                               (typeof order.status === 'string' && order.status.toLowerCase() === 'cancelled');
+                             return (
+                               <tr key={order.id} className="group hover:bg-gray-50/50 transition-colors">
+                                 <td className="py-5 font-black text-jozi-dark text-sm">ORD_{order.id.split('_')[1] || order.id}</td>
+                                 <td className="py-5 text-xs font-bold text-gray-500">{order.orderDate}</td>
+                                 <td className="py-5">
+                                   <p className="font-bold text-jozi-dark text-sm">{order.customerName}</p>
+                                   <p className="text-[10px] text-gray-400">{order.customerEmail}</p>
+                                 </td>
+                                 <td className="py-5">
+                                   <div className="flex items-center gap-2">
+                                     <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs font-bold">
+                                       {order.products.reduce((acc, p) => acc + p.quantity, 0)} Items
+                                     </span>
+                                   </div>
+                                 </td>
+                                 <td className="py-5 font-black text-jozi-dark">R{order.totalAmount.toLocaleString()}</td>
+                                 <td className="py-5">
+                                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyles(order.status)}`}>
+                                     {ORDER_STATUS_LABELS[String(order.status)] || order.status}
+                                   </span>
+                                 </td>
+                                 <td className="py-5">
+                                   {isFinalized ? (
+                                     <button 
+                                       onClick={() => setSelectedOrder(order)} 
+                                       className="p-2 hover:bg-white rounded-xl transition-colors"
+                                     >
+                                       <Eye className="w-4 h-4 text-gray-400 group-hover:text-jozi-forest" />
+                                     </button>
+                                   ) : (
+                                     <div className="flex items-center gap-2">
+                                       <button 
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleStatusUpdate(order.id, OrderStatus.CANCELLED);
+                                         }}
+                                         className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-1"
+                                       >
+                                         <ThumbsUp className="w-3 h-3" /> Approve
+                                       </button>
+                                       <button 
+                                         onClick={(e) => {
+                                           e.stopPropagation();
+                                           handleStatusUpdate(order.id, OrderStatus.PROCESSING);
+                                         }}
+                                         className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center gap-1"
+                                       >
+                                         <ThumbsDown className="w-3 h-3" /> Reject
+                                       </button>
+                                     </div>
+                                   )}
+                                 </td>
+                               </tr>
+                             );
+                           })}
+                         </tbody>
+                       </table>
+                     </div>
+                   )}
+                 </div>
+               )}
 
-               {/* Returns section — separate from order cancellations */}
-               <div className="pt-10 mt-10 border-t border-gray-200">
-                 <AdminResolutionReturnsSection />
-               </div>
+               {/* Returns view */}
+               {resolutionSubTab === 'returns' && (
+                 <div className="pt-4">
+                   <AdminResolutionReturnsSection />
+                 </div>
+               )}
             </div>
           )}
 
@@ -1107,7 +1285,7 @@ const AdminOrderManagement: React.FC = () => {
                             <div className="flex-1">
                               <p className="font-black text-jozi-forest text-sm leading-tight">{item.name}</p>
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 text-jozi-gold">Vendor: {item.vendorName}</p>
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 <span className="text-[9px] font-black text-gray-400 uppercase">Qty: {item.quantity}</span>
                                 <span className={`text-[9px] px-2 py-0.5 rounded border font-black uppercase ${
                                   currentStatus === OrderItemStatus.DELIVERED ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
@@ -1121,6 +1299,21 @@ const AdminOrderManagement: React.FC = () => {
                                 }`}>
                                   {currentStatus.replace(/_/g, ' ')}
                                 </span>
+                                {isReturnRequested(item) && isReturnApproved(item) && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-bold uppercase tracking-wide">
+                                    <CheckCircle2 className="w-3 h-3 shrink-0" /> Return approved
+                                  </span>
+                                )}
+                                {isReturnRequested(item) && isReturnDeclined(item) && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold uppercase tracking-wide">
+                                    <XCircle className="w-3 h-3 shrink-0" /> Return declined
+                                  </span>
+                                )}
+                                {isReturnInReview(item) && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[9px] font-bold uppercase tracking-wide">
+                                    <Clock className="w-3 h-3 shrink-0" /> Return in review
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1129,7 +1322,7 @@ const AdminOrderManagement: React.FC = () => {
                               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</p>
                               <p className="font-black text-jozi-forest mt-1">R{item.price}</p>
                             </div>
-                            {orderItemId && !isOrderDelivered(selectedOrder) && (
+                            {orderItemId && !isOrderViewOnly(selectedOrder) && (
                               <div className="relative">
                                 <select
                                   value={currentStatus}
@@ -1210,10 +1403,18 @@ const AdminOrderManagement: React.FC = () => {
               </div>
 
               <div className="p-6 bg-white border-t border-gray-100 shrink-0 flex flex-col gap-4">
-                {isOrderDelivered(selectedOrder) ? (
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <p className="text-sm font-bold text-emerald-800">Order delivered — view only. Status and items are not editable.</p>
+                {isOrderViewOnly(selectedOrder) ? (
+                  <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
+                    isOrderCancelled(selectedOrder)
+                      ? 'bg-red-50 border-red-100'
+                      : 'bg-emerald-50 border-emerald-100'
+                  }`}>
+                    <CheckCircle2 className={`w-5 h-5 shrink-0 ${isOrderCancelled(selectedOrder) ? 'text-red-600' : 'text-emerald-600'}`} />
+                    <p className={`text-sm font-bold ${isOrderCancelled(selectedOrder) ? 'text-red-800' : 'text-emerald-800'}`}>
+                      {isOrderCancelled(selectedOrder)
+                        ? 'Order cancelled — view only. Status and items are not editable.'
+                        : 'Order delivered — view only. Status and items are not editable.'}
+                    </p>
                   </div>
                 ) : (
                   <div className="relative">
@@ -1238,7 +1439,7 @@ const AdminOrderManagement: React.FC = () => {
                 )}
                 
                 {/* Bulk Save Button */}
-                {!isOrderDelivered(selectedOrder) && hasPendingChanges && (
+                {!isOrderViewOnly(selectedOrder) && hasPendingChanges && (
                   <button 
                     onClick={() => setShowConfirmModal(true)}
                     disabled={isSaving}

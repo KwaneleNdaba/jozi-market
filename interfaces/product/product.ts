@@ -3,6 +3,25 @@ export enum ProductStatus {
   INACTIVE = "Inactive",
 }
 
+export interface IPaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface IPaginationMetadata {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface IPaginatedResponse<T> {
+  data: T[];
+  pagination: IPaginationMetadata;
+}
+
 export interface IArtisanNotes {
   hook: string;
   story: string;
@@ -18,19 +37,25 @@ export interface IProductVideo {
   file: string; // URL or file path (optional)
 }
 
+export interface IInventoryData {
+  quantityAvailable: number;
+  quantityReserved: number;
+  reorderLevel: number;
+}
+
 export interface IProductVariant {
   id?: string;
   productId?: string;
   name: string;
   sku: string;
-  price?: number;
+  price: number;
   discountPrice?: number;
   stock: number;
   status: ProductStatus | string;
+  inventory?: IInventoryData; // Real-time inventory data
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
-
 
 export interface IProductAttribute {
   attributeId: string;
@@ -53,13 +78,11 @@ export interface IProduct {
   description: string;
   sku: string;
   status: ProductStatus | string;
-  artisanNotes: IArtisanNotes;
   technicalDetails: ITechnicalDetails;
-  careGuidelines: string;
-  packagingNarrative: string;
   images: IProductImage[];
   video?: IProductVideo;
   variants?: IProductVariant[];
+  inventory?: IInventoryData; // Inventory data for products without variants
   vendorName?: string; // Shop name from approved vendor application
   vendorDescription?: string; // Description from vendor application
   vendorLogo?: string; // Logo URL from vendor application
@@ -68,15 +91,12 @@ export interface IProduct {
 }
 
 export interface ICreateProduct {
-  userId?: string; // Optional - will be automatically populated from token by createProductAction if not provided
+  userId: string;
   title: string;
   description: string;
   sku: string;
   status: ProductStatus | string;
-  artisanNotes: IArtisanNotes;
   technicalDetails: ITechnicalDetails;
-  careGuidelines: string;
-  packagingNarrative: string;
   images: IProductImage[];
   video?: IProductVideo;
   variants?: Omit<IProductVariant, "id" | "productId" | "createdAt" | "updatedAt">[];
@@ -89,11 +109,8 @@ export interface IUpdateProduct {
   description?: string;
   sku?: string;
   status?: ProductStatus | string;
-  artisanNotes?: IArtisanNotes;
   technicalDetails?: ITechnicalDetails;
-  careGuidelines?: string;
-  packagingNarrative?: string;
   images?: IProductImage[];
   video?: IProductVideo;
-  variants?: Omit<IProductVariant, "id" | "productId" | "createdAt" | "updatedAt">[];
+  variants?: Omit<IProductVariant, "productId" | "createdAt" | "updatedAt">[]; // Keep id for updates
 }

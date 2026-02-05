@@ -37,9 +37,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
             </span>
           )}
-          {product.stock < 10 && (
+          {product.stock === 0 ? (
+            <span className="bg-gray-500 text-white text-[8px] font-black px-2.5 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+              Out of Stock
+            </span>
+          ) : product.stock < 10 ? (
             <span className="bg-jozi-dark text-white text-[8px] font-black px-2.5 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
               Only {product.stock} Left
+            </span>
+          ) : (
+            <span className="bg-green-500 text-white text-[8px] font-black px-2.5 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+              {product.stock} In Stock
             </span>
           )}
         </div>
@@ -57,15 +65,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           >
             <Eye className="w-5 h-5" />
           </Link>
-          <button 
-            className="w-11 h-11 bg-jozi-forest rounded-full flex items-center justify-center text-white hover:bg-jozi-gold transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 delay-75 shadow-xl"
-            onClick={(e) => {
-              e.preventDefault();
-              addItem(product, 1);
-            }}
-          >
-            <ShoppingCart className="w-5 h-5" />
-          </button>
+          {product.stock > 0 && (
+            <button 
+              className="w-11 h-11 bg-jozi-forest rounded-full flex items-center justify-center text-white hover:bg-jozi-gold transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 delay-75 shadow-xl"
+              onClick={(e) => {
+                e.preventDefault();
+                addItem(product, 1);
+              }}
+            >
+              <ShoppingCart className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -90,16 +100,40 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         <div className="mt-4 flex items-center justify-between border-t border-jozi-forest/5 pt-4">
           <div className="flex flex-col">
+            {product.priceLabel && (
+              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+                {product.priceLabel}
+              </span>
+            )}
             <div className="flex items-baseline space-x-1.5">
               <span className="text-xl font-black text-jozi-forest">R{product.price}</span>
               {product.originalPrice && (
                 <span className="text-[10px] text-gray-300 line-through font-bold italic">R{product.originalPrice}</span>
               )}
             </div>
+            {product.variantCount && product.variantCount > 1 && (
+              <span className="text-[8px] text-jozi-gold font-bold mt-0.5 uppercase tracking-wide">
+                {product.variantCount} Options Available
+              </span>
+            )}
+            <span className="text-[9px] text-gray-400 font-bold mt-0.5">
+              {product.stock === 0 ? (
+                <span className="text-red-500">Out of Stock</span>
+              ) : product.stock < 10 ? (
+                <span className="text-orange-500">{product.stock} left</span>
+              ) : (
+                <span className="text-green-600">{product.stock} available</span>
+              )}
+            </span>
           </div>
           <button 
-            className="bg-jozi-forest/5 hover:bg-jozi-forest hover:text-white p-2.5 rounded-xl transition-all group/btn shadow-sm text-jozi-forest"
-            onClick={() => addItem(product, 1)}
+            className={`p-2.5 rounded-xl transition-all group/btn shadow-sm ${
+              product.stock === 0 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-jozi-forest/5 hover:bg-jozi-forest hover:text-white text-jozi-forest'
+            }`}
+            onClick={() => product.stock > 0 && addItem(product, 1)}
+            disabled={product.stock === 0}
           >
             <Plus className="w-4 h-4" />
           </button>

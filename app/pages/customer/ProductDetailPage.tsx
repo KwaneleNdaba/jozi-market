@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,6 +38,7 @@ import { ICategoryWithSubcategories } from '@/interfaces/category/category';
 import { IAttribute } from '@/interfaces/attribute/attribute';
 import { Product } from '../../types';
 import { products } from '../../data/mockData';
+import { useProductSocket } from '@/app/hooks/useSocket';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +51,7 @@ const ProductDetailPage: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'shipping'>('description');
+  const [activeTab, setActiveTab] = useState<'specs'>('specs');
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Refs for scrollable containers
@@ -117,6 +118,52 @@ const ProductDetailPage: React.FC = () => {
     fetchData();
   }, [id]);
 
+  // Handle real-time stock updates via WebSocket
+  const handleStockUpdate = useCallback((data: any) => {
+    console.log('[ProductDetailPage] Real-time stock update:', data);
+    
+    setProduct(prevProduct => {
+      if (!prevProduct) return prevProduct;
+
+      if (data.type === 'product' && data.productId === prevProduct.id) {
+        // Update product-level inventory
+        return {
+          ...prevProduct,
+          inventory: {
+            ...prevProduct.inventory,
+            quantityAvailable: data.quantityAvailable ?? prevProduct.inventory?.quantityAvailable ?? 0,
+            quantityReserved: data.quantityReserved ?? prevProduct.inventory?.quantityReserved ?? 0,
+            reorderLevel: prevProduct.inventory?.reorderLevel ?? 0,
+          },
+        };
+      } else if (data.type === 'variant' && prevProduct.variants) {
+        // Update specific variant inventory
+        return {
+          ...prevProduct,
+          variants: prevProduct.variants.map(variant =>
+            variant.id === data.variantId
+              ? {
+                  ...variant,
+                  inventory: {
+                    ...variant.inventory,
+                    quantityAvailable: data.quantityAvailable ?? variant.inventory?.quantityAvailable ?? 0,
+                    quantityReserved: data.quantityReserved ?? variant.inventory?.quantityReserved ?? 0,
+                    reorderLevel: variant.inventory?.reorderLevel ?? 0,
+                  },
+                  stock: data.stock ?? variant.stock,
+                }
+              : variant
+          ),
+        };
+      }
+
+      return prevProduct;
+    });
+  }, []);
+
+  // Subscribe to WebSocket updates for this product
+  useProductSocket(product?.id, handleStockUpdate);
+
   useEffect(() => {
     if (product) {
       setSelectedImage(0);
@@ -171,7 +218,14 @@ const ProductDetailPage: React.FC = () => {
     if (!product) return 0;
     if (selectedVariant && product.variants) {
       const variant = product.variants.find(v => v.id === selectedVariant);
-      if (variant) return variant.discountPrice || variant.price || product.technicalDetails.regularPrice;
+      if (variant) {
+        // If variant has its own price, use variant's discount (if exists) or variant's price
+        if (variant.price) {
+          return variant.discountPrice || variant.price;
+        }
+        // If variant has no price, fall back to product's pricing
+        return product.technicalDetails.discountPrice || product.technicalDetails.regularPrice;
+      }
     }
     return product.technicalDetails.discountPrice || product.technicalDetails.regularPrice;
   }, [product, selectedVariant]);
@@ -180,8 +234,22 @@ const ProductDetailPage: React.FC = () => {
     if (!product) return null;
     if (selectedVariant && product.variants) {
       const variant = product.variants.find(v => v.id === selectedVariant);
-      if (variant && variant.discountPrice) return variant.price;
+      if (variant) {
+        // If variant has its own price AND discount, show original price
+        if (variant.price && variant.discountPrice) {
+          return variant.price;
+        }
+        // If variant has price but no discount, no strikethrough
+        if (variant.price) {
+          return null;
+        }
+        // If variant has no price, use product's discount logic
+        if (product.technicalDetails.discountPrice) {
+          return product.technicalDetails.regularPrice;
+        }
+      }
     }
+    // No variant selected: use product's discount logic
     if (product.technicalDetails.discountPrice) return product.technicalDetails.regularPrice;
     return null;
   }, [product, selectedVariant]);
@@ -193,8 +261,16 @@ const ProductDetailPage: React.FC = () => {
 
   const stock = useMemo(() => {
     if (!product) return 0;
-    if (selectedVariantObj) return selectedVariantObj.stock || 0;
-    return product.technicalDetails.initialStock || 0;
+    
+    // If a specific variant is selected, use its inventory data
+    if (selectedVariantObj) {
+      // Prefer inventory.quantityAvailable over stock field
+      return selectedVariantObj.inventory?.quantityAvailable ?? selectedVariantObj.stock ?? 0;
+    }
+    
+    // No variant selected or product has no variants
+    // Use product-level inventory or initialStock
+    return product.inventory?.quantityAvailable ?? product.technicalDetails.initialStock ?? 0;
   }, [product, selectedVariantObj]);
 
   const productImages = useMemo(() => {
@@ -226,7 +302,7 @@ const ProductDetailPage: React.FC = () => {
           name: v.name,
           sku: v.sku,
           price: v.price || product.technicalDetails.regularPrice,
-          stock: v.stock || 0,
+          stock: v.inventory?.quantityAvailable ?? v.stock ?? 0,
           type: v.name,
           options: [],
         }))
@@ -386,9 +462,36 @@ const ProductDetailPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Price - Show for all products, uses variant price if available */}
               <div className="flex items-baseline space-x-4">
                 <span className="text-2xl font-black text-jozi-forest">R{displayPrice}</span>
                 {originalPrice && <span className="text-base text-gray-300 line-through font-bold">R{originalPrice}</span>}
+              </div>
+
+              {/* Stock Availability */}
+              <div className="flex items-center gap-3">
+                {stock === 0 ? (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full">
+                    <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-500">
+                      Out of Stock
+                    </span>
+                  </div>
+                ) : stock < 10 ? (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-full">
+                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                    <span className="text-xs font-black uppercase tracking-widest text-orange-600">
+                      Only {stock} Left
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-xs font-black uppercase tracking-widest text-green-600">
+                      {stock} In Stock
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -407,11 +510,32 @@ const ProductDetailPage: React.FC = () => {
                 <div className="space-y-3">
                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-jozi-forest/60">Select Size</p>
                   <div className="flex flex-wrap gap-2">
-                    {product.variants.map((variant) => (
-                      <button key={variant.id} onClick={() => setSelectedVariant(variant.id || null)} className={`px-6 py-2 rounded-xl font-black text-xs transition-all border-2 ${selectedVariant === variant.id ? 'bg-jozi-forest text-white border-jozi-forest shadow-md' : 'bg-white text-gray-400 border-gray-50 hover:border-jozi-forest/20'}`}>
-                        {variant.name}
-                      </button>
-                    ))}
+                    {product.variants.map((variant) => {
+                      const variantStock = variant.inventory?.quantityAvailable ?? variant.stock ?? 0;
+                      const isOutOfStock = variantStock === 0;
+                      
+                      return (
+                        <button 
+                          key={variant.id} 
+                          onClick={() => !isOutOfStock && setSelectedVariant(variant.id || null)}
+                          disabled={isOutOfStock}
+                          className={`px-6 py-2 rounded-xl font-black text-xs transition-all border-2 relative ${
+                            isOutOfStock 
+                              ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed opacity-50' 
+                              : selectedVariant === variant.id 
+                                ? 'bg-jozi-forest text-white border-jozi-forest shadow-md' 
+                                : 'bg-white text-gray-400 border-gray-50 hover:border-jozi-forest/20'
+                          }`}
+                        >
+                          {variant.name}
+                          {isOutOfStock && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                              <X className="w-2.5 h-2.5 text-white" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -420,13 +544,33 @@ const ProductDetailPage: React.FC = () => {
               <div className="pt-2 space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex items-center bg-jozi-cream rounded-2xl p-1 shrink-0 border border-jozi-forest/5 shadow-inner">
-                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-all text-jozi-forest"><Minus className="w-4 h-4" /></button>
+                    <button 
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))} 
+                      disabled={stock === 0}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${stock === 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-white text-jozi-forest'}`}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
                     <span className="w-10 text-center font-black text-lg text-jozi-forest">{quantity}</span>
-                    <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 flex items-center justify-center hover:bg-white rounded-xl transition-all text-jozi-forest"><Plus className="w-4 h-4" /></button>
+                    <button 
+                      onClick={() => setQuantity(Math.min(stock, quantity + 1))} 
+                      disabled={stock === 0 || quantity >= stock}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${stock === 0 || quantity >= stock ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-white text-jozi-forest'}`}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button onClick={handleAddToCart} className="grow bg-jozi-forest text-white py-3 px-8 rounded-2xl font-black text-base flex items-center justify-center shadow-xl shadow-jozi-forest/20 hover:bg-jozi-dark hover:-translate-y-0.5 transition-all group">
+                  <button 
+                    onClick={handleAddToCart} 
+                    disabled={stock === 0}
+                    className={`grow py-3 px-8 rounded-2xl font-black text-base flex items-center justify-center shadow-xl transition-all group ${
+                      stock === 0 
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' 
+                        : 'bg-jozi-forest text-white shadow-jozi-forest/20 hover:bg-jozi-dark hover:-translate-y-0.5'
+                    }`}
+                  >
                     <ShoppingCart className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
-                    Add to Collection
+                    {stock === 0 ? 'Out of Stock' : 'Add to Collection'}
                   </button>
                   <button className="p-4 bg-white border border-jozi-forest/10 rounded-2xl text-jozi-forest hover:bg-red-50 hover:text-red-500 transition-all shadow-md group">
                     <Heart className="w-5 h-5 group-hover:fill-current" />
@@ -459,7 +603,7 @@ const ProductDetailPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-20">
           <div className="lg:w-2/3 space-y-16">
             <div className="flex border-b border-jozi-forest/5 space-x-12">
-              {[{ id: 'description', label: 'Artisan Notes' }, { id: 'specs', label: 'Technical Details' }, { id: 'shipping', label: 'Craft & Care' }].map((tab) => (
+              {[{ id: 'specs', label: 'Product Information' }].map((tab) => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`pb-6 text-xs font-black uppercase tracking-[0.3em] transition-all relative ${activeTab === tab.id ? 'text-jozi-forest' : 'text-gray-400'}`}>
                   {tab.label}
                   {activeTab === tab.id && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1.5 bg-jozi-gold rounded-full" />}
@@ -469,22 +613,6 @@ const ProductDetailPage: React.FC = () => {
 
             <div className="min-h-[250px] text-gray-500 leading-relaxed font-medium text-lg">
               <AnimatePresence mode="wait">
-                {activeTab === 'description' && (
-                  <motion.div key="desc" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
-                    {product.artisanNotes.hook && <p className="italic text-jozi-forest/70 font-bold border-l-4 border-jozi-gold pl-6 py-2">"{product.artisanNotes.hook}"</p>}
-                    {product.artisanNotes.story && <p>{product.artisanNotes.story}</p>}
-                    {product.artisanNotes.notes && product.artisanNotes.notes.length > 0 && (
-                      <div className="grid sm:grid-cols-2 gap-6">
-                        {product.artisanNotes.notes.map((note, i) => (
-                          <div key={i} className="flex items-center space-x-4 bg-white p-4 rounded-2xl shadow-sm border border-jozi-forest/5">
-                            <Check className="w-5 h-5 text-emerald-500" />
-                            <span className="text-sm font-bold text-jozi-forest/80">{note}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
                 {activeTab === 'specs' && (
                   <motion.div key="specs" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                     <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
@@ -497,16 +625,54 @@ const ProductDetailPage: React.FC = () => {
                         <span className="text-sm font-bold">{subcategoryName}</span>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
-                      <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Regular Price</span>
-                      <span className="text-sm font-bold">R{product.technicalDetails.regularPrice}</span>
-                    </div>
-                    {product.technicalDetails.discountPrice && (
-                      <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
-                        <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Discount Price</span>
-                        <span className="text-sm font-bold">R{product.technicalDetails.discountPrice}</span>
-                      </div>
-                    )}
+                    {/* Show pricing information */}
+                    {(!product.variants || product.variants.length === 0) ? (
+                      <>
+                        {/* Products without variants: show regular price and discount price */}
+                        <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
+                          <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Regular Price</span>
+                          <span className="text-sm font-bold">R{product.technicalDetails.regularPrice}</span>
+                        </div>
+                        {product.technicalDetails.discountPrice && (
+                          <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
+                            <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Discount Price</span>
+                            <span className="text-sm font-bold">R{product.technicalDetails.discountPrice}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : selectedVariantObj ? (
+                      <>
+                        {/* Products with variants: show selected variant price or fallback to regular price */}
+                        {selectedVariantObj.price ? (
+                          <>
+                            <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
+                              <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Variant Price</span>
+                              <span className="text-sm font-bold">R{selectedVariantObj.price}</span>
+                            </div>
+                            {selectedVariantObj.discountPrice && (
+                              <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
+                                <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Variant Discount Price</span>
+                                <span className="text-sm font-bold">R{selectedVariantObj.discountPrice}</span>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {/* Variant has no price, show product's regular price */}
+                            <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
+                              <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Regular Price</span>
+                              <span className="text-sm font-bold">R{product.technicalDetails.regularPrice}</span>
+                            </div>
+                            {product.technicalDetails.discountPrice && (
+                              <div className="grid grid-cols-2 py-5 border-b border-jozi-forest/5 group hover:bg-jozi-forest/5 px-4 rounded-xl transition-colors">
+                                <span className="font-black text-jozi-forest uppercase tracking-widest text-xs">Discount Price</span>
+                                <span className="text-sm font-bold">R{product.technicalDetails.discountPrice}</span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </>
+                    ) : null}
                     {product.technicalDetails.attributes && product.technicalDetails.attributes.length > 0 && (
                       <>
                         <div className="pt-4"><h4 className="text-sm font-black text-jozi-forest uppercase tracking-widest mb-4">Attributes</h4></div>
@@ -517,17 +683,6 @@ const ProductDetailPage: React.FC = () => {
                           </div>
                         ))}
                       </>
-                    )}
-                  </motion.div>
-                )}
-                {activeTab === 'shipping' && (
-                  <motion.div key="ship" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                    {product.packagingNarrative && <p>{product.packagingNarrative}</p>}
-                    {product.careGuidelines && (
-                      <div className="bg-jozi-forest p-10 rounded-4xl flex items-start space-x-6 text-white relative overflow-hidden">
-                        <div className="relative z-10"><h4 className="text-xl font-black mb-4">Care Guidelines</h4><div className="space-y-3 opacity-90 text-sm whitespace-pre-line">{product.careGuidelines}</div></div>
-                        <Info className="w-12 h-12 text-jozi-gold absolute top-10 right-10 opacity-20" />
-                      </div>
                     )}
                   </motion.div>
                 )}

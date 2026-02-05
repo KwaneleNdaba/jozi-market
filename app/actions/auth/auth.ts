@@ -1061,9 +1061,73 @@ export async function getCurrentUserAction(): Promise<CustomResponse<IUser>> {
 }
 
 /**
+ * Server action to update user profile information (fullName, phone)
+ */
+export async function updateUserProfileAction(
+  fullName?: string,
+  phone?: string
+): Promise<CustomResponse<TokenData>> {
+  try {
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser?.id) {
+      return {
+        data: null as any,
+        message: 'Authentication required. Please log in.',
+        error: true,
+      };
+    }
+
+    const userId = decodedUser.id;
+    logger.info('[Auth Action] Updating profile for user:', userId);
+    
+    const updateData: { userId: string; fullName?: string; phone?: string } = {
+      userId
+    };
+    if (fullName) updateData.fullName = fullName;
+    if (phone) updateData.phone = phone;
+
+    const response = await serverPUT(`${baseUrl}/auth/update-profile`, updateData);
+
+    if (response.error) {
+      return response;
+    }
+
+    // Update cookies with new token if provided
+    if (response.data?.accessToken) {
+      const cookieStore = await cookies();
+      cookieStore.set('accessToken', response.data.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      if (response.data.refreshToken) {
+        cookieStore.set('refreshToken', response.data.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+        });
+      }
+    }
+
+    logger.info('[Auth Action] Profile updated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error updating profile:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to update profile',
+      error: true,
+    };
+  }
+}
+
+/**
  * Server action to update user address
  */
-export async function updateUserAddressAction(address: string): Promise<CustomResponse<IUser>> {
+export async function updateUserAddressAction(address: string): Promise<CustomResponse<TokenData>> {
   try {
     const decodedUser = await decodeServerAccessToken();
     if (!decodedUser?.id) {
@@ -1076,7 +1140,32 @@ export async function updateUserAddressAction(address: string): Promise<CustomRe
 
     const userId = decodedUser.id;
     logger.info('[Auth Action] Updating address for user:', userId);
-    const response = await serverPUT(`${baseUrl}/auth/updateUser`, { id: userId, address });
+    const response = await serverPUT(`${baseUrl}/auth/update-address`, { userId, address });
+
+    if (response.error) {
+      return response;
+    }
+
+    // Update cookies with new token if provided
+    if (response.data?.accessToken) {
+      const cookieStore = await cookies();
+      cookieStore.set('accessToken', response.data.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      if (response.data.refreshToken) {
+        cookieStore.set('refreshToken', response.data.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+        });
+      }
+    }
+
     logger.info('[Auth Action] Address updated successfully');
     return response;
   } catch (err: any) {
@@ -1125,6 +1214,172 @@ export async function getUserByIdAction(userId: string): Promise<CustomResponse<
     return {
       data: null as any,
       message: err?.message || 'Failed to fetch user',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to update password with old password verification
+ */
+export async function updateOldPasswordAction(
+  userId: string,
+  oldPassword: string,
+  newPassword: string
+): Promise<CustomResponse<IUser>> {
+  try {
+    logger.info('[Auth Action] Updating password for user:', userId);
+    
+    if (newPassword.length < 8) {
+      return {
+        data: null as any,
+        message: 'Password must be at least 8 characters long',
+        error: true,
+      };
+    }
+
+    const response = await serverPUT(`${baseUrl}/auth/update-old-password`, {
+      userId,
+      oldPassword,
+      newPassword,
+    });
+
+    if (response.error) {
+      return response;
+    }
+
+    logger.info('[Auth Action] Password updated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error updating password:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to update password',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to update user email
+ */
+export async function updateEmailAction(
+  userId: string,
+  newEmail: string,
+  password: string
+): Promise<CustomResponse<TokenData>> {
+  try {
+    logger.info('[Auth Action] Updating email for user:', userId);
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      return {
+        data: null as any,
+        message: 'Invalid email format',
+        error: true,
+      };
+    }
+
+    const response = await serverPUT(`${baseUrl}/auth/update-email`, {
+      userId,
+      email: newEmail,
+      password,
+    });
+
+    if (response.error) {
+      return response;
+    }
+
+    // Update cookies with new token if provided
+    if (response.data?.accessToken) {
+      const cookieStore = await cookies();
+      cookieStore.set('accessToken', response.data.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      if (response.data.refreshToken) {
+        cookieStore.set('refreshToken', response.data.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+        });
+      }
+    }
+
+    logger.info('[Auth Action] Email updated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error updating email:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to update email',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to update user phone
+ */
+export async function updatePhoneAction(
+  userId: string,
+  newPhone: string,
+  password: string
+): Promise<CustomResponse<TokenData>> {
+  try {
+    logger.info('[Auth Action] Updating phone for user:', userId);
+    
+    // Basic phone validation
+    if (newPhone.length < 10) {
+      return {
+        data: null as any,
+        message: 'Phone number must be at least 10 characters',
+        error: true,
+      };
+    }
+
+    const response = await serverPUT(`${baseUrl}/auth/update-phone`, {
+      userId,
+      phone: newPhone,
+      password,
+    });
+
+    if (response.error) {
+      return response;
+    }
+
+    // Update cookies with new token if provided
+    if (response.data?.accessToken) {
+      const cookieStore = await cookies();
+      cookieStore.set('accessToken', response.data.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      if (response.data.refreshToken) {
+        cookieStore.set('refreshToken', response.data.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+        });
+      }
+    }
+
+    logger.info('[Auth Action] Phone updated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Auth Action] Error updating phone:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to update phone',
       error: true,
     };
   }

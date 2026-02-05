@@ -24,7 +24,8 @@ import {
   Truck,
   Quote,
   Video,
-  Loader2
+  Loader2,
+  Info
 } from 'lucide-react';
 import SectionHeader from '../SectionHeader';
 import { getAllCategoriesAction, getSubcategoriesByCategoryIdAction } from '@/app/actions/category';
@@ -48,11 +49,6 @@ interface ProductFormData {
   description: string;
   sku: string;
   status: string;
-  artisanNotes: {
-    hook: string;
-    story: string;
-    notes: string[];
-  };
   technicalDetails: {
     categoryId: string;
     subcategoryId: string;
@@ -61,16 +57,16 @@ interface ProductFormData {
     discountPrice?: number;
     initialStock?: number;
   };
-  careGuidelines: string;
-  packagingNarrative: string;
   images: (File | null)[];
   video: File | null;
   variants: Array<{
+    id?: number | string; // Local numeric ID for React key, or DB ID when editing
+    variantId?: string; // Database ID for existing variants
     name: string;
     sku: string;
-    price?: number;
-    discountPrice?: number;
-    stock: number;
+    price?: string;
+    discountPrice?: string;
+    stock: string;
     status: string;
   }>;
 }
@@ -79,7 +75,16 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
   const isEditMode = !!product;
   const { showSuccess, showError } = useToast();
   const [step, setStep] = useState(1);
-  const [variants, setVariants] = useState([{ id: 1, name: '', sku: '', price: '', discountPrice: '', stock: '', status: 'Active' }]);
+  const [variants, setVariants] = useState<Array<{
+    id: number | string;
+    variantId?: string;
+    name: string;
+    sku: string;
+    price: string;
+    discountPrice: string;
+    stock: string;
+    status: string;
+  }>>([{ id: 1, name: '', sku: '', price: '', discountPrice: '', stock: '', status: 'Active' }]);
   const [images, setImages] = useState<(File | null)[]>([null, null, null, null]);
   const [imageUrls, setImageUrls] = useState<string[]>([]); // Store existing image URLs when editing
   const [video, setVideo] = useState<File | null>(null);
@@ -105,11 +110,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
     description: '',
     sku: '',
     status: 'Active',
-    artisanNotes: {
-      hook: '',
-      story: '',
-      notes: ['', '', '', '']
-    },
     technicalDetails: {
       categoryId: '',
       subcategoryId: '',
@@ -118,15 +118,12 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
       discountPrice: undefined,
       initialStock: undefined
     },
-    careGuidelines: '',
-    packagingNarrative: '',
     images: [null, null, null, null],
     video: null,
     variants: []
   });
   
-  // Artisan Notes State
-  const [highlights, setHighlights] = useState<string[]>(['', '', '', '']);
+  // Artisan Notes State - REMOVED (no longer needed)
 
   // Populate form when editing
   useEffect(() => {
@@ -137,13 +134,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
         description: product.description,
         sku: product.sku,
         status: product.status,
-        artisanNotes: {
-          hook: product.artisanNotes.hook,
-          story: product.artisanNotes.story,
-          notes: product.artisanNotes.notes.length > 0 
-            ? [...product.artisanNotes.notes, '', '', ''].slice(0, 4)
-            : ['', '', '', '']
-        },
         technicalDetails: {
           categoryId: product.technicalDetails.categoryId,
           subcategoryId: product.technicalDetails.subcategoryId || '',
@@ -151,8 +141,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
           regularPrice: product.technicalDetails.regularPrice,
           discountPrice: product.technicalDetails.discountPrice
         },
-        careGuidelines: product.careGuidelines,
-        packagingNarrative: product.packagingNarrative,
         images: [null, null, null, null],
         video: null,
         variants: []
@@ -161,13 +149,11 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
       // Set category first - this will trigger subcategory fetch
       setSelectedCategoryId(product.technicalDetails.categoryId);
 
-      // Populate highlights
-      setHighlights([...product.artisanNotes.notes, '', '', ''].slice(0, 4));
-
       // Populate variants
       if (product.variants && product.variants.length > 0) {
         const transformedVariants = product.variants.map((v, idx) => ({
-          id: idx + 1,
+          id: idx + 1, // Local ID for React key
+          variantId: v.id, // Preserve database ID
           name: v.name,
           sku: v.sku,
           price: v.price?.toString() || '',
@@ -366,7 +352,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
     setVariants([...variants, { id: Date.now(), name: '', sku: '', price: '', discountPrice: '', stock: '', status: 'Active' }]);
   };
 
-  const removeVariant = (id: number) => {
+  const removeVariant = (id: number | string) => {
     setVariants(variants.filter(v => v.id !== id));
   };
 
@@ -385,32 +371,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
     setFormData(prev => ({
       ...prev,
       video: file
-    }));
-  };
-
-  const updateHighlight = (index: number, val: string) => {
-    const newH = [...highlights];
-    newH[index] = val;
-    setHighlights(newH);
-    setFormData(prev => ({
-      ...prev,
-      artisanNotes: {
-        ...prev.artisanNotes,
-        notes: newH
-      }
-    }));
-  };
-
-  const removeHighlight = (index: number) => {
-    const newH = [...highlights];
-    newH[index] = '';
-    setHighlights(newH);
-    setFormData(prev => ({
-      ...prev,
-      artisanNotes: {
-        ...prev.artisanNotes,
-        notes: newH
-      }
     }));
   };
 
@@ -433,6 +393,9 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
 
 
   const handleSubmit = async () => {
+    console.log('[Submit] Current variants state:', JSON.stringify(variants, null, 2));
+    console.log('[Submit] Variants count:', variants.length);
+
     // Validate required fields
     if (!formData.title || !formData.sku || !selectedCategoryId || !selectedSubcategoryId) {
       showError('Please fill in all required fields (Title, SKU, Category, and Subcategory)');
@@ -444,14 +407,29 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
       return;
     }
 
-    if (formData.technicalDetails.regularPrice <= 0) {
-      showError('Please set a valid regular price');
+    // Validate pricing: Either product has a regular price OR variants have prices
+    const validVariants = variants.filter(v => v.name.trim() !== '' && v.sku.trim() !== '');
+    const hasVariantPricing = validVariants.length > 0 && validVariants.some(v => v.price && parseFloat(v.price.toString()) > 0);
+    const hasProductPricing = formData.technicalDetails.regularPrice > 0;
+
+    if (!hasProductPricing && !hasVariantPricing) {
+      showError('Please set either a product regular price or variant prices');
       return;
     }
 
+    // Clear variant prices if product has a regular price set
+    // (variants will use the product price instead)
+    if (formData.technicalDetails.regularPrice > 0) {
+      const clearedVariants = variants.map(v => ({
+        ...v,
+        price: '', // Clear variant-specific prices
+        discountPrice: '' // Clear variant-specific discounts
+      }));
+      setVariants(clearedVariants);
+    }
+
     // Validate initialStock if no variants
-    const hasValidVariants = variants.some(v => v.name.trim() !== '' && v.sku.trim() !== '');
-    if (!hasValidVariants) {
+    if (validVariants.length === 0) {
       if (!formData.technicalDetails.initialStock || formData.technicalDetails.initialStock < 0) {
         showError('Please set initial stock for products without variants');
         return;
@@ -552,17 +530,12 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
           description: formData.description,
           sku: formData.sku,
           status: formData.status,
-          artisanNotes: {
-            hook: formData.artisanNotes.hook,
-            story: formData.artisanNotes.story,
-            notes: formData.artisanNotes.notes.filter(note => note.trim() !== '')
-          },
           technicalDetails: {
             categoryId: selectedCategoryId,
             subcategoryId: selectedSubcategoryId,
             regularPrice: formData.technicalDetails.regularPrice,
             discountPrice: formData.technicalDetails.discountPrice,
-            initialStock: !hasValidVariants ? formData.technicalDetails.initialStock : undefined,
+            initialStock: validVariants.length === 0 ? formData.technicalDetails.initialStock : undefined,
             attributes: Object.entries(attributeValues)
               .filter(([_, value]) => value.trim() !== '')
               .map(([attributeId, value]) => ({
@@ -570,8 +543,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                 value: value.trim()
               }))
           },
-          careGuidelines: formData.careGuidelines,
-          packagingNarrative: formData.packagingNarrative,
           images: finalImageUrls.map((url, idx) => ({
             index: idx,
             file: url
@@ -579,15 +550,28 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
           video: finalVideoUrl ? { file: finalVideoUrl } : undefined,
           variants: variants
             .filter(v => v.name.trim() !== '' && v.sku.trim() !== '')
-            .map(v => ({
-              name: v.name,
-              sku: v.sku,
-              price: v.price ? parseFloat(v.price) : undefined,
-              discountPrice: v.discountPrice ? parseFloat(v.discountPrice) : undefined,
-              stock: parseInt(v.stock) || 0,
-              status: v.status
-            }))
+            .map(v => {
+              const variantData = {
+                ...(v.variantId && { id: v.variantId }), // Include DB ID if editing existing variant
+                name: v.name,
+                sku: v.sku,
+                price: v.price ? parseFloat(v.price) : formData.technicalDetails.regularPrice || 0,
+                discountPrice: v.discountPrice ? parseFloat(v.discountPrice) : undefined,
+                stock: parseInt(v.stock) || 0,
+                status: v.status
+              };
+              console.log('[Variant Mapping]', {
+                hasVariantId: !!v.variantId,
+                variantId: v.variantId,
+                name: v.name,
+                mappedData: variantData
+              });
+              return variantData;
+            })
         };
+
+        console.log('[Update Payload] Variants count:', updateData.variants?.length);
+        console.log('[Update Payload] Full variants:', JSON.stringify(updateData.variants, null, 2));
 
         const productResponse = await updateProductAction(updateData);
 
@@ -607,21 +591,17 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
 
       // Step 4: Create new product
       const productData: ICreateProduct = {
+        userId: '', // Will be populated by server action from token
         title: formData.title,
         description: formData.description,
         sku: formData.sku,
         status: formData.status,
-        artisanNotes: {
-          hook: formData.artisanNotes.hook,
-          story: formData.artisanNotes.story,
-          notes: formData.artisanNotes.notes.filter(note => note.trim() !== '')
-        },
         technicalDetails: {
           categoryId: selectedCategoryId,
           subcategoryId: selectedSubcategoryId,
           regularPrice: formData.technicalDetails.regularPrice,
           discountPrice: formData.technicalDetails.discountPrice,
-          initialStock: !hasValidVariants ? formData.technicalDetails.initialStock : undefined,
+          initialStock: validVariants.length === 0 ? formData.technicalDetails.initialStock : undefined,
           attributes: Object.entries(attributeValues)
             .filter(([_, value]) => value.trim() !== '')
             .map(([attributeId, value]) => ({
@@ -629,8 +609,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
               value: value.trim()
             }))
         },
-        careGuidelines: formData.careGuidelines,
-        packagingNarrative: formData.packagingNarrative,
         images: uploadedImageUrls.map((url, idx) => ({
           index: idx,
           file: url
@@ -641,7 +619,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
           .map(v => ({
             name: v.name,
             sku: v.sku,
-            price: v.price ? parseFloat(v.price) : undefined,
+            price: v.price ? parseFloat(v.price) : formData.technicalDetails.regularPrice || 0,
             discountPrice: v.discountPrice ? parseFloat(v.discountPrice) : undefined,
             stock: parseInt(v.stock) || 0,
             status: v.status
@@ -708,8 +686,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
            {[
              { id: 1, label: 'Identity & Technical Details', icon: Tag, desc: 'Category, Attributes' },
              { id: 2, label: 'Pricing & Variants', icon: Zap, desc: 'Price & Variations' },
-             { id: 3, label: 'Artisan Notes', icon: Sparkles, desc: 'Story & Care' },
-             { id: 4, label: 'Exhibition', icon: ImageIcon, desc: 'Media Payload' },
+             { id: 3, label: 'Exhibition', icon: ImageIcon, desc: 'Media Payload' },
            ].map((s) => (
              <div 
               key={s.id}
@@ -1014,12 +991,30 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
 
                     {/* Variants Section */}
                     <div className="pt-8 border-t border-gray-50 space-y-6">
-                      <div className="flex justify-between items-center">
-                         <h4 className="text-xl font-black text-jozi-forest uppercase tracking-tight flex items-center">
-                           <Layers className="w-6 h-6 text-jozi-gold mr-3" />
-                           Variants
-                         </h4>
-                         <button onClick={addVariant} className="bg-jozi-forest text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center hover:bg-jozi-dark transition-all">
+                      <div className="flex justify-between items-start md:items-center gap-4 flex-col md:flex-row">
+                         <div className="space-y-2">
+                           <h4 className="text-xl font-black text-jozi-forest uppercase tracking-tight flex items-center">
+                             <Layers className="w-6 h-6 text-jozi-gold mr-3" />
+                             Variants
+                           </h4>
+                           {formData.technicalDetails.regularPrice > 0 ? (
+                             <p className="text-[9px] text-gray-500 font-medium flex items-start gap-2 max-w-xl">
+                               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-jozi-gold" />
+                               <span>
+                                 All variants will use the product price (R{formData.technicalDetails.regularPrice}). 
+                                 To set individual variant prices, clear the product's regular price first.
+                               </span>
+                             </p>
+                           ) : (
+                             <p className="text-[9px] text-gray-500 font-medium flex items-start gap-2 max-w-xl">
+                               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-jozi-gold" />
+                               <span>
+                                 Set individual prices for each variant, or leave empty to use the product's regular price.
+                               </span>
+                             </p>
+                           )}
+                         </div>
+                         <button onClick={addVariant} className="bg-jozi-forest text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center hover:bg-jozi-dark transition-all whitespace-nowrap">
                             <Plus className="w-4 h-4 mr-2" /> Add Variation
                          </button>
                       </div>
@@ -1062,26 +1057,49 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                                  />
                               </div>
                               <div className="md:col-span-2 space-y-2">
-                                 <label className="text-[9px] font-black uppercase text-gray-400">Price Override</label>
+                                 <label className="text-[9px] font-black uppercase text-gray-400 flex items-center gap-2">
+                                   Variant Price (Optional)
+                                   {formData.technicalDetails.regularPrice > 0 && (
+                                     <span className="text-[8px] normal-case font-medium text-gray-400 italic">
+                                       (Uses product price: R{formData.technicalDetails.regularPrice})
+                                     </span>
+                                   )}
+                                 </label>
                                  <input 
                                    type="number" 
                                    step="0.01"
-                                   className="w-full bg-white rounded-xl px-4 py-3 text-sm font-bold text-jozi-forest outline-none border border-transparent focus:border-jozi-gold/30"
+                                   disabled={formData.technicalDetails.regularPrice > 0}
+                                   className={`w-full rounded-xl px-4 py-3 text-sm font-bold outline-none border transition-all ${
+                                     formData.technicalDetails.regularPrice > 0
+                                       ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                                       : 'bg-white text-jozi-forest border-transparent focus:border-jozi-gold/30'
+                                   }`}
                                    value={v.price}
-                                   placeholder="0.00"
+                                   placeholder={formData.technicalDetails.regularPrice > 0 ? `R${formData.technicalDetails.regularPrice}` : '0.00'}
                                    onChange={(e) => {
                                      const newVariants = [...variants];
                                      newVariants[i].price = e.target.value;
                                      setVariants(newVariants);
                                    }}
                                  />
+                                 {formData.technicalDetails.regularPrice > 0 && (
+                                   <p className="text-[8px] text-gray-400 italic flex items-start gap-1 mt-1">
+                                     <Info className="w-3 h-3 shrink-0 mt-0.5" />
+                                     <span>This variant will use the product's regular price. Clear the product price to set variant-specific pricing.</span>
+                                   </p>
+                                 )}
                               </div>
                               <div className="md:col-span-2 space-y-2">
-                                 <label className="text-[9px] font-black uppercase text-gray-400">Discount Price (Optional)</label>
+                                 <label className="text-[9px] font-black uppercase text-gray-400">Variant Discount (Optional)</label>
                                  <input 
                                    type="number" 
                                    step="0.01"
-                                   className="w-full bg-white/50 rounded-xl px-4 py-3 text-sm font-bold text-gray-400 outline-none border-2 border-dashed border-gray-100 focus:border-jozi-gold/30"
+                                   disabled={formData.technicalDetails.regularPrice > 0}
+                                   className={`w-full rounded-xl px-4 py-3 text-sm font-bold outline-none transition-all ${
+                                     formData.technicalDetails.regularPrice > 0
+                                       ? 'bg-gray-50 text-gray-400 border-2 border-dashed border-gray-200 cursor-not-allowed'
+                                       : 'bg-white/50 text-gray-400 border-2 border-dashed border-gray-100 focus:border-jozi-gold/30'
+                                   }`}
                                    value={v.discountPrice}
                                    placeholder="0.00"
                                    onChange={(e) => {
@@ -1129,131 +1147,6 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
               )}
 
               {step === 3 && (
-                <motion.div 
-                  key="step3" 
-                  initial={{ opacity: 0, x: 20 }} 
-                  animate={{ opacity: 1, x: 0 }} 
-                  exit={{ opacity: 0, x: -20 }}
-                  className="space-y-12"
-                >
-                  <div className="space-y-8">
-                    <div className="flex justify-between items-center">
-                       <h3 className="text-2xl font-black text-jozi-dark tracking-tighter uppercase">Artisan Notes</h3>
-                       <button className="bg-jozi-forest/5 text-jozi-forest px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center hover:bg-jozi-gold hover:text-white transition-all">
-                          <Wand2 className="w-4 h-4 mr-2" /> AI Draft Notes
-                       </button>
-                    </div>
-
-                    {/* ARTISAN NOTES SECTION */}
-                    <div className="space-y-8 bg-jozi-cream/30 p-8 rounded-5xl border border-jozi-gold/10">
-                       <div className="flex items-center space-x-3">
-                          <Sparkles className="w-6 h-6 text-jozi-gold" />
-                          <h4 className="text-xl font-black text-jozi-forest uppercase tracking-tight">Artisan Notes</h4>
-                       </div>
-
-                       <div className="space-y-6">
-                          <div className="space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Aspiring Statement (The Hook)</label>
-                             <div className="relative">
-                                <Quote className="absolute left-6 top-6 w-5 h-5 text-jozi-gold opacity-30" />
-                                <textarea 
-                                  rows={2} 
-                                  placeholder="Inspired by the vibrant streets of Joburg, this piece bridges the gap..." 
-                                  className="w-full bg-white rounded-3xl pl-16 pr-8 py-6 font-bold text-sm italic text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none shadow-sm"
-                                  value={formData.artisanNotes.hook}
-                                  onChange={(e) => setFormData(prev => ({
-                                    ...prev,
-                                    artisanNotes: { ...prev.artisanNotes, hook: e.target.value }
-                                  }))}
-                                />
-                             </div>
-                          </div>
-
-                          <div className="space-y-2">
-                             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">The Motivation (Craft Story)</label>
-                             <textarea 
-                               rows={3} 
-                               placeholder="What motivated the creation of this piece? Describe the artisan's dedication..." 
-                               className="w-full bg-white rounded-3xl px-8 py-6 font-medium text-sm text-gray-500 outline-none border-2 border-transparent focus:border-jozi-gold/20 transition-all resize-none shadow-sm"
-                               value={formData.artisanNotes.story}
-                               onChange={(e) => setFormData(prev => ({
-                                 ...prev,
-                                 artisanNotes: { ...prev.artisanNotes, story: e.target.value }
-                               }))}
-                             />
-                          </div>
-
-                          <div className="space-y-4">
-                             <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Removable Artifact Notes (Max 4)</label>
-                                <span className="text-[9px] font-bold text-jozi-gold uppercase">Appears as checkmarks</span>
-                             </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {highlights.map((h, i) => (
-                                   <div key={i} className="relative group">
-                                      <input 
-                                        type="text" 
-                                        value={h}
-                                        onChange={(e) => updateHighlight(i, e.target.value)}
-                                        placeholder={`Note ${i + 1} (e.g. Ethically sourced local materials)`} 
-                                        className="w-full bg-white rounded-xl px-6 py-4 text-xs font-bold text-jozi-forest outline-none border border-transparent focus:border-jozi-gold/20 shadow-sm pr-12"
-                                      />
-                                      {h && (
-                                        <button 
-                                          onClick={() => removeHighlight(i)}
-                                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-300 hover:text-red-500 transition-colors"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      )}
-                                   </div>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-
-                    {/* Craft & Care Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div className="bg-jozi-forest p-10 rounded-4xl text-white space-y-6 shadow-2xl relative overflow-hidden">
-                             <div className="relative z-10 flex items-center space-x-3 text-jozi-gold">
-                                <Hammer className="w-6 h-6" />
-                                <span className="text-xs font-black uppercase tracking-widest">Craft & Care</span>
-                             </div>
-                             <div className="relative z-10 space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Care Guidelines (One item per line)</label>
-                             <textarea 
-                               rows={4} 
-                               placeholder="e.g. Hand wash only with cold water&#10;Avoid direct sunlight during drying" 
-                               className="w-full bg-white/10 rounded-2xl px-6 py-4 font-bold text-xs text-white outline-none border border-white/10 resize-none"
-                               value={formData.careGuidelines}
-                               onChange={(e) => setFormData(prev => ({ ...prev, careGuidelines: e.target.value }))}
-                             />
-                             </div>
-                          </div>
-
-                          <div className="bg-white rounded-3xl p-8 space-y-4 border border-gray-100 shadow-soft">
-                             <div className="flex items-center space-x-3 text-jozi-forest">
-                                <Truck className="w-6 h-6 text-jozi-gold" />
-                                <span className="text-xs font-black uppercase tracking-widest">Packaging Narrative</span>
-                             </div>
-                             <div className="space-y-2">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">How do you pack this piece?</label>
-                             <textarea 
-                               rows={4} 
-                               placeholder="e.g. Packed in eco-friendly locally manufactured materials..." 
-                               className="w-full bg-gray-50 rounded-xl px-6 py-3 font-bold text-xs text-jozi-forest outline-none resize-none"
-                               value={formData.packagingNarrative}
-                               onChange={(e) => setFormData(prev => ({ ...prev, packagingNarrative: e.target.value }))}
-                             />
-                          </div>
-                       </div>
-                    </div>
-                   </div>
-                </motion.div>
-              )}
-
-              {step === 4 && (
                 <motion.div key="step4" className="space-y-10">
                    <div className="space-y-2">
                       <h3 className="text-2xl font-black text-jozi-dark tracking-tighter uppercase">Visual Exhibition</h3>
@@ -1427,7 +1320,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                <div className="flex items-center space-x-4">
                  <button className="px-10 py-5 bg-gray-50 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-all">Save Vault Draft</button>
                  <button 
-                  onClick={() => step < 4 ? setStep(step + 1) : handleSubmit()}
+                  onClick={() => step < 3 ? setStep(step + 1) : handleSubmit()}
                   disabled={isSubmitting || isUploading}
                   className={`bg-jozi-forest text-white px-12 py-5 rounded-2xl font-black text-lg flex items-center shadow-2xl shadow-jozi-forest/20 transition-all group ${
                     isSubmitting || isUploading ? 'opacity-70 cursor-not-allowed' : 'hover:scale-105'
@@ -1445,7 +1338,7 @@ const InventoryAddProduct: React.FC<InventoryAddProductProps> = ({ onCancel, pro
                       </>
                     ) : (
                       <>
-                        {step === 4 ? (isEditMode ? 'Update Treasure' : 'Publish Treasure') : 'Continue Forward'}
+                        {step === 3 ? (isEditMode ? 'Update Treasure' : 'Publish Treasure') : 'Continue Forward'}
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}

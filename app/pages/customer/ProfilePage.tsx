@@ -113,7 +113,7 @@ const ProfilePage: React.FC = () => {
             <div className="bg-white p-10 rounded-5xl border border-jozi-forest/5 shadow-soft space-y-8">
               <h3 className="text-xl font-black text-jozi-forest flex items-center uppercase tracking-tight">
                 <ShieldCheck className="w-5 h-5 mr-3 text-jozi-gold" />
-                Security Protocol
+                Security Protocols
               </h3>
               <div className="space-y-6">
                 <div className="space-y-2">

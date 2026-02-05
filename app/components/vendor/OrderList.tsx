@@ -7,11 +7,9 @@ import {
   Download, 
   Eye, 
   MoreVertical, 
-  CheckCircle2, 
   Clock, 
   AlertTriangle, 
   Package, 
-  Truck, 
   ChevronDown, 
   ExternalLink,
   Users,
@@ -324,6 +322,13 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
+  const isOrderCancelledForList = (order: TransformedOrder): boolean =>
+    order.status === 'Cancelled' ||
+    order.originalOrder?.status === OrderStatus.CANCELLED ||
+    (typeof order.originalOrder?.status === 'string' && order.originalOrder.status.toLowerCase() === 'cancelled');
+
+  const selectableOrders = useMemo(() => filteredOrders.filter(o => !isOrderCancelledForList(o)), [filteredOrders]);
+
   return (
     <div className="space-y-8 text-left">
       <div className="bg-white rounded-[3.5rem] p-10 lg:p-12 shadow-soft border border-gray-100">
@@ -380,7 +385,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                     <input 
                       type="checkbox" 
                       className="w-5 h-5 rounded-md border-gray-300 accent-jozi-forest"
-                      onChange={(e) => setSelectedIds(e.target.checked ? filteredOrders.map(o => o.id) : [])}
+                      onChange={(e) => setSelectedIds(e.target.checked ? selectableOrders.map(o => o.id) : [])}
                     />
                   </th>
                   <th className="pb-6 text-[10px] font-black uppercase text-gray-400 tracking-widest">Manifest ID / Date</th>
@@ -392,14 +397,17 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredOrders.map((order) => (
+                {filteredOrders.map((order) => {
+                  const cancelled = isOrderCancelledForList(order);
+                  return (
                 <tr key={order.id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedOrder(order)}>
                   <td className="py-6" onClick={(e) => e.stopPropagation()}>
                     <input 
                       type="checkbox" 
                       checked={selectedIds.includes(order.id)}
-                      onChange={() => toggleSelect(order.id)}
-                      className="w-5 h-5 rounded-md border-gray-300 accent-jozi-forest" 
+                      onChange={() => !cancelled && toggleSelect(order.id)}
+                      disabled={cancelled}
+                      className="w-5 h-5 rounded-md border-gray-300 accent-jozi-forest disabled:opacity-50 disabled:cursor-not-allowed" 
                     />
                   </td>
                   <td className="py-6">
@@ -471,7 +479,8 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                     </div>
                   </td>
                 </tr>
-                ))}
+                );
+                })}
               </tbody>
             </table>
           </div>
@@ -533,34 +542,6 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
               </div>
 
               <div className="grow overflow-y-auto p-8 space-y-10">
-                
-                {/* Timeline */}
-                <div className="space-y-6">
-                   <h3 className="text-xs font-black text-jozi-forest uppercase tracking-widest border-l-4 border-jozi-gold pl-3">Fulfillment Journey</h3>
-                   <div className="relative pt-2">
-                      <div className="absolute top-2 bottom-4 left-6 w-[2px] bg-gray-100" />
-                      <div className="space-y-6 relative">
-                        {[
-                          { label: 'Order Received', time: selectedOrder.date.split(' ')[1] || '10:45 AM', active: true, icon: Clock },
-                          { label: 'Payments Verified', time: selectedOrder.payment === 'Paid' ? 'Verified' : 'Pending', active: selectedOrder.payment === 'Paid', icon: CheckCircle2 },
-                          { label: 'Processing', time: 'Pending', active: !['Processing'].includes(selectedOrder.status), icon: Package },
-                          { label: 'Out for Delivery', time: 'Pending', active: ['In Transit', 'Out for Delivery', 'Delivered'].includes(selectedOrder.status), icon: Truck },
-                          { label: 'Delivered', time: 'Pending', active: selectedOrder.status === 'Delivered', icon: MapPin }
-                        ].map((step, i) => (
-                          <div key={i} className="flex items-center space-x-6">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg z-10 transition-all ${step.active ? 'bg-jozi-forest text-white' : 'bg-gray-100 text-gray-300'}`}>
-                              <step.icon className="w-5 h-5" />
-                            </div>
-                            <div className="grow">
-                              <p className={`font-black text-sm ${step.active ? 'text-jozi-forest' : 'text-gray-300'}`}>{step.label}</p>
-                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{step.active ? step.time : 'Awaiting Stage'}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                </div>
-
                 {/* Items Section */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -578,10 +559,12 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                       const productName = product.title || product.name || item.name || 'Unknown Product';
                       const productImage = product.images?.[0]?.file || product.images?.[0] || undefined;
                       
-                      // Check if order has cancellation or return request (vendor cannot edit status if ANY request exists)
+                      // Check if order has cancellation or return request, or is cancelled (vendor cannot edit when any of these)
                       const order = selectedOrder.originalOrder;
                       const hasOrderCancellationRequest = !!order?.cancellationRequestedAt;
-                      const isStatusEditable = !hasOrderCancellationRequest;
+                      const orderCancelled = order?.status === OrderStatus.CANCELLED ||
+                        (typeof order?.status === 'string' && order.status.toLowerCase() === 'cancelled');
+                      const isStatusEditable = !hasOrderCancellationRequest && !orderCancelled;
                       
                       return (
                         <div key={orderItemId || idx} className={`p-4 bg-gray-50 rounded-2xl border border-gray-100 ${rejectingItemId === orderItemId ? 'pb-6' : ''}`}>
@@ -628,8 +611,8 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                               {orderItemId && (
                                 <div className="relative shrink-0">
                                   {!isStatusEditable && (
-                                    <div className="mb-2 text-[9px] font-black text-amber-600 uppercase tracking-widest text-center">
-                                      Cancellation Requested
+                                    <div className="mb-2 text-[9px] font-black uppercase tracking-widest text-center text-amber-600">
+                                      {orderCancelled ? 'Order cancelled' : 'Cancellation requested'}
                                     </div>
                                   )}
                                   <select
@@ -655,7 +638,7 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                                       }
                                     }}
                                     disabled={isUpdating || !isStatusEditable}
-                                    title={!isStatusEditable ? 'Cannot edit: Cancellation request exists' : undefined}
+                                    title={!isStatusEditable ? (orderCancelled ? 'Cannot edit: Order cancelled' : 'Cannot edit: Cancellation request exists') : undefined}
                                     className={`appearance-none bg-white border-2 rounded-xl px-3 py-2 pr-8 font-black text-[10px] uppercase tracking-widest transition-all min-w-[140px] text-jozi-forest ${
                                       isUpdating || !isStatusEditable 
                                         ? 'opacity-50 cursor-not-allowed border-gray-200' 

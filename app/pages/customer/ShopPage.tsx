@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Filter, SlidersHorizontal, ChevronDown, LayoutGrid, List, Tag, X, Loader2, Search } from 'lucide-react';
+import { Filter, SlidersHorizontal, ChevronDown, LayoutGrid, List, Tag, X, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../../components/ProductCard';
-import { MARKET_CATEGORIES } from '../../data/mockData';
 import { getAllCategoriesAction } from '../../actions/category/index';
 import { getAllProductsAction, getProductsByCategoryIdAction, getProductsBySubcategoryIdAction } from '../../actions/product/index';
 import { ICategoryWithSubcategories } from '@/interfaces/category/category';
-import { IProduct } from '@/interfaces/product/product';
+import { IProduct, IPaginationMetadata } from '@/interfaces/product/product';
 import { Product } from '../../types';
+import { useProductsSocket } from '@/app/hooks/useSocket';
 
 const ShopPage: React.FC = () => {
   const searchParams = useSearchParams();
@@ -23,6 +23,11 @@ const ShopPage: React.FC = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 5000 });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<IPaginationMetadata | null>(null);
+  const itemsPerPage = 20;
 
   const selectedCategory = searchParams.get('category') || 'All';
   const selectedSubcategory = searchParams.get('subcategory') || null;
@@ -55,19 +60,44 @@ const ShopPage: React.FC = () => {
         
         if (selectedSubcategoryId) {
           // Fetch by subcategory
-          response = await getProductsBySubcategoryIdAction(selectedSubcategoryId);
+          response = await getProductsBySubcategoryIdAction(selectedSubcategoryId, {
+            page: currentPage,
+            limit: itemsPerPage
+          });
         } else if (selectedCategoryId && selectedCategory !== 'All') {
           // Fetch by category
-          response = await getProductsByCategoryIdAction(selectedCategoryId);
+          response = await getProductsByCategoryIdAction(selectedCategoryId, {
+            page: currentPage,
+            limit: itemsPerPage
+          });
         } else {
           // Fetch all active products
-          response = await getAllProductsAction('Active');
+          response = await getAllProductsAction({
+            status: 'Active',
+            page: currentPage,
+            limit: itemsPerPage
+          });
         }
 
         if (!response.error && response.data) {
-          // Filter only active products
-          const activeProducts = response.data.filter(p => p.status === 'Active');
-          setProducts(activeProducts);
+          // Check if response has pagination metadata
+          if (response.pagination) {
+            setPagination(response.pagination);
+            setProducts(response.data);
+          } else {
+            // Fallback: if backend doesn't return pagination yet, filter only active products
+            const activeProducts = response.data.filter(p => p.status === 'Active');
+            setProducts(activeProducts);
+            // Create manual pagination metadata
+            setPagination({
+              currentPage: 1,
+              totalPages: 1,
+              totalItems: activeProducts.length,
+              itemsPerPage: activeProducts.length,
+              hasNextPage: false,
+              hasPreviousPage: false,
+            });
+          }
         }
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -78,7 +108,56 @@ const ShopPage: React.FC = () => {
     };
 
     fetchProducts();
-  }, [selectedCategoryId, selectedSubcategoryId, selectedCategory, selectedSubcategory]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedCategory, selectedSubcategory, currentPage]);
+
+  // Handle real-time stock updates via WebSocket
+  const handleStockUpdate = useCallback((data: any) => {
+    console.log('[ShopPage] Real-time stock update:', data);
+    
+    setProducts(prevProducts => 
+      prevProducts.map(product => {
+        // Update product stock if it matches
+        if (product.id === data.productId) {
+          if (data.type === 'product') {
+            // Update product-level inventory
+            return {
+              ...product,
+              inventory: {
+                ...product.inventory,
+                quantityAvailable: data.quantityAvailable ?? product.inventory?.quantityAvailable ?? 0,
+                quantityReserved: data.quantityReserved ?? product.inventory?.quantityReserved ?? 0,
+                reorderLevel: product.inventory?.reorderLevel ?? 0,
+              },
+            };
+          } else if (data.type === 'variant' && product.variants) {
+            // Update specific variant inventory
+            return {
+              ...product,
+              variants: product.variants.map(variant => 
+                variant.id === data.variantId
+                  ? {
+                      ...variant,
+                      inventory: {
+                        ...variant.inventory,
+                        quantityAvailable: data.quantityAvailable ?? variant.inventory?.quantityAvailable ?? 0,
+                        quantityReserved: data.quantityReserved ?? variant.inventory?.quantityReserved ?? 0,
+                        reorderLevel: variant.inventory?.reorderLevel ?? 0,
+                      },
+                      stock: data.stock ?? variant.stock,
+                    }
+                  : variant
+              ),
+            };
+          }
+        }
+        return product;
+      })
+    );
+  }, []);
+
+  // Subscribe to WebSocket updates for all visible products
+  const productIds = useMemo(() => products.map(p => p.id).filter(Boolean) as string[], [products]);
+  useProductsSocket(productIds, handleStockUpdate);
 
   // Transform IProduct to Product format for ProductCard
   const transformProduct = (product: IProduct): Product => {
@@ -92,15 +171,57 @@ const ShopPage: React.FC = () => {
       ? product.images.map(img => img.file)
       : [firstImage];
 
-    // Calculate price - use variant price if available, otherwise use regularPrice
-    const basePrice = product.technicalDetails.regularPrice;
-    const discountPrice = product.technicalDetails.discountPrice;
-    
-    // Calculate stock - from variants or initialStock
+    // Check if product has variants with prices
     const hasVariants = product.variants && product.variants.length > 0;
-    const stock = hasVariants && product.variants
-      ? product.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
-      : (product.technicalDetails.initialStock || 0);
+    const variantsWithPrices = hasVariants 
+      ? product.variants?.filter(v => v.price && v.price > 0) || []
+      : [];
+    
+    // Determine pricing strategy
+    let displayPrice: number;
+    let displayOriginalPrice: number | undefined;
+    let priceLabel: string | undefined;
+    
+    if (variantsWithPrices.length > 0) {
+      // Product has variants with individual prices
+      // ONLY use variant pricing, completely ignore product-level pricing
+      const firstVariant = variantsWithPrices[0];
+      
+      // If variant has a discount price, show it with original price strikethrough
+      if (firstVariant.discountPrice && firstVariant.discountPrice > 0) {
+        displayPrice = firstVariant.discountPrice;
+        displayOriginalPrice = firstVariant.price;
+      } else {
+        // Variant has no discount, just show the regular price
+        displayPrice = firstVariant.price;
+        displayOriginalPrice = undefined; // No strikethrough
+      }
+      
+      // Add label to indicate multiple variant prices
+      if (variantsWithPrices.length > 1) {
+        priceLabel = `Starting from`;
+      }
+    } else {
+      // Product uses single price for all variants or has no variants
+      // Use product-level pricing
+      displayPrice = product.technicalDetails.discountPrice || product.technicalDetails.regularPrice;
+      displayOriginalPrice = product.technicalDetails.discountPrice ? product.technicalDetails.regularPrice : undefined;
+    }
+    
+    // Calculate stock - from variants or inventory/initialStock
+    let stock = 0;
+    
+    if (hasVariants && product.variants) {
+      // Sum all variant stocks if product has variants
+      stock = product.variants.reduce((sum, v) => {
+        // Prefer inventory.quantityAvailable over stock field
+        const variantStock = v.inventory?.quantityAvailable ?? v.stock ?? 0;
+        return sum + variantStock;
+      }, 0);
+    } else {
+      // Use inventory data if available, otherwise fall back to initialStock
+      stock = product.inventory?.quantityAvailable ?? product.technicalDetails.initialStock ?? 0;
+    }
 
     // Get category name - we'll need to find it from categories
     const categoryName = categories.find(cat => cat.id === product.technicalDetails.categoryId)?.name || 'Uncategorized';
@@ -112,8 +233,10 @@ const ShopPage: React.FC = () => {
       id: product.id || '',
       name: product.title,
       description: product.description,
-      price: discountPrice || basePrice,
-      originalPrice: discountPrice ? basePrice : undefined,
+      price: displayPrice,
+      originalPrice: displayOriginalPrice,
+      priceLabel: priceLabel,
+      variantCount: variantsWithPrices.length > 1 ? variantsWithPrices.length : undefined,
       category: categoryName,
       subcategory: subcategoryName,
       vendor: {
@@ -131,8 +254,8 @@ const ShopPage: React.FC = () => {
             id: v.id || '',
             name: v.name,
             sku: v.sku,
-            price: v.price || basePrice,
-            stock: v.stock || 0,
+            price: v.price || product.technicalDetails.regularPrice,
+            stock: v.inventory?.quantityAvailable ?? v.stock ?? 0,
             type: v.name,
             options: [],
           }))
@@ -186,6 +309,7 @@ const ShopPage: React.FC = () => {
   }, [transformedProducts, sortBy, searchQuery, priceRange, products]);
 
   const handleCategoryFilter = (cat: string, catId?: string) => {
+    setCurrentPage(1); // Reset to page 1 when changing filters
     if (cat === 'All') {
       router.push('/shop');
     } else {
@@ -197,6 +321,7 @@ const ShopPage: React.FC = () => {
   };
 
   const handleSubcategoryFilter = (sub: string, subId?: string) => {
+    setCurrentPage(1); // Reset to page 1 when changing filters
     const params = new URLSearchParams();
     params.set('category', selectedCategory);
     if (selectedCategoryId) params.set('categoryId', selectedCategoryId);
@@ -206,10 +331,16 @@ const ShopPage: React.FC = () => {
   };
 
   const removeSubcategory = () => {
+    setCurrentPage(1); // Reset to page 1 when changing filters
     const params = new URLSearchParams();
     params.set('category', selectedCategory);
     if (selectedCategoryId) params.set('categoryId', selectedCategoryId);
     router.push(`/shop?${params.toString()}`);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -519,6 +650,84 @@ const ShopPage: React.FC = () => {
               >
                 Explore Full Market
               </button>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-12">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!pagination.hasPreviousPage}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                  pagination.hasPreviousPage
+                    ? 'bg-jozi-forest text-white hover:bg-jozi-dark'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              <div className="flex items-center gap-2">
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current
+                  const showPage =
+                    page === 1 ||
+                    page === pagination.totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+
+                  const showEllipsis =
+                    (page === 2 && currentPage > 3) ||
+                    (page === pagination.totalPages - 1 && currentPage < pagination.totalPages - 2);
+
+                  if (!showPage && !showEllipsis) return null;
+
+                  if (showEllipsis) {
+                    return (
+                      <span key={page} className="px-2 text-gray-400 font-bold">
+                        ...
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
+                        page === currentPage
+                          ? 'bg-jozi-gold text-white shadow-lg'
+                          : 'bg-white text-jozi-forest hover:bg-jozi-forest/5 border border-jozi-forest/10'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!pagination.hasNextPage}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                  pagination.hasNextPage
+                    ? 'bg-jozi-forest text-white hover:bg-jozi-dark'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Pagination Info */}
+          {pagination && (
+            <div className="text-center mt-6">
+              <p className="text-xs text-gray-400 font-bold">
+                Showing {((currentPage - 1) * pagination.itemsPerPage) + 1} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} products
+              </p>
             </div>
           )}
         </div>

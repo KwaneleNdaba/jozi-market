@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { 
   User, 
   Package, 
@@ -28,8 +28,6 @@ interface CustomerSidebarProps {
 
 const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ user }) => {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'overview';
 
   const menuItems = [
     { id: 'overview', label: 'My Dashboard', icon: User, path: '/profile' },
@@ -38,21 +36,11 @@ const CustomerSidebar: React.FC<CustomerSidebarProps> = ({ user }) => {
     { id: 'rewards', label: 'Loyalty Rewards', icon: Star, path: '/rewards' },
     { id: 'games', label: 'Play & Earn', icon: Gamepad2, path: '/games' },
     { id: 'referrals', label: 'Refer a Neighbor', icon: Zap, path: '/referrals' },
-    { id: 'wishlist', label: 'My Wishlist', icon: Heart, path: '/profile?tab=wishlist' },
-    { id: 'settings', label: 'Account Settings', icon: Settings, path: '/profile?tab=settings' },
+    { id: 'wishlist', label: 'My Wishlist', icon: Heart, path: '/wishlist' },
+    { id: 'settings', label: 'Account Settings', icon: Settings, path: '/settings' },
   ];
 
   const checkActive = (item: any) => {
-    if (item.path.includes('?tab=')) {
-      const tab = item.path.split('=')[1]?.split('&')[0];
-      return pathname === '/profile' && activeTab === tab;
-    }
-    if (item.path === '/profile') {
-      return pathname === '/profile' && !searchParams.get('tab');
-    }
-    if (item.path === '/orders') {
-      return pathname === '/orders';
-    }
     return pathname === item.path;
   };
 

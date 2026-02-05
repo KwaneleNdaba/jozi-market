@@ -96,6 +96,8 @@ export interface Product {
   description: string;
   price: number;
   originalPrice?: number;
+  priceLabel?: string; // e.g., "Starting from" for variant pricing
+  variantCount?: number; // Number of variants if product has multiple priced variants
   category: string;
   subcategory?: string;
   vendor: {
