@@ -120,22 +120,27 @@ const ProductDetailPage: React.FC = () => {
 
   // Handle real-time stock updates via WebSocket
   const handleStockUpdate = useCallback((data: any) => {
-    console.log('[ProductDetailPage] Real-time stock update:', data);
+    console.log('[ProductDetailPage] 🔄 Real-time stock update:', data);
     
     setProduct(prevProduct => {
       if (!prevProduct) return prevProduct;
 
       if (data.type === 'product' && data.productId === prevProduct.id) {
         // Update product-level inventory
-        return {
+        const updatedProduct = {
           ...prevProduct,
           inventory: {
-            ...prevProduct.inventory,
             quantityAvailable: data.quantityAvailable ?? prevProduct.inventory?.quantityAvailable ?? 0,
             quantityReserved: data.quantityReserved ?? prevProduct.inventory?.quantityReserved ?? 0,
-            reorderLevel: prevProduct.inventory?.reorderLevel ?? 0,
+            reorderLevel: data.reorderLevel ?? prevProduct.inventory?.reorderLevel ?? 0,
           },
         };
+        console.log('[ProductDetailPage] ✅ Updated product inventory:', {
+          productId: prevProduct.id,
+          oldStock: prevProduct.inventory?.quantityAvailable,
+          newStock: updatedProduct.inventory.quantityAvailable,
+        });
+        return updatedProduct;
       } else if (data.type === 'variant' && prevProduct.variants) {
         // Update specific variant inventory
         return {
@@ -144,13 +149,12 @@ const ProductDetailPage: React.FC = () => {
             variant.id === data.variantId
               ? {
                   ...variant,
+                  stock: data.quantityAvailable ?? data.stock ?? variant.stock,
                   inventory: {
-                    ...variant.inventory,
                     quantityAvailable: data.quantityAvailable ?? variant.inventory?.quantityAvailable ?? 0,
                     quantityReserved: data.quantityReserved ?? variant.inventory?.quantityReserved ?? 0,
-                    reorderLevel: variant.inventory?.reorderLevel ?? 0,
+                    reorderLevel: data.reorderLevel ?? variant.inventory?.reorderLevel ?? 0,
                   },
-                  stock: data.stock ?? variant.stock,
                 }
               : variant
           ),

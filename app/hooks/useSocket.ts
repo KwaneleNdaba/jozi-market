@@ -7,10 +7,12 @@ interface StockUpdateData {
   type: 'product' | 'variant';
   productId?: string;
   variantId?: string;
-  quantityAvailable?: number;
+  quantityAvailable: number; // Primary inventory field
   quantityReserved?: number;
-  stock?: number;
+  reorderLevel?: number;
+  stock?: number; // Legacy field, same as quantityAvailable
   status?: string;
+  timestamp?: string;
 }
 
 /**

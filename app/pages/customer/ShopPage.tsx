@@ -119,21 +119,24 @@ const ShopPage: React.FC = () => {
         // Update product stock if it matches
         if (product.id === data.productId) {
           if (data.type === 'product') {
-            // Update product-level inventory AND stock field
+            // Use quantityAvailable as the primary field
+            const currentStock = product.inventory?.quantityAvailable ?? 0;
+            const newStock = data.quantityAvailable ?? data.stock ?? currentStock;
+            
             const updatedProduct = {
               ...product,
-              stock: data.quantityAvailable ?? data.stock ?? product.stock,
               inventory: {
-                ...product.inventory,
-                quantityAvailable: data.quantityAvailable ?? product.inventory?.quantityAvailable ?? 0,
+                quantityAvailable: data.quantityAvailable ?? currentStock,
                 quantityReserved: data.quantityReserved ?? product.inventory?.quantityReserved ?? 0,
-                reorderLevel: product.inventory?.reorderLevel ?? 0,
+                reorderLevel: data.reorderLevel ?? product.inventory?.reorderLevel ?? 0,
               },
             };
             console.log('[ShopPage] ✅ Updated product stock:', { 
               productId: product.id, 
-              oldStock: product.stock, 
-              newStock: updatedProduct.stock 
+              oldStock: currentStock, 
+              newStock: updatedProduct.inventory.quantityAvailable,
+              quantityAvailable: data.quantityAvailable,
+              quantityReserved: data.quantityReserved
             });
             return updatedProduct;
           } else if (data.type === 'variant' && product.variants) {
@@ -144,13 +147,12 @@ const ShopPage: React.FC = () => {
                 variant.id === data.variantId
                   ? {
                       ...variant,
+                      stock: data.quantityAvailable ?? data.stock ?? variant.stock,
                       inventory: {
-                        ...variant.inventory,
                         quantityAvailable: data.quantityAvailable ?? variant.inventory?.quantityAvailable ?? 0,
                         quantityReserved: data.quantityReserved ?? variant.inventory?.quantityReserved ?? 0,
-                        reorderLevel: variant.inventory?.reorderLevel ?? 0,
+                        reorderLevel: data.reorderLevel ?? variant.inventory?.reorderLevel ?? 0,
                       },
-                      stock: data.stock ?? variant.stock,
                     }
                   : variant
               ),
