@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 const mylocalUrl = 'http://localhost:8000';
-const SOCKET_URL = process.env.NEXT_PUBLIC_URL ?? mylocalUrl;
+const SOCKET_URL = process.env.NEXT_PUBLIC_URL ?? process.env.NEXT_PUBLIC_URL ?? mylocalUrl;
 
 let socket: Socket | null = null;
 

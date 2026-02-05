@@ -112,16 +112,17 @@ const ShopPage: React.FC = () => {
 
   // Handle real-time stock updates via WebSocket
   const handleStockUpdate = useCallback((data: any) => {
-    console.log('[ShopPage] Real-time stock update:', data);
+    console.log('[ShopPage] 🔄 Real-time stock update received:', data);
     
     setProducts(prevProducts => 
       prevProducts.map(product => {
         // Update product stock if it matches
         if (product.id === data.productId) {
           if (data.type === 'product') {
-            // Update product-level inventory
-            return {
+            // Update product-level inventory AND stock field
+            const updatedProduct = {
               ...product,
+              stock: data.quantityAvailable ?? data.stock ?? product.stock,
               inventory: {
                 ...product.inventory,
                 quantityAvailable: data.quantityAvailable ?? product.inventory?.quantityAvailable ?? 0,
@@ -129,6 +130,12 @@ const ShopPage: React.FC = () => {
                 reorderLevel: product.inventory?.reorderLevel ?? 0,
               },
             };
+            console.log('[ShopPage] ✅ Updated product stock:', { 
+              productId: product.id, 
+              oldStock: product.stock, 
+              newStock: updatedProduct.stock 
+            });
+            return updatedProduct;
           } else if (data.type === 'variant' && product.variants) {
             // Update specific variant inventory
             return {
