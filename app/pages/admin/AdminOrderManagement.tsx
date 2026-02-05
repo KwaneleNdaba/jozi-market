@@ -53,6 +53,7 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
 
 export interface ProductItem {
   name: string;
+  variant?: string | null;
   quantity: number;
   price: number;
   vendorName: string;
@@ -175,9 +176,11 @@ const AdminOrderManagement: React.FC = () => {
       const isRev = rev === true || rev === 'true' || rev === 1;
       const by = (item as any).returnReviewedBy ?? (item as any).reviewedBy ?? null;
       const at = (item as any).returnReviewedAt ?? (item as any).reviewedAt ?? null;
+      const variantName = item.variant?.name || null;
 
       return {
         name: item.product?.title || 'Unknown Product',
+        variant: variantName,
         quantity: item.quantity,
         price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
         vendorName: item.product?.vendorName || 'Unknown Vendor',

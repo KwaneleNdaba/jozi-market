@@ -226,16 +226,13 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
 
       // Transform order items
       const items = (order.items || []).map(item => {
-        const product = item.product || {};
-        const productName = product.title || product.name || 'Unknown Product';
+        const product = item.product;
+        const productName = product?.title || 'Unknown Product';
         
         // Get variant name if available
         let variantName = 'Standard';
-        if (item.productVariantId && product.variants) {
-          const variant = product.variants.find((v: any) => v.id === item.productVariantId);
-          if (variant) {
-            variantName = variant.name || variant.size || 'Standard';
-          }
+        if (item.productVariantId && item.variant) {
+          variantName = item.variant.name || 'Standard';
         }
 
         const unitPrice = typeof item.unitPrice === 'string' 
@@ -586,7 +583,9 @@ const OrderList: React.FC<OrderListProps> = ({ filterStatus, orders = [], loadin
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-black text-jozi-forest text-sm leading-tight truncate">{productName}</p>
-                                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-jozi-gold">Variant: {item.variant || 'Standard'}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest mt-1 text-jozi-gold">
+                                  Variant: {item.variant?.name || 'Standard'}
+                                </p>
                                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                                   <span className="text-[9px] font-black text-gray-400 uppercase">Qty: {item.quantity || item.qty}</span>
                                   <span className={`text-[9px] px-2 py-0.5 rounded border font-black uppercase ${

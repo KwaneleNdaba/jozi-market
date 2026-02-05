@@ -204,8 +204,13 @@ const ShopPage: React.FC = () => {
     } else {
       // Product uses single price for all variants or has no variants
       // Use product-level pricing
-      displayPrice = product.technicalDetails.discountPrice || product.technicalDetails.regularPrice;
-      displayOriginalPrice = product.technicalDetails.discountPrice ? product.technicalDetails.regularPrice : undefined;
+      if (product.technicalDetails.discountPrice && product.technicalDetails.discountPrice > 0) {
+        displayPrice = product.technicalDetails.discountPrice;
+        displayOriginalPrice = product.technicalDetails.regularPrice;
+      } else {
+        displayPrice = product.technicalDetails.regularPrice;
+        displayOriginalPrice = undefined;
+      }
     }
     
     // Calculate stock - from variants or inventory/initialStock

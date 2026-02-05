@@ -35,6 +35,75 @@ export interface IShippingAddress {
   province?: string;
 }
 
+export interface IOrderUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  role: string;
+  profileUrl?: string;
+  address?: string;
+}
+
+export interface IOrderProduct {
+  id: string;
+  title: string;
+  description?: string;
+  sku: string;
+  images?: Array<{
+    index: number;
+    file: string;
+  }>;
+  regularPrice?: number;
+  discountPrice?: number;
+  status?: string;
+  vendorName?: string;
+  vendorDescription?: string;
+  vendorLogo?: string;
+  technicalDetails?: {
+    categoryId?: string;
+    subcategoryId?: string;
+    regularPrice?: number;
+    discountPrice?: number;
+    initialStock?: number;
+    attributes?: any[];
+  };
+  inventory?: {
+    quantityAvailable: number;
+    quantityReserved: number;
+    reorderLevel: number;
+  };
+  variants?: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    price?: number;
+    discountPrice?: number;
+    stock?: number;
+    status: string;
+    inventory?: {
+      quantityAvailable: number;
+      quantityReserved: number;
+      reorderLevel: number;
+    };
+  }>;
+}
+
+export interface IOrderProductVariant {
+  id: string;
+  name: string;
+  sku: string;
+  price?: number;
+  discountPrice?: number;
+  status: string;
+  stock?: number;
+  inventory?: {
+    quantityAvailable: number;
+    quantityReserved: number;
+    reorderLevel: number;
+  };
+}
+
 export interface IOrderItem {
   id?: string;
   orderId?: string;
@@ -44,17 +113,18 @@ export interface IOrderItem {
   unitPrice: number;
   totalPrice: number;
   status?: OrderItemStatus | string;
+  // Return flags
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
   isReturnReviewed?: boolean;
-  returnReviewedBy?: string | null;
-  returnReviewedAt?: Date | string | null;
+  // Rejection metadata fields (for vendor rejection)
   rejectionReason?: string | null;
   rejectedBy?: string | null;
-  rejectedAt?: Date | null;
-  product?: any;
-  createdAt?: Date;
-  updatedAt?: Date;
+  rejectedAt?: Date | string | null;
+  product?: IOrderProduct; // Product details (enriched)
+  variant?: IOrderProductVariant; // Variant details if applicable
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface IOrder {
@@ -62,26 +132,26 @@ export interface IOrder {
   userId: string;
   orderNumber: string;
   status: OrderStatus | string;
-  totalAmount: number | string;
+  totalAmount: number;
   shippingAddress: IShippingAddress;
   paymentMethod: string;
   paymentStatus: PaymentStatus | string;
   email: string;
   phone?: string;
   notes?: string;
+  items?: IOrderItem[];
+  user?: IOrderUser;
+  // Return flags
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
   isReturnReviewed?: boolean;
-  returnReviewedBy?: string | null;
-  returnReviewedAt?: Date | string | null;
-  cancellationRequestedAt?: Date | null;
+  // Cancellation metadata fields
+  cancellationRequestedAt?: Date | string | null;
   cancellationReviewedBy?: string | null;
-  cancellationReviewedAt?: Date | null;
+  cancellationReviewedAt?: Date | string | null;
   cancellationRejectionReason?: string | null;
-  items?: IOrderItem[];
-  user?: IOrderUser;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 export interface ICreateOrder {
@@ -114,7 +184,7 @@ export interface IRequestCancellation {
 
 export interface IReviewCancellation {
   orderId: string;
-  status: OrderStatus | string;
+  status: OrderStatus | string; // Uses OrderStatus enum (cancelled, etc.)
   reviewedBy: string;
   rejectionReason?: string;
 }
@@ -131,16 +201,6 @@ export interface IVendorOrdersResponse {
   groupedOrders: IOrdersGroupedByDate[];
   totalOrders: number;
   totalAmount: number;
-}
-
-export interface IOrderUser {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  role: string;
-  profileUrl?: string;
-  address?: string;
 }
 
 export interface IVendorDetails {
@@ -162,22 +222,15 @@ export interface IOrderItemWithDetails extends IOrderItem {
     createdAt: Date | string;
     status?: OrderStatus | string;
     paymentStatus?: PaymentStatus | string;
-    totalAmount?: number | string;
+    totalAmount?: number;
     shippingAddress?: IShippingAddress;
     email?: string;
     phone?: string;
     notes?: string;
     customer?: IOrderUser;
   };
-  product?: {
-    id: string;
-    title: string;
-    sku: string;
-    images?: Array<{
-      index: number;
-      file: string;
-    }>;
-  };
+  product?: IOrderProduct;
+  variant?: IOrderProductVariant;
   vendor?: IVendorDetails;
 }
 

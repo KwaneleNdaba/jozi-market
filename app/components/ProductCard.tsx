@@ -6,6 +6,7 @@ import { Star, ShoppingCart, Eye, Heart, Plus } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../contexts/CartContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +14,23 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addItem } = useCart();
+  const router = useRouter();
+
+  // Determine if product has variants with different prices
+  const hasVariantsWithDifferentPrices = product.variantCount && product.variantCount > 1;
+
+  const handleAddToCart = () => {
+    if (product.stock === 0) return;
+
+    // If product has multiple variants with different prices, redirect to product detail
+    if (hasVariantsWithDifferentPrices) {
+      router.push(`/product/${product.id}`);
+      return;
+    }
+
+    // Otherwise, add to cart directly
+    addItem(product, 1);
+  };
 
   return (
     <motion.div 
@@ -65,7 +83,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           >
             <Eye className="w-5 h-5" />
           </Link>
-          {product.stock > 0 && (
+          {product.stock > 0 && !hasVariantsWithDifferentPrices && (
             <button 
               className="w-11 h-11 bg-jozi-forest rounded-full flex items-center justify-center text-white hover:bg-jozi-gold transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 delay-75 shadow-xl"
               onClick={(e) => {
@@ -130,12 +148,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             className={`p-2.5 rounded-xl transition-all group/btn shadow-sm ${
               product.stock === 0 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : hasVariantsWithDifferentPrices
+                ? 'bg-jozi-gold/10 hover:bg-jozi-gold hover:text-white text-jozi-gold'
                 : 'bg-jozi-forest/5 hover:bg-jozi-forest hover:text-white text-jozi-forest'
             }`}
-            onClick={() => product.stock > 0 && addItem(product, 1)}
+            onClick={handleAddToCart}
             disabled={product.stock === 0}
+            title={hasVariantsWithDifferentPrices ? 'View options' : 'Add to cart'}
           >
-            <Plus className="w-4 h-4" />
+            {hasVariantsWithDifferentPrices ? <Eye className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           </button>
         </div>
       </div>

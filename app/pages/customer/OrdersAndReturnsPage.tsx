@@ -35,7 +35,7 @@ interface OrderDetail {
   deliveryAddress: string; trackingNumber: string; cancellationRequestStatus?: string | null;
   isReturnRequested?: boolean; isReturnApproved?: boolean;
   items: {
-    id: string; name: string; vendor: string; price: string; quantity: number;
+    id: string; name: string; variant?: string | null; vendor: string; price: string; quantity: number;
     image: string; orderItemId?: string; rejectionReason?: string | null;
     status?: string; isReturnRequested?: boolean; isReturnApproved?: boolean;
   }[];
@@ -118,15 +118,24 @@ const OrdersView: React.FC = () => {
       const shippingCost = totalAmount < 500 ? 75 : 0;
       const subtotal = totalAmount - shippingCost;
       const items = (order.items || []).map((item, idx) => {
-        const product = item.product || {};
+        const product = item.product;
         let firstImage = '/placeholder-image.jpg';
-        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
           const imageObj = product.images[0];
-          firstImage = typeof imageObj === 'object' && imageObj.file ? imageObj.file : imageObj;
+          if (typeof imageObj === 'object' && imageObj.file) {
+            firstImage = imageObj.file;
+          } else if (typeof imageObj === 'string') {
+            firstImage = imageObj;
+          }
         }
+        // Vendor info is provided directly on the product object
+        const vendorName = item.product?.vendorName || 'Unknown Vendor';
+        const variantName = item.variant?.name || null;
         return {
-          id: item.id || `item-${idx}`, name: product.title || product.name || 'Unknown Product',
-          vendor: product.vendorName || product.vendor?.name || 'Unknown Vendor',
+          id: item.id || `item-${idx}`, 
+          name: product?.title || 'Unknown Product',
+          variant: variantName,
+          vendor: vendorName,
           price: formatCurrency(typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || 0),
           quantity: item.quantity, image: firstImage, orderItemId: item.id,
           rejectionReason: item.rejectionReason || undefined, status: item.status || undefined,

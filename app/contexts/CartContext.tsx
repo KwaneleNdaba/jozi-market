@@ -78,11 +78,18 @@ const convertBackendItemToCartItem = (backendItem: ICartItem): CartItem | null =
   let discountPrice: number | undefined = undefined;
   let variantStock = 0;
 
-  if (backendItem.productVariantId && product.variants && product.variants.length > 0) {
-    // Find the variant
+  if (backendItem.productVariantId && backendItem.variant) {
+    // Use variant price from enriched variant data
+    const variant = backendItem.variant;
+    basePrice = typeof variant.price === 'string' ? parseFloat(variant.price) : (variant.price || 0);
+    discountPrice = variant.discountPrice 
+      ? (typeof variant.discountPrice === 'string' ? parseFloat(variant.discountPrice) : variant.discountPrice)
+      : undefined;
+    variantStock = variant.stock || 0;
+  } else if (backendItem.productVariantId && product.variants && product.variants.length > 0) {
+    // Fallback: Find the variant in product.variants array
     const variant = product.variants.find((v: any) => v.id === backendItem.productVariantId);
     if (variant) {
-      // Use variant price
       basePrice = typeof variant.price === 'string' ? parseFloat(variant.price) : (variant.price || 0);
       discountPrice = variant.discountPrice 
         ? (typeof variant.discountPrice === 'string' ? parseFloat(variant.discountPrice) : variant.discountPrice)
@@ -93,33 +100,25 @@ const convertBackendItemToCartItem = (backendItem: ICartItem): CartItem | null =
 
   // Fallback to product price if variant not found or no variant
   if (basePrice === 0) {
-    basePrice = product.technicalDetails?.regularPrice 
-      ? (typeof product.technicalDetails.regularPrice === 'string' 
-        ? parseFloat(product.technicalDetails.regularPrice) 
-        : product.technicalDetails.regularPrice)
+    // Check both locations for price (backend may send in either place)
+    const productRegularPrice = product.regularPrice || product.technicalDetails?.regularPrice;
+    const productDiscountPrice = product.discountPrice || product.technicalDetails?.discountPrice;
+    
+    basePrice = productRegularPrice 
+      ? (typeof productRegularPrice === 'string' 
+        ? parseFloat(productRegularPrice) 
+        : productRegularPrice)
       : 0;
-    discountPrice = product.technicalDetails?.discountPrice
-      ? (typeof product.technicalDetails.discountPrice === 'string'
-        ? parseFloat(product.technicalDetails.discountPrice)
-        : product.technicalDetails.discountPrice)
+    discountPrice = productDiscountPrice && productDiscountPrice > 0
+      ? (typeof productDiscountPrice === 'string'
+        ? parseFloat(productDiscountPrice)
+        : productDiscountPrice)
       : undefined;
   }
 
   // Final price calculation - ensure we have a valid price
   const finalPrice = discountPrice || basePrice;
   
-  // If price is still 0, try to get it from alternative locations
-  if (finalPrice === 0) {
-    // Try getting price from product directly if technicalDetails doesn't have it
-    const altPrice = (product as any).price || (product as any).regularPrice;
-    if (altPrice) {
-      const parsedAltPrice = typeof altPrice === 'string' ? parseFloat(altPrice) : altPrice;
-      if (parsedAltPrice > 0) {
-        basePrice = parsedAltPrice;
-      }
-    }
-  }
-
   // Final check - if still 0, log warning
   const finalPriceValue = discountPrice || basePrice;
   if (finalPriceValue === 0) {
@@ -127,51 +126,27 @@ const convertBackendItemToCartItem = (backendItem: ICartItem): CartItem | null =
       productId: product.id,
       productTitle: product.title,
       variantId: backendItem.productVariantId,
-      hasTechnicalDetails: !!product.technicalDetails,
+      hasRegularPrice: !!product.regularPrice,
       hasVariants: !!(product.variants && product.variants.length > 0),
     });
   }
   
-  // Extract vendor information from applicant array or vendor object
-  let vendorName = product.vendorName || 'Unknown Vendor';
-  let vendorLogo: string | undefined = product.vendorLogo;
-  let vendorDescription: string | undefined = product.vendorDescription;
-  
-  // Check if product has vendor object with applicant array
-  if ((product as any).vendor && (product as any).vendor.applicant && Array.isArray((product as any).vendor.applicant)) {
-    const applicant = (product as any).vendor.applicant[0]; // Get first applicant
-    if (applicant) {
-      vendorName = applicant.shopName || vendorName;
-      vendorDescription = applicant.description || vendorDescription;
-      if (applicant.files && applicant.files.logoUrl) {
-        vendorLogo = applicant.files.logoUrl;
-      }
-    }
-  }
-  
-  // Construct vendor logo URL if needed
-  if (vendorLogo && !vendorLogo.startsWith('http://') && !vendorLogo.startsWith('https://')) {
-    vendorLogo = constructImageUrl(vendorLogo);
-  }
-
   const cartItem: CartItem = {
     id: product.id || backendItem.productId,
     name: product.title,
-    description: product.description,
+    description: product.description || '',
     price: finalPriceValue,
     originalPrice: discountPrice && basePrice > 0 ? basePrice : undefined,
     category: '', // Will be populated from category lookup if needed
     vendor: {
-      id: product.userId,
-      name: vendorName,
+      id: '', // Backend doesn't provide userId in ICartProduct
+      name: product.vendorName || 'Local Vendor', // Use vendor info from product
       rating: 4.5,
-      logo: vendorLogo, // Add logo to vendor object
-      description: vendorDescription, // Add description to vendor object
     },
     images: imageUrls,
     rating: 4.5,
     reviewCount: 12,
-    stock: variantStock > 0 ? variantStock : (product.technicalDetails?.initialStock || 0),
+    stock: variantStock > 0 ? variantStock : 0,
     tags: [],
     quantity: backendItem.quantity,
     selectedVariants: backendItem.productVariantId ? { 'variant': backendItem.productVariantId } : undefined,

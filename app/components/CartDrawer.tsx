@@ -107,19 +107,33 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         </button>
                       </div>
                       <div className="mt-3 flex items-center justify-between">
-                        <div className="flex items-center bg-white border border-jozi-forest/10 rounded-full px-2 py-1">
+                        <div className="flex items-center bg-white border-2 border-jozi-forest/20 rounded-full px-2 py-1.5 gap-1">
                           <button 
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="p-1 hover:text-jozi-gold transition-colors"
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                            className="p-1.5 hover:bg-jozi-gold/10 rounded-full text-jozi-forest hover:text-jozi-gold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={item.quantity <= 1}
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-8 text-center text-sm font-bold text-jozi-forest">{item.quantity}</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max={item.stock || 999}
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const newQty = parseInt(e.target.value) || 1;
+                              if (newQty >= 1 && (!item.stock || newQty <= item.stock)) {
+                                updateQuantity(item.id, newQty);
+                              }
+                            }}
+                            className="w-12 text-center text-sm font-bold text-jozi-forest bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-jozi-gold/20 rounded appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
                           <button 
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-1 hover:text-jozi-gold transition-colors"
+                            className="p-1.5 hover:bg-jozi-gold/10 rounded-full text-jozi-forest hover:text-jozi-gold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={!!item.stock && item.quantity >= item.stock}
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-4 h-4" />
                           </button>
                         </div>
                         <span className="font-bold text-jozi-forest">R{item.price * item.quantity}</span>

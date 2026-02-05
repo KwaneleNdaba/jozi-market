@@ -59,6 +59,7 @@ interface OrderDetail {
   items: {
     id: string;
     name: string;
+    variant?: string | null;
     vendor: string;
     price: string;
     quantity: number;
@@ -241,16 +242,20 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
       const discount = 0; 
 
       const items = (order.items || []).map((item, idx) => {
-        const product = item.product || {};
+        const product = item.product;
         let firstImage = '/placeholder-image.jpg';
-        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
           const imageObj = product.images[0];
           if (typeof imageObj === 'object' && imageObj.file) firstImage = imageObj.file;
           else if (typeof imageObj === 'string') firstImage = imageObj;
         }
         
-        const vendorName = product.vendorName || product.vendor?.name || 'Unknown Vendor';
+        // Vendor info is provided directly on the product object
+        const vendorName = item.product?.vendorName || 'Unknown Vendor';
         const unitPrice = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice || 0;
+        
+        // Get variant name if this item has a variant
+        const variantName = item.variant?.name || null;
         
         const req = item.isReturnRequested as unknown;
         const app = item.isReturnApproved as unknown;
@@ -265,7 +270,8 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
 
         return {
           id: item.id || `item-${idx}`,
-          name: product.title || product.name || 'Unknown Product',
+          name: product?.title || 'Unknown Product',
+          variant: variantName,
           vendor: vendorName,
           price: formatCurrency(unitPrice),
           quantity: item.quantity,
@@ -589,7 +595,10 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                               <img src={item.image} className="w-full h-full object-cover" alt={item.name} />
                             </div>
                             <div className="grow text-center sm:text-left space-y-1">
-                              <h4 className="text-base font-bold text-slate-900 leading-tight">{item.name}</h4>
+                              <h4 className="text-base font-bold text-slate-900 leading-tight">
+                                {item.name}
+                                {item.variant && <span className="ml-2 text-xs font-medium text-slate-500">({item.variant})</span>}
+                              </h4>
                               <p className="text-xs font-medium text-slate-500">Vendor: <span className="text-jozi-forest">{item.vendor}</span></p>
                               {item.status === 'rejected' && item.rejectionReason && (
                                 <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 text-red-600 border border-red-100 text-[10px] font-bold uppercase tracking-wide">
@@ -1029,7 +1038,10 @@ const OrdersPage: React.FC<OrdersPageProps> = ({
                                     <img src={item.image} alt="" className="w-full h-full object-cover"/>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className={`font-bold text-sm truncate ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>{item.name}</p>
+                                  <p className={`font-bold text-sm truncate ${isSelected ? 'text-blue-900' : 'text-slate-700'}`}>
+                                    {item.name}
+                                    {item.variant && <span className="ml-1 text-xs font-normal text-slate-400">({item.variant})</span>}
+                                  </p>
                                   <p className="text-xs text-slate-400 mt-0.5">Purchased Qty: {item.quantity}</p>
                                 </div>
                                 {isSelected && item.orderItemId && (
