@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Users, Store, UserPlus, Share2, Megaphone, 
   Globe, Gamepad2, Gift, Tag, Monitor, Bell, BarChart3, 
   ShoppingCart, Layers, Grid, CreditCard, ShieldAlert, 
-  LogOut, X, Menu, ChevronRight, ListTree
+  LogOut, X, Menu, ChevronRight, ListTree, Trophy
 } from 'lucide-react';
 import Logo from '../Logo';
 
@@ -27,12 +27,13 @@ const NAV_ITEMS = [
     { id: 'orders', label: 'Order Manifests', icon: ShoppingCart, path: '/admin/orders' },
     // { id: 'payouts', label: 'Payout Ledger', icon: CreditCard, path: '/admin/vendors/payouts' },
   ]},
-  // { group: 'Growth', items: [
-  //   { id: 'exposure', label: 'Social Exposure', icon: Share2, path: '/admin/social-exposure' },
-  //   { id: 'gamification', label: 'Economy Logic', icon: Gamepad2, path: '/admin/gamification' },
-  //   { id: 'rewards', label: 'Rewards Catalog', icon: Gift, path: '/admin/rewards' },
-  //   { id: 'vouchers', label: 'Voucher Hub', icon: Tag, path: '/admin/vouchers' },
-  // ]},
+  { group: 'Growth', items: [
+    { id: 'points-tiers', label: 'Points & Tiers', icon: Trophy, path: '/admin/points-config' },
+    // { id: 'exposure', label: 'Social Exposure', icon: Share2, path: '/admin/social-exposure' },
+    // { id: 'gamification', label: 'Economy Logic', icon: Gamepad2, path: '/admin/gamification' },
+    // { id: 'rewards', label: 'Rewards Catalog', icon: Gift, path: '/admin/rewards' },
+    // { id: 'vouchers', label: 'Voucher Hub', icon: Tag, path: '/admin/vouchers' },
+  ]},
   // { group: 'Infrastructure', items: [
   //   { id: 'categories', label: 'Category Orchestrator', icon: ListTree, path: '/admin/categories' },
   //   { id: 'features', label: 'Capability Config', icon: Layers, path: '/admin/features' },

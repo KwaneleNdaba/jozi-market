@@ -12,6 +12,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
   const pathname = usePathname();
   
   // Check if current route is an auth page
@@ -21,9 +22,19 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-50 flex overflow-hidden">
       {/* Desktop Sidebar (Fixed) - Hidden on auth pages */}
       {!isAuthPage && (
-        <div className="hidden lg:block w-72 h-screen shrink-0 sticky top-0 border-r border-white/5">
-          <AdminSidebar />
-        </div>
+        <AnimatePresence mode="wait">
+          {isDesktopSidebarOpen && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: 288 }}
+              exit={{ width: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="hidden lg:block h-screen shrink-0 sticky top-0 border-r border-white/5 overflow-hidden"
+            >
+              <AdminSidebar />
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
 
       {/* Mobile Sidebar (Drawer) - Hidden on auth pages */}
@@ -61,6 +72,13 @@ export default function AdminLayout({
               <button 
                 onClick={() => setIsSidebarOpen(true)}
                 className="lg:hidden p-2 text-jozi-dark hover:bg-gray-100 rounded-xl transition-all"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={() => setIsDesktopSidebarOpen(!isDesktopSidebarOpen)}
+                className="hidden lg:block p-2 text-jozi-dark hover:bg-gray-100 rounded-xl transition-all"
+                title={isDesktopSidebarOpen ? "Close sidebar" : "Open sidebar"}
               >
                 <Menu className="w-6 h-6" />
               </button>

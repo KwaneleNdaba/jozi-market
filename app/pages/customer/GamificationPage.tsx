@@ -26,7 +26,7 @@ const GamificationPage: React.FC = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinResult, setSpinResult] = useState<string | null>(null);
   const [points, setPoints] = useState(1250);
-  const [activeTab, setActiveTab] = useState<'games' | 'challenges' | 'rewards'>('games');
+  const [activeTab, setActiveTab] = useState<'games' | 'challenges' | 'rewards'>('rewards');
 
   const handleSpin = () => {
     if (isSpinning) return;
@@ -80,7 +80,7 @@ const GamificationPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex bg-jozi-cream p-1 rounded-xl border border-jozi-forest/5">
+          {/* <div className="flex bg-jozi-cream p-1 rounded-xl border border-jozi-forest/5">
             {['games', 'challenges', 'rewards'].map((tab) => (
               <button
                 key={tab}
@@ -92,7 +92,7 @@ const GamificationPage: React.FC = () => {
                 {tab}
               </button>
             ))}
-          </div>
+          </div> */}
         </div>
       </section>
 
@@ -117,7 +117,7 @@ const GamificationPage: React.FC = () => {
         </section>
 
         <AnimatePresence mode="wait">
-          {activeTab === 'games' && (
+          {/* {activeTab === 'games' && (
             <motion.div
               key="games-view"
               initial={{ opacity: 0, y: 20 }}
@@ -125,7 +125,7 @@ const GamificationPage: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-12"
             >
-              {/* Featured Game: Spin the Wheel */}
+              Featured Game: Spin the Wheel
               <div className="bg-jozi-forest rounded-5xl p-12 lg:p-20 overflow-hidden relative text-white">
                 <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
                   <div className="space-y-8">
@@ -163,7 +163,7 @@ const GamificationPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Wheel Visualization */}
+                  Wheel Visualization
                   <div className="relative flex justify-center">
                     <motion.div 
                       animate={isSpinning ? { rotate: 360 * 5 } : { rotate: 0 }}
@@ -183,12 +183,12 @@ const GamificationPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Abstract background blobs */}
+                Abstract background blobs
                 <div className="absolute -top-24 -right-24 w-96 h-96 bg-jozi-gold/20 rounded-full blur-[120px]" />
                 <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-jozi-bright/10 rounded-full blur-[100px]" />
               </div>
 
-              {/* Other Mini Games Grid */}
+              Other Mini Games Grid
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {[
                   { title: 'Scratch & Win', icon: Award, desc: 'Find 3 matching Jozi icons to win the jackpot.', points: 'Cost: 20 Pts', level: 'Novice' },
@@ -220,9 +220,9 @@ const GamificationPage: React.FC = () => {
                 ))}
               </div>
             </motion.div>
-          )}
+          )} */}
 
-          {activeTab === 'challenges' && (
+          {/* {activeTab === 'challenges' && (
             <motion.div
               key="challenges-view"
               initial={{ opacity: 0, x: 20 }}
@@ -230,7 +230,7 @@ const GamificationPage: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               className="grid lg:grid-cols-3 gap-12"
             >
-              {/* Daily Streak Section */}
+              Daily Streak Section
               <div className="lg:col-span-1 space-y-8">
                 <div className="bg-white p-8 rounded-4xl border border-jozi-forest/5 shadow-soft">
                   <h3 className="text-xl font-black text-jozi-forest mb-6 flex items-center">
@@ -264,7 +264,7 @@ const GamificationPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Active Challenges List */}
+              Active Challenges List
               <div className="lg:col-span-2 space-y-6">
                 <h3 className="text-2xl font-black text-jozi-forest flex items-center">
                   <Trophy className="w-6 h-6 mr-3 text-jozi-gold" />
@@ -310,7 +310,7 @@ const GamificationPage: React.FC = () => {
                 ))}
               </div>
             </motion.div>
-          )}
+          )} */}
 
           {activeTab === 'rewards' && (
             <motion.div

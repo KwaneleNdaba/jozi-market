@@ -1,15 +1,16 @@
 import { io, Socket } from 'socket.io-client';
 
+// Use direct EC2 URL for WebSocket (bypasses API Gateway)
 const mylocalUrl = 'http://localhost:8000';
-const SOCKET_URL = process.env.NEXT_PUBLIC_URL ?? process.env.NEXT_PUBLIC_URL ?? mylocalUrl;
+const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL ?? process.env.NEXT_PUBLIC_API_URL ?? mylocalUrl;
 
 let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    console.log('[Socket] Initializing connection to:', SOCKET_URL);
+    console.log('[Socket] Initializing WebSocket connection to:', WEBSOCKET_URL);
     
-    socket = io(SOCKET_URL, {
+    socket = io(WEBSOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
