@@ -2,7 +2,7 @@
 
 import { serverGET, serverPOST } from '@/lib/server-client';
 import { baseUrl } from '@/endpoints/url';
-import { PaymentRequest, PaymentResponse, PaymentStatusResponse } from '@/interfaces/payfast/payfast';
+import { CampaignClaimPaymentRequest, PaymentRequest, PaymentResponse, PaymentStatusResponse } from '@/interfaces/payfast/payfast';
 import { CustomResponse } from '@/interfaces/response';
 import { logger } from '@/lib/log';
 import { decodeServerAccessToken } from '@/lib/server-auth';
@@ -32,6 +32,38 @@ export async function generatePaymentAction(
 
     logger.info('[PayFast Action] Generating payment for user:', decodedUser.id);
     const response = await serverPOST(`${baseUrl}/payfast/generate-payment`, fullRequest);
+    logger.info('[PayFast Action] Payment URL generated successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[PayFast Action] Error generating payment:', err);
+    return {
+      data: null as any,
+      message: err?.message || 'Failed to generate payment',
+      error: true,
+    };
+  }
+}
+
+export async function generateCampaignClaimPaymentAction(
+  request: Omit<CampaignClaimPaymentRequest, 'userId'> & { email: string; phone?: string; fullName?: string; deliveryAddress?: PaymentRequest['deliveryAddress'] }
+): Promise<CustomResponse<PaymentResponse>> {
+  try {
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser?.id) {
+      return {
+        data: null as any,
+        message: 'Authentication required. Please log in to generate payment.',
+        error: true,
+      };
+    }
+
+    const fullRequest: CampaignClaimPaymentRequest = {
+      ...request,
+      userId: decodedUser.id,
+    };
+
+    logger.info('[PayFast Action] Generating payment for user:', decodedUser.id);
+    const response = await serverPOST(`${baseUrl}/payfast/generate-campaign-payment`, fullRequest);
     logger.info('[PayFast Action] Payment URL generated successfully');
     return response;
   } catch (err: any) {

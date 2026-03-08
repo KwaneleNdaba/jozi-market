@@ -19,6 +19,16 @@ export interface PaymentRequest {
   };
 }
 
+export interface CampaignClaimPaymentRequest {
+  userId: string;
+  email: string;
+  phone?: string;
+  fullName?: string;
+  deliveryAddress: any; // IShippingAddress
+  campaignClaimIds: string[]; // Array of campaign claim IDs
+  deliveryFee: number; // The delivery fee to charge
+}
+
 export interface PaymentResponse {
   paymentUrl: string;
   paymentReference: string;

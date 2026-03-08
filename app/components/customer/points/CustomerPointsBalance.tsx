@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getMyPointsBalanceAction, getMyPointsHistoryAction } from '@/app/actions/points';
+import { getUserPointsBalanceAction, getMyPointsHistoryAction } from '@/app/actions/points';
 import type { IUserPointsBalance, IPointsHistory } from '@/interfaces/points/points';
 import { Coins, TrendingUp, TrendingDown, Clock, Gift } from 'lucide-react';
 
@@ -18,7 +18,7 @@ export const CustomerPointsBalance: React.FC = () => {
 
       try {
         const [balanceResponse, historyResponse] = await Promise.all([
-          getMyPointsBalanceAction(),
+          getUserPointsBalanceAction(),
           getMyPointsHistoryAction(),
         ]);
 
@@ -115,15 +115,6 @@ export const CustomerPointsBalance: React.FC = () => {
             <p className="text-lg font-semibold">{balance.lifetimeRedeemed.toLocaleString()}</p>
           </div>
         </div>
-
-        {balance.nextExpiryDate && balance.nextExpiryPoints && (
-          <div className="mt-4 pt-4 border-t border-emerald-400/30">
-            <p className="text-emerald-100 text-xs">Next Expiry</p>
-            <p className="text-sm font-medium">
-              {balance.nextExpiryPoints.toLocaleString()} points on {formatDate(balance.nextExpiryDate)}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Points History */}

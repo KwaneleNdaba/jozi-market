@@ -26,16 +26,25 @@ import {
   MessageSquare,
   ThumbsUp,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Gift,
+  Clock,
+  AlertCircle,
+  Zap
 } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import ProductCard from '../../components/ProductCard';
 import { getProductByIdAction } from '../../actions/product/index';
 import { getAllCategoriesAction } from '../../actions/category/index';
 import { getAllAttributesAction } from '../../actions/attribute/index';
+import { getUserPointsBalanceAction } from '../../actions/points/index';
+import { getCampaignsByProductAction } from '../../actions/freeProductCampaign/index';
+import { claimCampaignAction } from '../../actions/campaign-claim/index';
 import { IProduct } from '@/interfaces/product/product';
 import { ICategoryWithSubcategories } from '@/interfaces/category/category';
 import { IAttribute } from '@/interfaces/attribute/attribute';
+import type { IUserPointsBalance } from '@/interfaces/points/points';
+import type { IFreeProductCampaign } from '@/interfaces/freeProductCampaign/freeProductCampaign';
 import { Product } from '../../types';
 import { products } from '../../data/mockData';
 import { useProductSocket } from '@/app/hooks/useSocket';
@@ -87,6 +96,14 @@ const ProductDetailPage: React.FC = () => {
     { id: 2, user: 'Thabo K.', rating: 4, comment: 'Great piece of local art. Shipping was fast and the packaging was very secure.', date: '1 week ago', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100' },
   ]);
 
+  // Campaign and Rewards State
+  const [pointsBalance, setPointsBalance] = useState<IUserPointsBalance | null>(null);
+  const [campaigns, setCampaigns] = useState<IFreeProductCampaign[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+  const [claimingCampaign, setClaimingCampaign] = useState(false);
+  const [claimSuccess, setClaimSuccess] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+
   // Fetch product, categories, and attributes
   useEffect(() => {
     const fetchData = async () => {
@@ -116,6 +133,38 @@ const ProductDetailPage: React.FC = () => {
       }
     };
     fetchData();
+  }, [id]);
+
+  // Fetch campaigns and points balance
+  useEffect(() => {
+    const fetchCampaignsAndPoints = async () => {
+      if (!id) return;
+      
+      setLoadingCampaigns(true);
+      try {
+        // Fetch campaigns for this product
+        const campaignsResponse = await getCampaignsByProductAction(id as string);
+        if (!campaignsResponse.error && campaignsResponse.data) {
+          // Filter for active, visible campaigns only
+          const activeCampaigns = campaignsResponse.data.filter(
+            campaign => campaign.isVisible && campaign.quantity > 0
+          );
+          setCampaigns(activeCampaigns);
+        }
+
+        // Fetch user's points balance
+        const pointsResponse = await getUserPointsBalanceAction();
+        if (!pointsResponse.error && pointsResponse.data) {
+          setPointsBalance(pointsResponse.data);
+        }
+      } catch (err) {
+        console.error('Error fetching campaigns and points:', err);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+
+    fetchCampaignsAndPoints();
   }, [id]);
 
   // Handle real-time stock updates via WebSocket
@@ -195,6 +244,74 @@ const ProductDetailPage: React.FC = () => {
       setNewRating(0);
       setNewComment('');
     }, 1500);
+  };
+
+  // Campaign matching logic - find matching campaign for current variant/product
+  const matchingCampaign = useMemo(() => {
+    if (!campaigns || campaigns.length === 0 || !product) return null;
+
+    // If product has variants and one is selected
+    if (selectedVariant && product.variants && product.variants.length > 0) {
+      // Find campaign that matches this specific variant
+      const variantCampaign = campaigns.find(
+        campaign => campaign.variantId === selectedVariant
+      );
+      return variantCampaign || null;
+    }
+
+    // No variant selected or product has no variants
+    // Find campaign without specific variant (product-level campaign)
+    const productCampaign = campaigns.find(
+      campaign => !campaign.variantId
+    );
+    return productCampaign || null;
+  }, [campaigns, selectedVariant, product]);
+
+  // Check if user has enough points
+  const hasEnoughPoints = useMemo(() => {
+    if (!matchingCampaign || !pointsBalance) return false;
+    return pointsBalance.availablePoints >= matchingCampaign.pointsRequired;
+  }, [matchingCampaign, pointsBalance]);
+
+  // Calculate points needed
+  const pointsNeeded = useMemo(() => {
+    if (!matchingCampaign || !pointsBalance) return 0;
+    const needed = matchingCampaign.pointsRequired - pointsBalance.availablePoints;
+    return needed > 0 ? needed : 0;
+  }, [matchingCampaign, pointsBalance]);
+
+  // Handle claim campaign
+  const handleClaimCampaign = async () => {
+    if (!matchingCampaign || !hasEnoughPoints || claimingCampaign) return;
+
+    setClaimingCampaign(true);
+    setClaimError(null);
+    setClaimSuccess(false);
+
+    try {
+      const response = await claimCampaignAction(matchingCampaign.id);
+      
+      if (response.error) {
+        setClaimError(response.message || 'Failed to claim reward');
+      } else {
+        setClaimSuccess(true);
+        
+        // Refresh points balance
+        const pointsResponse = await getUserPointsBalanceAction();
+        if (!pointsResponse.error && pointsResponse.data) {
+          setPointsBalance(pointsResponse.data);
+        }
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setClaimSuccess(false);
+        }, 5000);
+      }
+    } catch (err: any) {
+      setClaimError(err?.message || 'An error occurred while claiming the reward');
+    } finally {
+      setClaimingCampaign(false);
+    }
   };
 
   const categoryName = useMemo(() => {
@@ -465,6 +582,136 @@ const ProductDetailPage: React.FC = () => {
                   </Link>
                 </div>
               </div>
+
+              {/* Campaign Reward Banner */}
+              {matchingCampaign && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-jozi-gold/10 via-jozi-gold/5 to-transparent border-2 border-jozi-gold/30 rounded-2xl p-4 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-jozi-gold/5 rounded-full blur-2xl" />
+                  
+                  <div className="relative z-10 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-jozi-gold rounded-xl">
+                          <Gift className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-jozi-forest uppercase tracking-wide">
+                            Free Reward Available
+                          </h3>
+                          <p className="text-xs text-gray-600 font-medium">
+                            Claim this product with your points!
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {matchingCampaign.quantity <= 5 && (
+                        <span className="px-2 py-1 bg-rose-100 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-full whitespace-nowrap">
+                          Only {matchingCampaign.quantity} left
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3 border border-jozi-gold/20">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-jozi-gold" />
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Points Required</span>
+                        </div>
+                        <p className="text-lg font-black text-jozi-forest mt-1">
+                          {matchingCampaign.pointsRequired.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="bg-white/60 backdrop-blur-sm rounded-xl p-3 border border-jozi-gold/20">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-emerald-500" />
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Your Points</span>
+                        </div>
+                        <p className="text-lg font-black text-jozi-forest mt-1">
+                          {pointsBalance?.availablePoints.toLocaleString() || 0}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Claim Button or Message */}
+                    {claimSuccess ? (
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4 flex items-center gap-3"
+                      >
+                        <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-black text-emerald-900">Reward Claimed Successfully!</p>
+                          <p className="text-xs text-emerald-700 font-medium mt-0.5">
+                            Check your profile for claim details
+                          </p>
+                        </div>
+                      </motion.div>
+                    ) : hasEnoughPoints ? (
+                      <button
+                        onClick={handleClaimCampaign}
+                        disabled={claimingCampaign || matchingCampaign.quantity === 0}
+                        className="w-full bg-gradient-to-r from-jozi-forest to-jozi-forest/90 text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-jozi-forest/20 hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                      >
+                        {claimingCampaign ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Claiming...
+                          </>
+                        ) : matchingCampaign.quantity === 0 ? (
+                          'Out of Stock'
+                        ) : (
+                          <>
+                            <Gift className="w-4 h-4" />
+                            Claim Free Reward
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-black text-amber-900">
+                            Need {pointsNeeded.toLocaleString()} more points
+                          </p>
+                          <p className="text-xs text-amber-700 font-medium mt-1">
+                            Continue shopping and earning to unlock this reward!
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {claimError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-rose-50 border-2 border-rose-200 rounded-xl p-3 flex items-center gap-2"
+                      >
+                        <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                        <p className="text-xs font-bold text-rose-900">{claimError}</p>
+                      </motion.div>
+                    )}
+
+                    {matchingCampaign.expiryDate && (
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>
+                          Campaign expires {new Date(matchingCampaign.expiryDate).toLocaleDateString('en-ZA', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Price - Show for all products, uses variant price if available */}
               <div className="flex items-baseline space-x-4">

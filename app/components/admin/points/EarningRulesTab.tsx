@@ -488,7 +488,7 @@ export const EarningRulesTab: React.FC<EarningRulesTabProps> = () => {
                                       <option value="">-- Select Expiry Logic --</option>
                                       {expiryRules.map(er => (
                                         <option key={er.id} value={er.id}>
-                                          {er.expiryType.charAt(0).toUpperCase() + er.expiryType.slice(1)} ({er.expiryDays} days - {er.expiryMode})
+                                          {er.expiryType.charAt(0).toUpperCase() + er.expiryType.slice(1)} ({er.expiryDays} days)
                                         </option>
                                       ))}
                                     </select>

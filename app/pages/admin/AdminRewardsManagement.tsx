@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Gift, 
@@ -34,27 +34,31 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
+import { 
+  getAllCampaignsAction,
+  approveCampaignAction,
+  rejectCampaignAction,
+  setCampaignVisibilityAction,
+  deleteCampaignAction,
+  updateCampaignAction
+} from '@/app/actions/freeProductCampaign';
+import type { IFreeProductCampaign } from '@/interfaces/freeProductCampaign/freeProductCampaign';
+import CampaignDetailDrawer from '@/app/components/admin/CampaignDetailDrawer';
 
-// --- MOCK DATA ---
+// --- INTERFACES ---
 interface Reward {
   id: string;
   name: string;
   type: 'Coupon' | 'Free Product' | 'Discount' | 'Extra Points';
   pointsRequired: number;
   status: 'Active' | 'Inactive';
+  isApproved: boolean;
   maxClaimsPerUser?: number;
   totalClaimed: number;
   expiryDays?: number;
   description: string;
   image?: string;
 }
-
-const INITIAL_REWARDS: Reward[] = [
-  { id: 'rew-1', name: 'R100 Heritage Voucher', type: 'Coupon', pointsRequired: 1000, status: 'Active', maxClaimsPerUser: 1, totalClaimed: 450, expiryDays: 30, description: 'Store-wide R100 discount for any artisan workshop.', image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&q=80&w=200' },
-  { id: 'rew-2', name: 'Leather Keyring', type: 'Free Product', pointsRequired: 2500, status: 'Active', maxClaimsPerUser: 2, totalClaimed: 120, expiryDays: 0, description: 'Hand-stitched Zebu leather keyring from Maboneng Textiles.', image: 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200' },
-  { id: 'rew-3', name: 'Priority Express Pass', type: 'Discount', pointsRequired: 500, status: 'Active', totalClaimed: 890, description: 'Upgrade any standard delivery to Express for free.', image: 'https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=200' },
-  { id: 'rew-4', name: 'Double XP Booster', type: 'Extra Points', pointsRequired: 2000, status: 'Inactive', maxClaimsPerUser: 1, totalClaimed: 42, expiryDays: 7, description: 'Earn double points on all purchases for 7 days.', image: 'https://images.unsplash.com/photo-1574634534894-89d7576c8259?auto=format&fit=crop&q=80&w=200' },
-];
 
 const ANALYTICS_DATA = [
   { name: '0-1k Pts', count: 12 },
@@ -66,12 +70,68 @@ const ANALYTICS_DATA = [
 const COLORS = ['#1B5E52', '#C7A16E', '#D4A854', '#0A1A17'];
 
 const AdminRewardsManagement: React.FC = () => {
-  const [rewards, setRewards] = useState<Reward[]>(INITIAL_REWARDS);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [campaigns, setCampaigns] = useState<IFreeProductCampaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<{ id: string; currentPoints: number } | null>(null);
+  const [newPoints, setNewPoints] = useState<number>(0);
+  const [selectedCampaignForDrawer, setSelectedCampaignForDrawer] = useState<IFreeProductCampaign | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Fetch campaigns on mount
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      setLoading(true);
+      const response = await getAllCampaignsAction();
+      if (!response.error && response.data) {
+        // Store full campaign data
+        setCampaigns(response.data);
+        
+        // Map campaigns to rewards format
+        const mappedRewards: Reward[] = response.data.map((campaign: IFreeProductCampaign) => {
+          const productTitle = campaign.product?.title || 'Unknown Product';
+          const variantName = campaign.variant?.name;
+          const displayName = variantName ? `${productTitle} - ${variantName}` : productTitle;
+          
+          // Handle image - can be object with file property or string
+          const firstImage = campaign.product?.images?.[0];
+          const imageUrl: string | undefined = typeof firstImage === 'object' && firstImage?.file 
+            ? firstImage.file 
+            : typeof firstImage === 'string' 
+            ? firstImage 
+            : undefined;
+          
+          return {
+            id: campaign.id,
+            name: displayName,
+            type: 'Free Product' as const,
+            pointsRequired: campaign.pointsRequired,
+            status: campaign.isVisible ? 'Active' : 'Inactive', // Use isVisible, not isApproved
+            isApproved: campaign.isApproved,
+            totalClaimed: campaign.totalClaims || 0,
+            description: campaign.product?.description || `Quantity: ${campaign.quantity}`,
+            image: imageUrl,
+          };
+        });
+        setRewards(mappedRewards);
+      }
+      setLoading(false);
+    };
+
+    fetchCampaigns();
+  }, []);
 
   // Form State
   const [formData, setFormData] = useState<Partial<Reward>>({
@@ -126,14 +186,132 @@ const AdminRewardsManagement: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Wipe this reward from the market? Historical claims will remain in user logs.')) {
-      setRewards(prev => prev.filter(r => r.id !== id));
+
+
+  const handleApprove = async (id: string) => {
+    setActionLoading(id);
+    const response = await approveCampaignAction(id);
+    if (!response.error && response.data) {
+      // Update both campaigns and rewards state
+      setCampaigns(prev => prev.map(c => 
+        c.id === id ? { ...c, isApproved: true } : c
+      ));
+      setRewards(prev => prev.map(r => 
+        r.id === id ? { ...r, isApproved: true } : r
+      ));
+      showToast('Campaign approved successfully', 'success');
+    } else {
+      showToast(response.message || 'Failed to approve campaign', 'error');
+    }
+    setActionLoading(null);
+  };
+
+  const handleReject = async (id: string) => {
+    if (window.confirm('Reject this campaign? The vendor will be notified.')) {
+      setActionLoading(id);
+      const response = await rejectCampaignAction(id);
+      if (!response.error && response.data) {
+        // Update both campaigns and rewards state
+        setCampaigns(prev => prev.map(c => 
+          c.id === id ? { ...c, isApproved: false } : c
+        ));
+        setRewards(prev => prev.map(r => 
+          r.id === id ? { ...r, isApproved: false } : r
+        ));
+        showToast('Campaign rejected successfully', 'success');
+      } else {
+        showToast(response.message || 'Failed to reject campaign', 'error');
+      }
+      setActionLoading(null);
     }
   };
 
-  const toggleStatus = (id: string) => {
-    setRewards(prev => prev.map(r => r.id === id ? { ...r, status: r.status === 'Active' ? 'Inactive' : 'Active' } : r));
+  const toggleVisibility = async (id: string, currentStatus: string) => {
+    setActionLoading(id);
+    const newVisibility = currentStatus !== 'Active'; // If currently Active, set to false (hide), otherwise true (show)
+    const response = await setCampaignVisibilityAction(id, newVisibility);
+    if (!response.error && response.data) {
+      // Update both campaigns and rewards state with the actual isVisible from response
+      setCampaigns(prev => prev.map(c => 
+        c.id === id ? { ...c, isVisible: response.data.isVisible } : c
+      ));
+      setRewards(prev => prev.map(r => 
+        r.id === id ? { ...r, status: response.data.isVisible ? 'Active' : 'Inactive' } : r
+      ));
+      showToast(`Campaign ${response.data.isVisible ? 'shown' : 'hidden'} successfully`, 'success');
+    } else {
+      showToast(response.message || 'Failed to update visibility', 'error');
+    }
+    setActionLoading(null);
+  };
+
+  const handleOpenPointsModal = (id: string, currentPoints: number) => {
+    setSelectedCampaign({ id, currentPoints });
+    setNewPoints(currentPoints);
+    setIsPointsModalOpen(true);
+  };
+
+  const handleUpdatePoints = async () => {
+    if (!selectedCampaign) return;
+    
+    setActionLoading(selectedCampaign.id);
+    const response = await updateCampaignAction(selectedCampaign.id, {
+      pointsRequired: newPoints
+    });
+    
+    if (!response.error && response.data) {
+      setRewards(prev => prev.map(r => 
+        r.id === selectedCampaign.id ? { ...r, pointsRequired: response.data.pointsRequired } : r
+      ));
+      showToast('Points updated successfully', 'success');
+      setIsPointsModalOpen(false);
+      setSelectedCampaign(null);
+    } else {
+      showToast(response.message || 'Failed to update points', 'error');
+    }
+    setActionLoading(null);
+  };
+
+  const handleOpenDrawer = (rewardId: string) => {
+    const campaign = campaigns.find(c => c.id === rewardId);
+    if (campaign) {
+      setSelectedCampaignForDrawer(campaign);
+    }
+  };
+
+  const handleDrawerActionSuccess = async () => {
+    // Refetch campaigns after any action in the drawer
+    const response = await getAllCampaignsAction();
+    if (!response.error && response.data) {
+      setCampaigns(response.data);
+      const mappedRewards: Reward[] = response.data.map((campaign: IFreeProductCampaign) => {
+        const productTitle = campaign.product?.title || 'Unknown Product';
+        const variantName = campaign.variant?.name;
+        const displayName = variantName ? `${productTitle} - ${variantName}` : productTitle;
+        
+        // Handle image - can be object with file property or string
+        const firstImage = campaign.product?.images?.[0];
+        const imageUrl = typeof firstImage === 'object' && firstImage?.file 
+          ? firstImage.file 
+          : typeof firstImage === 'string' 
+          ? firstImage 
+          : undefined;
+        
+        return {
+          id: campaign.id,
+          name: displayName,
+          type: 'Free Product' as const,
+          pointsRequired: campaign.pointsRequired,
+          status: campaign.isVisible ? 'Active' : 'Inactive', // Use isVisible, not isApproved
+          isApproved: campaign.isApproved,
+          totalClaimed: campaign.totalClaims || 0,
+          description: campaign.product?.description || `Quantity: ${campaign.quantity}`,
+          image: imageUrl,
+        };
+      });
+      setRewards(mappedRewards);
+    }
+    showToast('Campaign updated successfully', 'success');
   };
 
   return (
@@ -278,6 +456,16 @@ const AdminRewardsManagement: React.FC = () => {
            </div>
         </div>
 
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 border-4 border-jozi-gold border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-sm font-bold text-gray-400">Loading rewards...</p>
+            </div>
+          </div>
+        ) : (
+          <>
         {/* Rewards List */}
         <AnimatePresence mode="wait">
           {viewMode === 'grid' ? (
@@ -295,7 +483,7 @@ const AdminRewardsManagement: React.FC = () => {
                        {reward.type === 'Coupon' ? <Tag className="w-6 h-6" /> : reward.type === 'Free Product' ? <PackageIcon className="w-6 h-6" /> : reward.type === 'Discount' ? <CreditCard className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
                     </div>
                     <button 
-                      onClick={() => toggleStatus(reward.id)}
+                      onClick={() => toggleVisibility(reward.id, reward.status)}
                       className={`w-12 h-6 rounded-full relative transition-colors ${reward.status === 'Active' ? 'bg-emerald-500' : 'bg-gray-200'}`}
                     >
                       <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${reward.status === 'Active' ? 'translate-x-7' : 'translate-x-1'}`} />
@@ -307,9 +495,14 @@ const AdminRewardsManagement: React.FC = () => {
                       <p className="text-[10px] font-black uppercase tracking-widest text-jozi-gold">{reward.type}</p>
                       <h4 className="text-xl font-black text-jozi-dark tracking-tight leading-tight">{reward.name}</h4>
                     </div>
-                    <div className="flex items-baseline space-x-1">
-                       <span className="text-3xl font-black text-jozi-forest">{reward.pointsRequired}</span>
+                    <div 
+                      className="flex items-baseline space-x-1 cursor-pointer group/points"
+                      onClick={() => handleOpenPointsModal(reward.id, reward.pointsRequired)}
+                      title="Click to edit points"
+                    >
+                       <span className="text-3xl font-black text-jozi-forest group-hover/points:text-jozi-gold transition-colors">{reward.pointsRequired}</span>
                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Points</span>
+                       <Edit3 className="w-3 h-3 text-gray-300 group-hover/points:text-jozi-gold opacity-0 group-hover/points:opacity-100 transition-all" />
                     </div>
                     <p className="text-xs text-gray-400 font-medium leading-relaxed line-clamp-2">{reward.description}</p>
                   </div>
@@ -319,8 +512,25 @@ const AdminRewardsManagement: React.FC = () => {
                        {reward.totalClaimed} Lifetime Claims
                      </div>
                      <div className="flex items-center space-x-2">
-                       <button onClick={() => handleOpenModal(reward)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-jozi-forest hover:bg-white shadow-sm"><Edit3 className="w-4 h-4" /></button>
-                       <button onClick={() => handleDelete(reward.id)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-red-500 hover:bg-white shadow-sm"><Trash2 className="w-4 h-4" /></button>
+                       {!reward.isApproved && (
+                         <button 
+                           onClick={() => handleApprove(reward.id)} 
+                           disabled={actionLoading === reward.id}
+                           className="p-2 bg-emerald-50 text-emerald-500 rounded-lg hover:bg-emerald-100 shadow-sm disabled:opacity-50"
+                           title="Approve Campaign"
+                         >
+                           <CheckCircle2 className="w-4 h-4" />
+                         </button>
+                       )}
+                       <button 
+                         onClick={() => handleOpenDrawer(reward.id)} 
+                         disabled={actionLoading === reward.id}
+                         className="p-2 bg-gray-50 cursor-pointer text-gray-400 rounded-lg hover:text-jozi-forest hover:bg-white shadow-sm disabled:opacity-50"
+                         title="View Details"
+                       >
+                         <Eye className="w-4 h-4" />
+                       </button>
+                   
                      </div>
                   </div>
                 </div>
@@ -364,7 +574,16 @@ const AdminRewardsManagement: React.FC = () => {
                       <td className="py-6">
                         <span className="px-3 py-1 bg-jozi-cream text-jozi-gold rounded-full text-[9px] font-black uppercase border border-jozi-gold/10">{reward.type}</span>
                       </td>
-                      <td className="py-6 font-black text-jozi-dark">{reward.pointsRequired.toLocaleString()}</td>
+                      <td className="py-6">
+                        <button
+                          onClick={() => handleOpenPointsModal(reward.id, reward.pointsRequired)}
+                          className="font-black  cursor-pointer text-jozi-dark hover:text-jozi-gold transition-colors flex items-center space-x-1 group/edit"
+                          title="Click to edit points"
+                        >
+                          <span>{reward.pointsRequired.toLocaleString()}</span>
+                          <Edit3 className="w-3 h-3 opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+                        </button>
+                      </td>
                       <td className="py-6">
                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${reward.status === 'Active' ? 'bg-emerald-50 text-emerald-500' : 'bg-gray-100 text-gray-400'}`}>
                           {reward.status}
@@ -373,8 +592,25 @@ const AdminRewardsManagement: React.FC = () => {
                       <td className="py-6 text-xs font-bold text-gray-400">{reward.totalClaimed} Claims</td>
                       <td className="py-6 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <button onClick={() => handleOpenModal(reward)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-jozi-forest"><Edit3 className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(reward.id)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                          {!reward.isApproved && (
+                            <button 
+                              onClick={() => handleApprove(reward.id)} 
+                              disabled={actionLoading === reward.id}
+                              className="p-2 bg-emerald-50 text-emerald-500 rounded-lg hover:bg-emerald-100 disabled:opacity-50"
+                              title="Approve Campaign"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => handleOpenDrawer(reward.id)} 
+                            disabled={actionLoading === reward.id}
+                            className="p-2 bg-gray-50  cursor-pointer text-gray-400 rounded-lg hover:text-jozi-forest disabled:opacity-50"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        
                         </div>
                       </td>
                     </tr>
@@ -408,6 +644,8 @@ const AdminRewardsManagement: React.FC = () => {
            </div>
            <ShieldCheck className="absolute -bottom-10 -right-10 w-64 h-64 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000" />
         </div>
+          </>
+        )}
       </section>
 
       {/* Configuration Modal */}
@@ -532,6 +770,131 @@ const AdminRewardsManagement: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 right-8 z-50"
+          >
+            <div className={`px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 ${
+              toast.type === 'success' 
+                ? 'bg-emerald-500 text-white' 
+                : 'bg-red-500 text-white'
+            }`}>
+              {toast.type === 'success' ? (
+                <CheckCircle2 className="w-5 h-5" />
+              ) : (
+                <AlertCircle className="w-5 h-5" />
+              )}
+              <span className="font-bold text-sm">{toast.message}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Points Assignment Modal */}
+      <AnimatePresence>
+        {isPointsModalOpen && selectedCampaign && (
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setIsPointsModalOpen(false)} 
+              className="absolute inset-0 bg-jozi-dark/60 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-5xl p-10 w-full max-w-md relative shadow-2xl overflow-hidden text-left"
+            >
+              <button 
+                onClick={() => setIsPointsModalOpen(false)} 
+                className="absolute top-8 right-8 p-3 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-4 mb-2">
+                    <div className="w-12 h-12 bg-jozi-gold/10 rounded-2xl flex items-center justify-center text-jozi-gold shadow-sm">
+                      <Target className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-2xl font-black text-jozi-forest tracking-tighter uppercase">Assign Points</h3>
+                  </div>
+                  <p className="text-gray-400 font-medium text-sm">Set the loyalty points required to claim this reward.</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">
+                      Current Points
+                    </label>
+                    <div className="bg-gray-50 rounded-2xl px-6 py-4">
+                      <span className="text-2xl font-black text-gray-400">{selectedCampaign.currentPoints.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">
+                      New Points Required
+                    </label>
+                    <div className="relative">
+                      <Target className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-jozi-gold" />
+                      <input 
+                        type="number" 
+                        min="0"
+                        step="100"
+                        className="w-full bg-gray-50 rounded-2xl pl-14 pr-6 py-5 font-black text-2xl text-jozi-forest outline-none border-2 border-transparent focus:border-jozi-gold/20"
+                        value={newPoints}
+                        onChange={(e) => setNewPoints(parseInt(e.target.value) || 0)}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 bg-jozi-cream rounded-xl p-4">
+                    <AlertCircle className="w-4 h-4 text-jozi-gold shrink-0" />
+                    <p className="text-xs text-jozi-dark font-medium">
+                      Points will be updated immediately and affect all future claims.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsPointsModalOpen(false)} 
+                    className="grow py-4 bg-gray-50 rounded-2xl font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleUpdatePoints}
+                    disabled={actionLoading === selectedCampaign.id || newPoints === selectedCampaign.currentPoints}
+                    className="grow py-4 bg-jozi-forest text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-xl shadow-jozi-forest/20 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-4 h-4 mr-2" /> Update Points
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Campaign Detail Drawer */}
+      <CampaignDetailDrawer
+        campaign={selectedCampaignForDrawer}
+        onClose={() => setSelectedCampaignForDrawer(null)}
+        onActionSuccess={handleDrawerActionSuccess}
+      />
     </div>
   );
 };

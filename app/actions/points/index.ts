@@ -25,6 +25,7 @@ import {
   ICreateAbuseFlag,
   IPointsHistory,
   IUserPointsBalance,
+  IPointsDashboardSummary,
 } from '@/interfaces/points/points';
 import { CustomResponse } from '@/interfaces/response';
 import { logger } from '@/lib/log';
@@ -1284,23 +1285,7 @@ export async function getExpiryRulesByTypeAction(
   }
 }
 
-export async function getExpiryRulesByModeAction(
-  expiryMode: string
-): Promise<CustomResponse<IExpiryRule[]>> {
-  try {
-    logger.info('[Points Action] Fetching expiry rules for mode:', expiryMode);
-    const response = await serverGET(pointsEndpoints.getExpiryRulesByMode(expiryMode));
-    logger.info('[Points Action] Expiry rules fetched successfully');
-    return response;
-  } catch (err: any) {
-    logger.error('[Points Action] Error fetching expiry rules:', err);
-    return {
-      data: [] as IExpiryRule[],
-      message: err?.message || 'Failed to fetch expiry rules',
-      error: true,
-    };
-  }
-}
+// Note: getExpiryRulesByModeAction removed - mode field no longer exists in expiry rules
 
 export async function createExpiryRuleAction(
   ruleData: ICreateExpiryRule
@@ -1387,21 +1372,7 @@ export async function deactivateExpiryRuleAction(id: string): Promise<CustomResp
   }
 }
 
-export async function toggleExpiryRuleNotificationsAction(id: string): Promise<CustomResponse<IExpiryRule>> {
-  try {
-    logger.info('[Points Action] Toggling expiry rule notifications:', id);
-    const response = await serverPUT(pointsEndpoints.toggleExpiryRuleNotifications(id), {});
-    logger.info('[Points Action] Expiry rule notifications toggled successfully');
-    return response;
-  } catch (err: any) {
-    logger.error('[Points Action] Error toggling expiry rule notifications:', err);
-    return {
-      data: null as any,
-      message: err?.message || 'Failed to toggle expiry rule notifications',
-      error: true,
-    };
-  }
-}
+// Note: toggleExpiryRuleNotificationsAction removed - notifications settings no longer part of expiry rules
 
 export async function validateExpirySettingsAction(
   data: ICreateExpiryRule | Partial<IExpiryRule>
@@ -1565,9 +1536,11 @@ export async function getPointsHistoryByUserIdAction(
 // 14. USER POINTS BALANCE ACTIONS
 // ============================================
 
-export async function getMyPointsBalanceAction(): Promise<CustomResponse<IUserPointsBalance>> {
+
+export async function getUserPointsBalanceAction(
+): Promise<CustomResponse<IUserPointsBalance>> {
   try {
-    const decodedUser = await decodeServerAccessToken();
+        const decodedUser = await decodeServerAccessToken();
     if (!decodedUser?.id) {
       return {
         data: null as any,
@@ -1575,9 +1548,7 @@ export async function getMyPointsBalanceAction(): Promise<CustomResponse<IUserPo
         error: true,
       };
     }
-
-    logger.info('[Points Action] Fetching my points balance');
-    const response = await serverGET(pointsEndpoints.getMyPointsBalance);
+    const response = await serverGET(pointsEndpoints.getUserPointsBalance(decodedUser?.id));
     logger.info('[Points Action] Points balance fetched successfully');
     return response;
   } catch (err: any) {
@@ -1590,19 +1561,19 @@ export async function getMyPointsBalanceAction(): Promise<CustomResponse<IUserPo
   }
 }
 
-export async function getUserPointsBalanceAction(
+export async function getDashboardSummaryAction(
   userId: string
-): Promise<CustomResponse<IUserPointsBalance>> {
+): Promise<CustomResponse<IPointsDashboardSummary>> {
   try {
-    logger.info('[Points Action] Fetching points balance for user:', userId);
-    const response = await serverGET(pointsEndpoints.getUserPointsBalance(userId));
-    logger.info('[Points Action] Points balance fetched successfully');
+    logger.info('[Points Action] Fetching dashboard summary for user:', userId);
+    const response = await serverGET(pointsEndpoints.getDashboardSummary(userId));
+    logger.info('[Points Action] Dashboard summary fetched successfully');
     return response;
   } catch (err: any) {
-    logger.error('[Points Action] Error fetching points balance:', err);
+    logger.error('[Points Action] Error fetching dashboard summary:', err);
     return {
       data: null as any,
-      message: err?.message || 'Failed to fetch points balance',
+      message: err?.message || 'Failed to fetch dashboard summary',
       error: true,
     };
   }

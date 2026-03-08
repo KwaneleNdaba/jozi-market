@@ -13,7 +13,8 @@ import {
   AlertTriangle, 
   ShoppingCart, 
   Users, 
-  Star, 
+  Star,
+  Gift,
   ChevronDown, 
   ChevronUp, 
   Loader2,
@@ -28,8 +29,7 @@ import {
   updateExpiryRuleAction,
   deleteExpiryRuleAction,
   activateExpiryRuleAction,
-  deactivateExpiryRuleAction,
-  toggleExpiryRuleNotificationsAction
+  deactivateExpiryRuleAction
 } from '@/app/actions/points';
 import type { IExpiryRule, ICreateExpiryRule, ExpiryType } from '@/interfaces/points/points';
 
@@ -100,6 +100,7 @@ const TypeIcon = ({ type }: { type: string }) => {
     case 'purchase': return <div className="p-2 bg-blue-100 rounded-lg"><ShoppingCart className="w-4 h-4 text-blue-600" /></div>;
     case 'referral': return <div className="p-2 bg-purple-100 rounded-lg"><Users className="w-4 h-4 text-purple-600" /></div>;
     case 'engagement': return <div className="p-2 bg-amber-100 rounded-lg"><Star className="w-4 h-4 text-amber-600" /></div>;
+    case 'gift': return <div className="p-2 bg-green-100 rounded-lg"><Gift className="w-4 h-4 text-green-600" /></div>;
     default: return <div className="p-2 bg-gray-100 rounded-lg"><Clock className="w-4 h-4 text-gray-600" /></div>;
   }
 };
@@ -174,10 +175,6 @@ export const ExpiryRulesTab: React.FC = () => {
       const newRule: ICreateExpiryRule = {
         expiryType: type,
         expiryDays: 365,
-        expiryMode: 'rolling',
-        gracePeriodDays: 0,
-        warningDaysBefore: 7,
-        sendExpiryNotifications: true,
         active: true
       };
       
@@ -220,26 +217,6 @@ export const ExpiryRulesTab: React.FC = () => {
     }
   };
 
-  const handleToggleNotifications = async (ruleId: string) => {
-    setActionLoading(ruleId);
-    
-    try {
-      const response = await toggleExpiryRuleNotificationsAction(ruleId);
-      
-      if (response.error) {
-        handleNotify('error', response.message);
-      } else {
-        handleNotify('success', 'Notifications toggled successfully');
-        await loadRules();
-      }
-    } catch (err) {
-      console.error('[ExpiryRulesTab] Error toggling notifications:', err);
-      handleNotify('error', 'Failed to toggle notifications');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const handleDeleteRule = async (ruleId: string) => {
     if (!confirm('Are you sure you want to delete this expiry rule? This action cannot be undone.')) {
       return;
@@ -265,7 +242,7 @@ export const ExpiryRulesTab: React.FC = () => {
   };
 
   // Identify which rules are missing from the DB
-  const availableTypes = ['purchase', 'referral', 'engagement'] as const;
+  const availableTypes = ['purchase', 'referral', 'engagement', 'gift'] as const;
   const missingTypes = availableTypes.filter(type => !rules.find(r => r.expiryType === type));
 
   // --- Render Helpers ---
@@ -274,14 +251,14 @@ export const ExpiryRulesTab: React.FC = () => {
     {
       key: 'type',
       header: 'Source Type',
-      width: '25%',
+      width: '30%',
       render: (rule: IExpiryRule) => (
         <div className="flex items-center gap-3">
           <TypeIcon type={rule.expiryType} />
           <div className="flex flex-col">
             <span className="font-medium text-gray-900 capitalize">{rule.expiryType}</span>
             <span className="text-xs text-gray-500">
-              {rule.expiryMode === 'rolling' ? 'Rolling Expiry' : 'Fixed Monthly'}
+              Points from {rule.expiryType} activities
             </span>
           </div>
         </div>
@@ -289,8 +266,8 @@ export const ExpiryRulesTab: React.FC = () => {
     },
     {
       key: 'duration',
-      header: 'Duration',
-      width: '20%',
+      header: 'Expiry Duration',
+      width: '25%',
       render: (rule: IExpiryRule) => (
         <AutoSaveInput
           type="number"
@@ -298,35 +275,28 @@ export const ExpiryRulesTab: React.FC = () => {
           value={rule.expiryDays}
           onSave={(val) => handleUpdateRule(rule.id, { expiryDays: Number(val) })}
           suffix="days"
-          className="w-28"
+          className="w-32"
           disabled={!rule.active}
         />
       ),
     },
     {
-      key: 'mode',
-      header: 'Expiry Logic',
+      key: 'description',
+      header: 'How It Works',
       width: '30%',
       render: (rule: IExpiryRule) => (
         <div className="text-sm text-gray-600">
-           {rule.expiryMode === 'rolling' ? (
-             <span className="flex items-center gap-1.5">
-               <Clock className="w-3.5 h-3.5" /> 
-               Expires {rule.expiryDays} days after earn
-             </span>
-           ) : (
-             <span className="flex items-center gap-1.5">
-               <Calendar className="w-3.5 h-3.5" />
-               Expires on day {rule.fixedDayOfMonth || 1} of month
-             </span>
-           )}
+          <span className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" /> 
+            Expires {rule.expiryDays} days after points are earned
+          </span>
         </div>
       ),
     },
     {
       key: 'active',
       header: 'Active',
-      width: '15%',
+      width: '10%',
       render: (rule: IExpiryRule) => (
         <Toggle
           checked={rule.active}
@@ -338,7 +308,7 @@ export const ExpiryRulesTab: React.FC = () => {
     {
       key: 'actions',
       header: '',
-      width: '10%',
+      width: '5%',
       render: (rule: IExpiryRule) => (
         <Button
           variant="ghost"
@@ -412,10 +382,10 @@ export const ExpiryRulesTab: React.FC = () => {
           >
             <div className="min-w-full">
               <div className="overflow-x-auto">
-                <div className="grid grid-cols-[25%_20%_30%_15%_10%] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  <div>Source</div>
-                  <div>Duration</div>
-                  <div>Logic Preview</div>
+                <div className="grid grid-cols-[30%_25%_30%_10%_5%] gap-4 px-6 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <div>Source Type</div>
+                  <div>Expiry Duration</div>
+                  <div>How It Works</div>
                   <div>Status</div>
                   <div className="text-right">Details</div>
                 </div>
@@ -429,7 +399,7 @@ export const ExpiryRulesTab: React.FC = () => {
                     rules.map((rule) => (
                       <div key={rule.id} className="group bg-white transition-colors hover:bg-gray-50/50">
                         {/* Main Row */}
-                        <div className="grid grid-cols-[25%_20%_30%_15%_10%] gap-4 px-6 py-4 items-center">
+                        <div className="grid grid-cols-[30%_25%_30%_10%_5%] gap-4 px-6 py-4 items-center">
                           {columns.map((col, idx) => (
                             <div key={`${rule.id}-${idx}`} className="flex items-center">
                               {col.render(rule)}
@@ -440,104 +410,35 @@ export const ExpiryRulesTab: React.FC = () => {
                         {/* Expandable Configuration */}
                         {expandedRule === rule.id && (
                           <div className="px-6 pb-6 pt-0 animate-in fade-in slide-in-from-top-1 duration-200">
-                            <div className="p-5 bg-gray-50 border border-gray-100 rounded-lg shadow-inner grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="p-5 bg-gray-50 border border-gray-100 rounded-lg shadow-inner">
                               
-                              {/* Left: Mode Selection */}
                               <div className="space-y-4">
                                 <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                                  <Calendar className="w-4 h-4 text-gray-500" />
-                                  Calculation Method
+                                  <Clock className="w-4 h-4 text-gray-500" />
+                                  Expiry Rule Details
                                 </h4>
+                                
                                 <div className="space-y-3 pl-6">
-                                  <label className="flex items-start gap-3 cursor-pointer group">
-                                    <input
-                                      type="radio"
-                                      name={`mode-${rule.id}`}
-                                      checked={rule.expiryMode === 'rolling'}
-                                      onChange={() => handleUpdateRule(rule.id, { expiryMode: 'rolling' })}
-                                      className="mt-1 text-[var(--jozi-forest)] focus:ring-[var(--jozi-forest)]"
-                                    />
-                                    <div>
-                                      <span className="block text-sm font-medium text-gray-900">Rolling Expiry</span>
-                                      <span className="block text-xs text-gray-500">
-                                        Points expire exactly {rule.expiryDays} days after they are earned. Each transaction is tracked individually.
-                                      </span>
-                                    </div>
-                                  </label>
-
-                                  <label className="flex items-start gap-3 cursor-pointer group">
-                                    <input
-                                      type="radio"
-                                      name={`mode-${rule.id}`}
-                                      checked={rule.expiryMode === 'fixed_monthly'}
-                                      onChange={() => handleUpdateRule(rule.id, { expiryMode: 'fixed_monthly' })}
-                                      className="mt-1 text-[var(--jozi-forest)] focus:ring-[var(--jozi-forest)]"
-                                    />
-                                    <div>
-                                      <span className="block text-sm font-medium text-gray-900">Fixed Monthly Expiry</span>
-                                      <span className="block text-xs text-gray-500">
-                                        All points earned in a period expire on a specific day of the month.
-                                      </span>
-                                    </div>
-                                  </label>
-
-                                  {/* Fixed Day Selector (Only if Fixed Mode) */}
-                                  {rule.expiryMode === 'fixed_monthly' && (
-                                    <div className="ml-7 mt-2 p-3 bg-white border border-gray-200 rounded-md">
-                                      <label className="text-xs text-gray-500 mb-1 block">Day of month to expire:</label>
-                                      <AutoSaveInput
-                                        type="number"
-                                        min="1"
-                                        max="28"
-                                        value={rule.fixedDayOfMonth || 1}
-                                        onSave={(val) => handleUpdateRule(rule.id, { fixedDayOfMonth: Number(val) })}
-                                        className="w-full"
-                                        suffix="th"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Right: Protection & Notifications */}
-                              <div className="space-y-4">
-                                <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                                  <Bell className="w-4 h-4 text-gray-500" />
-                                  Protection & Alerts
-                                </h4>
-                                <div className="space-y-4 pl-6">
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Grace Period (Extra days after expiry)</p>
-                                    <AutoSaveInput
-                                      type="number"
-                                      min="0"
-                                      value={rule.gracePeriodDays}
-                                      onSave={(val) => handleUpdateRule(rule.id, { gracePeriodDays: Number(val) })}
-                                      className="w-full"
-                                      suffix="days"
-                                    />
-                                  </div>
-
-                                  <div className="flex items-start gap-4">
+                                  <div className="flex items-center gap-4">
                                     <div className="flex-1">
-                                      <p className="text-xs text-gray-500 mb-1">Warning Notification</p>
+                                      <p className="text-xs text-gray-500 mb-1">Points Validity Period</p>
                                       <AutoSaveInput
                                         type="number"
                                         min="1"
-                                        value={rule.warningDaysBefore}
-                                        onSave={(val) => handleUpdateRule(rule.id, { warningDaysBefore: Number(val) })}
+                                        value={rule.expiryDays}
+                                        onSave={(val) => handleUpdateRule(rule.id, { expiryDays: Number(val) })}
                                         className="w-full"
-                                        suffix="days before"
+                                        suffix="days"
+                                        disabled={!rule.active}
                                       />
                                     </div>
-                                    <div className="pt-6">
-                                      <Toggle 
-                                        checked={rule.sendExpiryNotifications}
-                                        onChange={() => handleToggleNotifications(rule.id)}
-                                        label="" // Compact
-                                        disabled={actionLoading === rule.id}
-                                      />
-                                    </div>
+                                  </div>
+                                  
+                                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-md">
+                                    <p className="text-xs text-blue-900">
+                                      <strong>How it works:</strong> Points earned from {rule.expiryType} activities will automatically expire {rule.expiryDays} days after they are earned. 
+                                      Customers will see these points removed from their balance when they expire.
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -578,7 +479,7 @@ export const ExpiryRulesTab: React.FC = () => {
                 <div className="flex-1 space-y-4 pt-1">
                   <div>
                     <p className="text-sm font-medium text-gray-900">Customer earns points today</p>
-                    <p className="text-xs text-gray-500">Total +500 pts across different activities</p>
+                    <p className="text-xs text-gray-500">Total +550 pts across different activities</p>
                   </div>
                   
                   <div className="space-y-3 bg-white p-4 rounded border border-gray-100 shadow-sm">
@@ -626,6 +527,21 @@ export const ExpiryRulesTab: React.FC = () => {
                     ) : (
                       <div className="text-xs text-gray-400 italic pl-6">Engagement rules not active</div>
                     )}
+
+                     {/* Gift Preview */}
+                     {getRuleByType('gift') ? (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-2 text-gray-700">
+                          <Gift className="w-3.5 h-3.5 text-green-500" /> 
+                          50 Gifted Pts
+                        </span>
+                        <span className="text-gray-500 font-mono text-xs">
+                           Expires in {getRuleByType('gift')?.expiryDays} days
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic pl-6">Gift rules not active</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -637,21 +553,21 @@ export const ExpiryRulesTab: React.FC = () => {
                   <div className="w-1 h-full bg-amber-400 rounded-full shrink-0 min-h-[40px]"></div>
                   <div>
                     <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Short Expiry (30-90d)</p>
-                    <p className="text-xs text-gray-600">Reduces liability quickly but risks frustrating casual customers.</p>
+                    <p className="text-xs text-gray-600">Reduces liability quickly but may frustrate casual customers who don't shop frequently.</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
                   <div className="w-1 h-full bg-blue-400 rounded-full shrink-0 min-h-[40px]"></div>
                   <div>
-                    <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Standard (1 Year)</p>
-                    <p className="text-xs text-gray-600">Industry standard. Gives customers enough time to redeem.</p>
+                    <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Standard (180-365d)</p>
+                    <p className="text-xs text-gray-600">Industry standard. Gives customers enough time to accumulate and redeem points.</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
                   <div className="w-1 h-full bg-green-400 rounded-full shrink-0 min-h-[40px]"></div>
                   <div>
-                    <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Grace Periods</p>
-                    <p className="text-xs text-gray-600">Adding a 7-day grace period significantly reduces support tickets for "just expired" points.</p>
+                    <p className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Different Durations</p>
+                    <p className="text-xs text-gray-600">Consider longer expiry for high-value activities (purchases) and shorter for low-value (engagement).</p>
                   </div>
                 </div>
               </div>

@@ -91,13 +91,11 @@ export const pointsEndpoints = {
   getAllExpiryRules: `${baseUrl}/points/expiry-rules`,
   getExpiryRuleById: (id: string) => `${baseUrl}/points/expiry-rules/${id}`,
   getExpiryRulesByType: (expiryType: string) => `${baseUrl}/points/expiry-rules/type/${expiryType}`,
-  getExpiryRulesByMode: (expiryMode: string) => `${baseUrl}/points/expiry-rules/mode/${expiryMode}`,
   createExpiryRule: `${baseUrl}/points/expiry-rules`,
   updateExpiryRule: (id: string) => `${baseUrl}/points/expiry-rules/${id}`,
   deleteExpiryRule: (id: string) => `${baseUrl}/points/expiry-rules/${id}`,
   activateExpiryRule: (id: string) => `${baseUrl}/points/expiry-rules/${id}/activate`,
   deactivateExpiryRule: (id: string) => `${baseUrl}/points/expiry-rules/${id}/deactivate`,
-  toggleExpiryRuleNotifications: (id: string) => `${baseUrl}/points/expiry-rules/${id}/toggle-notifications`,
   validateExpirySettings: `${baseUrl}/points/expiry-rules/validate`,
   calculateExpiryDate: (ruleId: string) => `${baseUrl}/points/expiry-rules/${ruleId}/calculate-expiry`,
   
@@ -113,5 +111,6 @@ export const pointsEndpoints = {
   
   // User Points Balance
   getMyPointsBalance: `${baseUrl}/points/balance/my-balance`,
-  getUserPointsBalance: (userId: string) => `${baseUrl}/points/balance/user/${userId}`,
+  getUserPointsBalance: (userId: string) => `${baseUrl}/points/user-points-balance/user/${userId}`,
+  getDashboardSummary: (userId: string) => `${baseUrl}/points/user-points-balance/user/${userId}/dashboard-summary`,
 } as const;

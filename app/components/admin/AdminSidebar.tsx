@@ -31,7 +31,7 @@ const NAV_ITEMS = [
     { id: 'points-tiers', label: 'Points & Tiers', icon: Trophy, path: '/admin/points-config' },
     // { id: 'exposure', label: 'Social Exposure', icon: Share2, path: '/admin/social-exposure' },
     // { id: 'gamification', label: 'Economy Logic', icon: Gamepad2, path: '/admin/gamification' },
-    // { id: 'rewards', label: 'Rewards Catalog', icon: Gift, path: '/admin/rewards' },
+    { id: 'rewards', label: 'Rewards Catalog', icon: Gift, path: '/admin/rewards' },
     // { id: 'vouchers', label: 'Voucher Hub', icon: Tag, path: '/admin/vouchers' },
   ]},
   // { group: 'Infrastructure', items: [

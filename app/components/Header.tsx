@@ -18,7 +18,8 @@ import {
   Sparkles,
   MessageSquare,
   LogOut,
-  Settings
+  Settings,
+  GiftIcon
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -157,7 +158,7 @@ const Header: React.FC = () => {
     { label: 'Vendors', path: '/vendors', icon: <User className="w-4 h-4 mr-1" /> },
     { label: 'Deals', path: '/deals', icon: <Tag className="w-4 h-4 mr-1" /> },
     { label: 'Discussions', path: '/discussions', icon: <MessageSquare className="w-4 h-4 mr-1" /> },
-    { label: 'Play & Earn', path: '/games', icon: <Gamepad2 className="w-4 h-4 mr-1" /> },
+    { label: 'Rewards', path: '/games', icon: <GiftIcon className="w-4 h-4 mr-1" /> },
   ];
 
   const handleCategoryClick = (cat: string, sub?: string) => {
@@ -169,11 +170,11 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-jozi-cream/80 backdrop-blur-md border-b border-jozi-forest/10">
-      <div className="container mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-jozi-cream/95 backdrop-blur-xl border-b border-jozi-forest/10">
+      <div className="container mx-auto px-3 md:px-4 lg:px-6 h-14 md:h-16 flex items-center justify-between">
         {/* Logo - Points to Root (Landing Page) */}
-        <Link href="/" className="flex items-center -ml-4 lg:-ml-2">
-          <Logo className="h-10 w-auto" />
+        <Link href="/" className="flex items-center -ml-2 lg:-ml-2">
+          <Logo className="h-8 md:h-10 w-auto" />
         </Link>
 
         {/* Desktop Nav */}
@@ -255,7 +256,7 @@ const Header: React.FC = () => {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center space-x-1.5 md:space-x-3 lg:space-x-4">
+        <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-4">
           {!isLoggedIn ? (
             <div className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-1 lg:mr-2 text-left">
               <Link href="/signin" className="text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:text-jozi-gold transition-colors whitespace-nowrap">
@@ -349,7 +350,8 @@ const Header: React.FC = () => {
             </div>
           )}
 
-          <div className="flex items-center space-x-1.5 lg:space-x-2">
+          {/* Desktop-only action buttons */}
+          <div className="hidden lg:flex items-center space-x-1.5 lg:space-x-2">
             <Link href="/profile?tab=wishlist" className="p-1.5 hover:bg-jozi-forest/5 rounded-full text-jozi-forest transition-colors">
               <Heart className="w-4 h-4" />
             </Link>
@@ -371,12 +373,22 @@ const Header: React.FC = () => {
             Sell
           </Link>
           
+          {/* Mobile: Search icon */}
+          <button 
+            className="lg:hidden p-2 text-jozi-forest min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+            onClick={() => {
+              // TODO: Open search drawer
+            }}
+          >
+            <Search className="w-5 h-5" />
+          </button>
+          
           {/* Mobile Menu Toggle */}
           <button 
-            className="lg:hidden p-2 text-jozi-forest"
+            className="lg:hidden p-2 text-jozi-forest min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X /> : <Menu />}
+            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>

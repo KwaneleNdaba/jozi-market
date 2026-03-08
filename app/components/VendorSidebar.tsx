@@ -30,6 +30,7 @@ const VendorSidebar: React.FC<VendorSidebarProps> = ({ vendor }) => {
     { id: 'inventory', label: 'Product Vault', icon: Package, minTier: 'Free', path: '/vendor/inventory' },
     { id: 'orders', label: 'Order Manifest', icon: ShoppingCart, minTier: 'Free', path: '/vendor/orders' },
     // { id: 'notifications', label: 'Notifications', icon: Bell, minTier: 'Free', path: '/vendor/notifications' },
+    { id: 'free-product', label: 'Free Product Campaign', icon: Bell, minTier: 'Free', path: '/vendor/campaigns/free-product' },
     // { id: 'exposure', label: 'Social Exposure', icon: Share2, minTier: 'Starter', path: '/vendor/exposure' },
     // { id: 'influencers', label: 'Influencer Hub', icon: Megaphone, minTier: 'Starter', path: '/vendor/influencers' },
     // { id: 'email-marketing', label: 'Email Campaigns', icon: Mail, minTier: 'Growth', path: '/vendor/email-marketing' },

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Gamepad2, 
@@ -18,15 +18,82 @@ import {
   Award,
   Sparkles,
   Ticket,
-  Users
+  Users,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { getVisibleCampaignsAction } from '@/app/actions/freeProductCampaign';
+import type { IFreeProductCampaign } from '@/interfaces/freeProductCampaign/freeProductCampaign';
+import {  getUserPointsBalanceAction  } from '@/app/actions/points';
+import { decodeAccessToken } from '@/lib/ecryptUser';
 
 const GamificationPage: React.FC = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinResult, setSpinResult] = useState<string | null>(null);
-  const [points, setPoints] = useState(1250);
+  const [points, setPoints] = useState(0);
+  const [pendingPoints, setPendingPoints] = useState(0);
   const [activeTab, setActiveTab] = useState<'games' | 'challenges' | 'rewards'>('rewards');
+  const [campaigns, setCampaigns] = useState<IFreeProductCampaign[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loadingPoints, setLoadingPoints] = useState(true);
+
+  // Get user ID from token
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const decoded = await decodeAccessToken();
+        if (decoded?.id) {
+          setUserId(decoded.id);
+        }
+      } catch (error) {
+        console.error('Failed to decode token:', error);
+      }
+    };
+
+    getUserId();
+  }, []);
+
+  // Fetch user points balance
+  useEffect(() => {
+    const fetchPoints = async () => {
+      try {
+        setLoadingPoints(true);
+        const response = await getUserPointsBalanceAction();
+        if (!response.error && response.data) {
+          setPoints(response.data.availablePoints);
+          setPendingPoints(response.data.pendingPoints);
+        }
+      } catch (error) {
+        console.error('Failed to fetch points:', error);
+      } finally {
+        setLoadingPoints(false);
+      }
+    };
+
+    fetchPoints();
+  }, []);
+
+  // Fetch visible campaigns
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        setLoadingCampaigns(true);
+        const response = await getVisibleCampaignsAction();
+        
+        if (!response.error && response.data) {
+          setCampaigns(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch campaigns:', error);
+      } finally {
+        setLoadingCampaigns(false);
+      }
+    };
+
+    fetchCampaigns();
+  }, []);
 
   const handleSpin = () => {
     if (isSpinning) return;
@@ -64,18 +131,18 @@ const GamificationPage: React.FC = () => {
                 <Star className="w-5 h-5 fill-current" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Your Balance</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Available Points</p>
                 <p className="text-xl font-black text-jozi-forest">{points.toLocaleString()} <span className="text-sm font-bold text-jozi-gold">PTS</span></p>
               </div>
             </div>
             <div className="h-10 w-px bg-gray-100 hidden sm:block" />
             <div className="hidden sm:flex items-center space-x-3">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
-                <Flame className="w-5 h-5 fill-current" />
+                <Clock className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Daily Streak</p>
-                <p className="text-xl font-black text-jozi-forest">4 Days</p>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Pending Points</p>
+                <p className="text-xl font-black text-jozi-forest">{pendingPoints.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -322,48 +389,126 @@ const GamificationPage: React.FC = () => {
             >
               <div className="text-center space-y-4 max-w-2xl mx-auto">
                 <h2 className="text-4xl font-black text-jozi-forest">Jozi Rewards Boutique</h2>
-                <p className="text-gray-500 font-medium leading-relaxed">Redeem your hard-earned points for exclusive vouchers, limited edition merch, and Joburg's finest experiences.</p>
+                <p className="text-gray-500 font-medium leading-relaxed">Redeem your hard-earned points for exclusive free products from Joburg's finest local vendors.</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {[
-                  { title: 'R100 Off Voucher', points: 1000, type: 'Savings', rarity: 'Common' },
-                  { title: 'Free Express Shipping', points: 2500, type: 'Service', rarity: 'Rare' },
-                  { title: 'Jozi Market Tote', points: 4500, type: 'Merch', rarity: 'Epic' },
-                  { title: 'Artisanal Coffee Box', points: 8000, type: 'Food', rarity: 'Legendary' },
-                  { title: 'R500 Mega Voucher', points: 15000, type: 'Savings', rarity: 'Mythic' },
-                  { title: 'VIP Market Pass', points: 25000, type: 'Event', rarity: 'Limited' },
-                ].map((reward, i) => (
-                  <div key={i} className="group bg-white rounded-4xl border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all flex flex-col items-center p-8 text-center relative">
-                    <div className="absolute top-6 right-6">
-                      <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${
-                        reward.rarity === 'Legendary' ? 'bg-jozi-gold text-white' : 'bg-gray-100 text-gray-400'
-                      }`}>
-                        {reward.rarity}
-                      </span>
+              {loadingCampaigns ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white rounded-4xl border border-jozi-forest/5 shadow-soft p-8 animate-pulse">
+                      <div className="aspect-square bg-gray-200 rounded-3xl mb-6" />
+                      <div className="h-4 bg-gray-200 rounded mb-2" />
+                      <div className="h-6 bg-gray-200 rounded mb-4" />
+                      <div className="h-10 bg-gray-200 rounded" />
                     </div>
-                    <div className="w-20 h-20 bg-jozi-gold/5 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-jozi-gold/10 transition-colors">
-                      <Gift className="w-10 h-10 text-jozi-gold" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{reward.type}</span>
-                    <h4 className="text-xl font-black text-jozi-forest mt-1">{reward.title}</h4>
-                    
-                    <div className="mt-8 flex flex-col items-center space-y-4 w-full">
-                      <div className="flex items-center space-x-1">
-                        <span className="text-3xl font-black text-jozi-forest">{reward.points.toLocaleString()}</span>
-                        <span className="text-xs font-bold text-jozi-gold uppercase">Pts</span>
+                  ))}
+                </div>
+              ) : campaigns.length === 0 ? (
+                <div className="text-center py-20">
+                  <Gift className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                  <h3 className="text-2xl font-black text-gray-400 mb-2">No Campaigns Available</h3>
+                  <p className="text-gray-500 font-medium">Check back soon for new reward campaigns!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {campaigns.map((campaign) => {
+                    const productImage = campaign.product?.images?.[0]?.file || '/placeholder-product.jpg';
+                    const productTitle = campaign.product?.title || 'Unknown Product';
+                    const variantName = campaign.variant?.name;
+                    const displayName = variantName ? `${productTitle} - ${variantName}` : productTitle;
+                    const canAfford = points >= campaign.pointsRequired;
+                    const isExpiringSoon = campaign.expiryDate && 
+                      new Date(campaign.expiryDate).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+
+                    return (
+                      <div 
+                        key={campaign.id} 
+                        className="group bg-white rounded-4xl border border-jozi-forest/5 shadow-soft hover:shadow-xl transition-all flex flex-col overflow-hidden"
+                      >
+                        {/* Product Image */}
+                        <div className="relative aspect-square bg-gray-50 overflow-hidden">
+                          <Image
+                            src={productImage}
+                            alt={displayName}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          />
+                          
+                          {/* Badges */}
+                          <div className="absolute top-4 left-4 right-4 flex items-start justify-between">
+                            {isExpiringSoon && (
+                              <span className="text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest bg-rose-500 text-white shadow-lg">
+                                Expiring Soon
+                              </span>
+                            )}
+                            {campaign.quantity <= 5 && campaign.quantity > 0 && (
+                              <span className="text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest bg-jozi-gold text-white shadow-lg ml-auto">
+                                Limited Offer
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Quantity Badge */}
+                          <div className="absolute bottom-4 right-4">
+                            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg">
+                              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Available</p>
+                              <p className="text-lg font-black text-jozi-forest">{campaign.quantity}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 flex flex-col flex-grow">
+                          <div className="flex-grow">
+                            <h4 className="text-lg font-black text-jozi-forest line-clamp-2 leading-tight">
+                              {displayName}
+                            </h4>
+                          </div>
+                          
+                          {/* Points & Actions */}
+                          <div className="mt-6 space-y-3">
+                            <div className="flex items-center justify-center space-x-2 bg-jozi-gold/10 rounded-2xl py-3">
+                              <Star className="w-5 h-5 text-jozi-gold fill-current" />
+                              <span className="text-2xl font-black text-jozi-forest">
+                                {campaign.pointsRequired.toLocaleString()}
+                              </span>
+                              <span className="text-xs font-bold text-jozi-gold uppercase">PTS</span>
+                            </div>
+
+                            <Link 
+                              href={`/product/${campaign.productId}`}
+                              className={`w-full py-3.5 rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 ${
+                                canAfford && campaign.quantity > 0
+                                  ? 'bg-jozi-forest text-white hover:bg-jozi-dark shadow-lg shadow-jozi-forest/10' 
+                                  : 'bg-gray-100 text-gray-400'
+                              }`}
+                            >
+                              <Eye className="w-4 h-4" />
+                              {campaign.quantity === 0 ? 'Out of Stock' : canAfford ? 'View & Claim' : 'Need More Points'}
+                            </Link>
+
+                            {/* Vendor Attribution */}
+                            <div className="pt-3 border-t border-jozi-forest/5">
+                              <p className="text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest">
+                                Offered by
+                              </p>
+                              <Link 
+                                href={`/vendors/${campaign.vendorId}`}
+                                className="text-xs font-black text-jozi-forest text-center mt-1 block hover:text-jozi-gold transition-colors"
+                              >
+                                {campaign.vendor?.applicant && Array.isArray(campaign.vendor.applicant) 
+                                  ? campaign.vendor.applicant[0]?.shopName 
+                                  : (campaign.vendor?.applicant as any)?.shopName || 'Local Vendor'}
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <button className={`w-full py-4 rounded-2xl font-black text-sm transition-all ${
-                        points >= reward.points 
-                          ? 'bg-jozi-forest text-white hover:bg-jozi-dark shadow-lg shadow-jozi-forest/10' 
-                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      }`}>
-                        {points >= reward.points ? 'Redeem Item' : `Need ${reward.points - points} More`}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
