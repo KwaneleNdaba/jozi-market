@@ -26,18 +26,18 @@ const VendorSidebar: React.FC<VendorSidebarProps> = ({ vendor }) => {
   const pathname = usePathname();
 
   const menuItems = [
-    // { id: 'overview', label: 'Artisan Cockpit', icon: LayoutDashboard, minTier: 'Free', path: '/vendor/dashboard' },
+    { id: 'overview', label: 'Artisan Cockpit', icon: LayoutDashboard, minTier: 'Free', path: '/vendor/dashboard' },
     { id: 'inventory', label: 'Product Vault', icon: Package, minTier: 'Free', path: '/vendor/inventory' },
     { id: 'orders', label: 'Order Manifest', icon: ShoppingCart, minTier: 'Free', path: '/vendor/orders' },
-    // { id: 'notifications', label: 'Notifications', icon: Bell, minTier: 'Free', path: '/vendor/notifications' },
+    { id: 'notifications', label: 'Notifications', icon: Bell, minTier: 'Free', path: '/vendor/notifications' },
     { id: 'free-product', label: 'Free Product Campaign', icon: Bell, minTier: 'Free', path: '/vendor/campaigns/free-product' },
-    // { id: 'exposure', label: 'Social Exposure', icon: Share2, minTier: 'Starter', path: '/vendor/exposure' },
-    // { id: 'influencers', label: 'Influencer Hub', icon: Megaphone, minTier: 'Starter', path: '/vendor/influencers' },
-    // { id: 'email-marketing', label: 'Email Campaigns', icon: Mail, minTier: 'Growth', path: '/vendor/email-marketing' },
-    // { id: 'analytics', label: 'Intelligence', icon: BrainCircuit, minTier: 'Starter', path: '/vendor/intelligence' },
-    // { id: 'marketing', label: 'Marketing Hub', icon: Tag, minTier: 'Growth', path: '/vendor/marketing' },
-    // { id: 'wallet', label: 'Capital Ledger', icon: Wallet, minTier: 'Free', path: '/vendor/wallet' },
-    // { id: 'settings', label: 'Workshop Config', icon: Settings, minTier: 'Free', path: '/vendor/settings' },
+    { id: 'exposure', label: 'Social Exposure', icon: Share2, minTier: 'Starter', path: '/vendor/exposure' },
+    { id: 'influencers', label: 'Influencer Hub', icon: Megaphone, minTier: 'Starter', path: '/vendor/influencers' },
+    { id: 'email-marketing', label: 'Email Campaigns', icon: Mail, minTier: 'Growth', path: '/vendor/email-marketing' },
+    { id: 'analytics', label: 'Intelligence', icon: BrainCircuit, minTier: 'Starter', path: '/vendor/intelligence' },
+    { id: 'marketing', label: 'Marketing Hub', icon: Tag, minTier: 'Growth', path: '/vendor/marketing' },
+    { id: 'wallet', label: 'Capital Ledger', icon: Wallet, minTier: 'Free', path: '/vendor/wallet' },
+    { id: 'settings', label: 'Workshop Config', icon: Settings, minTier: 'Free', path: '/vendor/settings' },
   ];
 
   return (
