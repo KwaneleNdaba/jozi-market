@@ -38,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       whileHover={{ y: -10 }}
-      className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-jozi-forest/5 transition-all duration-500 h-full flex flex-col"
+      className="group bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl border border-jozi-forest/5 transition-all duration-500 h-full flex flex-col"
     >
       {/* Image Section */}
       <div className="relative aspect-4/5 overflow-hidden bg-jozi-cream shrink-0">
@@ -98,43 +98,43 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       {/* Content Section */}
-      <div className="p-5 flex flex-col grow">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[9px] font-black text-jozi-gold uppercase tracking-[0.2em]">{product.category}</span>
-          <div className="flex items-center bg-jozi-forest/5 px-2 py-0.5 rounded-lg">
+      <div className="p-3 md:p-5 flex flex-col grow">
+        <div className="flex items-center justify-between mb-1.5 md:mb-2">
+          <span className="text-[8px] md:text-[9px] font-black text-jozi-gold uppercase tracking-[0.2em] truncate">{product.category}</span>
+          <div className="flex items-center bg-jozi-forest/5 px-1.5 md:px-2 py-0.5 rounded-lg shrink-0 ml-1">
             <Star className="w-2.5 h-2.5 text-jozi-gold fill-current" />
-            <span className="text-[9px] font-black ml-1 text-jozi-forest">{product.rating}</span>
+            <span className="text-[8px] md:text-[9px] font-black ml-0.5 md:ml-1 text-jozi-forest">{product.rating}</span>
           </div>
         </div>
         
         <Link href={`/product/${product.id}`} className="block grow">
-          <h3 className="font-black text-jozi-forest text-base line-clamp-1 group-hover:text-jozi-gold transition-colors tracking-tight leading-tight">
+          <h3 className="font-black text-jozi-forest text-sm md:text-base line-clamp-1 group-hover:text-jozi-gold transition-colors tracking-tight leading-tight">
             {product.name}
           </h3>
         </Link>
-        <p className="text-[10px] text-gray-400 mt-0.5 font-medium italic">
+        <p className="text-[9px] md:text-[10px] text-gray-400 mt-0.5 font-medium italic truncate">
           by <span className="font-black text-jozi-forest/60 group-hover:text-jozi-gold transition-colors">{product.vendor.name}</span>
         </p>
         
-        <div className="mt-4 flex items-center justify-between border-t border-jozi-forest/5 pt-4">
-          <div className="flex flex-col">
+        <div className="mt-3 md:mt-4 flex items-center justify-between border-t border-jozi-forest/5 pt-3 md:pt-4">
+          <div className="flex flex-col min-w-0">
             {product.priceLabel && (
-              <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+              <span className="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">
                 {product.priceLabel}
               </span>
             )}
-            <div className="flex items-baseline space-x-1.5">
-              <span className="text-xl font-black text-jozi-forest">R{product.price}</span>
+            <div className="flex items-baseline space-x-1 md:space-x-1.5">
+              <span className="text-base md:text-xl font-black text-jozi-forest">R{product.price}</span>
               {product.originalPrice && (
-                <span className="text-[10px] text-gray-300 line-through font-bold italic">R{product.originalPrice}</span>
+                <span className="text-[9px] md:text-[10px] text-gray-300 line-through font-bold italic">R{product.originalPrice}</span>
               )}
             </div>
             {product.variantCount && product.variantCount > 1 && (
               <span className="text-[8px] text-jozi-gold font-bold mt-0.5 uppercase tracking-wide">
-                {product.variantCount} Options Available
+                {product.variantCount} Options
               </span>
             )}
-            <span className="text-[9px] text-gray-400 font-bold mt-0.5">
+            <span className="text-[8px] md:text-[9px] text-gray-400 font-bold mt-0.5 hidden sm:block">
               {product.stock === 0 ? (
                 <span className="text-red-500">Out of Stock</span>
               ) : product.stock < 10 ? (
@@ -145,7 +145,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </span>
           </div>
           <button 
-            className={`p-2.5 rounded-xl transition-all group/btn shadow-sm ${
+            className={`p-2 md:p-2.5 rounded-xl transition-all group/btn shadow-sm min-h-[36px] min-w-[36px] md:min-h-[40px] md:min-w-[40px] flex items-center justify-center shrink-0 ${
               product.stock === 0 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                 : hasVariantsWithDifferentPrices

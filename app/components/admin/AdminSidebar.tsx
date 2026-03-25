@@ -25,6 +25,7 @@ const NAV_ITEMS = [
     { id: 'onboarding', label: 'Vendor Onboarding', icon: UserPlus, path: '/admin/onboarding' },
     { id: 'influencers', label: 'Collab Approvals', icon: Megaphone, path: '/admin/influencer-approvals' },
     { id: 'orders', label: 'Order Manifests', icon: ShoppingCart, path: '/admin/orders' },
+    { id: 'campaign-orders', label: 'Campaign Orders', icon: Gift, path: '/admin/campaign-orders' },
     { id: 'payouts', label: 'Payout Ledger', icon: CreditCard, path: '/admin/vendors/payouts' },
   ]},
   { group: 'Growth', items: [

@@ -1,6 +1,6 @@
 import { baseUrl } from "../../url";
 import { CustomResponse } from "@/interfaces/response";
-import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestCancellation, IReviewCancellation, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from "@/interfaces/order/order";
+import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestCancellation, IReviewCancellation, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem, IPaginatedOrdersResponse } from "@/interfaces/order/order";
 import { POST, GET, PUT } from "@/lib/client";
 import { logger } from "@/lib/log";
 
@@ -78,6 +78,37 @@ export const ORDER_API = {
       return {
         data: [] as IOrder[],
         message: err?.message || "Failed to fetch orders",
+        error: true,
+      };
+    }
+  },
+
+  /**
+   * Get campaign claim orders with pagination and search (admin only)
+   */
+  GET_CAMPAIGN_CLAIM_ORDERS: async (page: number = 1, limit: number = 10, search?: string): Promise<CustomResponse<IPaginatedOrdersResponse>> => {
+    try {
+      let url = `${OrderBaseURL}/campaign-claims?page=${page}&limit=${limit}`;
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      logger.info(`[ORDER_API] Fetching campaign claim orders (page: ${page}, limit: ${limit}${search ? `, search: ${search}` : ''})`);
+      const response = await GET(url);
+      logger.info(`[ORDER_API] Campaign claim orders fetched successfully`);
+      return response;
+    } catch (err: any) {
+      logger.error("[ORDER_API] Error fetching campaign claim orders:", err);
+      return {
+        data: {
+          orders: [],
+          pagination: {
+            page: 1,
+            limit: 10,
+            totalOrders: 0,
+            totalPages: 0,
+          }
+        },
+        message: err?.message || "Failed to fetch campaign claim orders",
         error: true,
       };
     }

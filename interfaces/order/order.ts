@@ -113,6 +113,8 @@ export interface IOrderItem {
   unitPrice: number;
   totalPrice: number;
   status?: OrderItemStatus | string;
+  isCampaignClaimItem?: boolean; // Flag to indicate if this item is from a campaign claim
+  campaignClaimId?: string | null; // Link to campaign claim if this item is from a free product campaign
   // Return flags
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
@@ -141,6 +143,7 @@ export interface IOrder {
   notes?: string;
   items?: IOrderItem[];
   user?: IOrderUser;
+  campaignClaimIds?: string[]; // Array of campaign claim IDs for free product orders
   // Return flags
   isReturnRequested?: boolean;
   isReturnApproved?: boolean;
@@ -161,6 +164,7 @@ export interface ICreateOrder {
   email: string;
   phone?: string;
   notes?: string;
+  campaignClaimIds?: string[]; // Array of campaign claim IDs for free product orders
 }
 
 export interface IUpdateOrder {
@@ -249,5 +253,15 @@ export interface IOrderItemsGroupedResponse {
   dateRange: {
     startDate: string;
     endDate: string;
+  };
+}
+
+export interface IPaginatedOrdersResponse {
+  orders: IOrder[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalOrders: number;
+    totalPages: number;
   };
 }

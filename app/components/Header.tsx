@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -19,7 +19,8 @@ import {
   MessageSquare,
   LogOut,
   Settings,
-  GiftIcon
+  GiftIcon,
+  Bell
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -153,6 +154,40 @@ const Header: React.FC = () => {
     router.refresh();
   };
 
+  const [showHeader, setShowHeader] = useState(true);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  useEffect(() => {
+    const SCROLL_THRESHOLD = 10;
+
+    const onScroll = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+
+        if (currentY < 60 || isMenuOpen) {
+          setShowHeader(true);
+        } else {
+          const delta = currentY - lastScrollY.current;
+          if (delta < -SCROLL_THRESHOLD) {
+            setShowHeader(true);
+          } else if (delta > SCROLL_THRESHOLD) {
+            setShowHeader(false);
+          }
+        }
+
+        lastScrollY.current = currentY;
+        ticking.current = false;
+      });
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isMenuOpen]);
+
   const navLinks = [
     { label: 'Shop', path: '/marketplace', type: 'dropdown' },
     { label: 'Vendors', path: '/vendors', icon: <User className="w-4 h-4 mr-1" /> },
@@ -170,12 +205,31 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-jozi-cream/95 backdrop-blur-xl border-b border-jozi-forest/10">
-      <div className="container mx-auto px-3 md:px-4 lg:px-6 h-14 md:h-16 flex items-center justify-between">
-        {/* Logo - Points to Root (Landing Page) */}
-        <Link href="/" className="flex items-center -ml-2 lg:-ml-2">
-          <Logo className="h-8 md:h-10 w-auto" />
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-2xl border-b border-gray-100 shadow-sm safe-area-top transition-transform duration-300 ease-out will-change-transform ${showHeader ? 'translate-y-0' : '-translate-y-full'} lg:translate-y-0`}>
+      <div className="container mx-auto px-4 lg:px-6 h-14 md:h-16 flex items-center justify-between gap-2">
+        {/* Logo */}
+        <Link href="/" className="flex items-center shrink-0">
+          <Logo className="h-7 md:h-9 w-auto" />
         </Link>
+
+        {/* Prominent Search Bar - Temu Style */}
+        <div className="flex-1 max-w-xl mx-4 hidden md:block">
+          <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+              <Search className="w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search products, brands and categories..."
+              className="w-full bg-gray-100 border border-gray-200 pl-11 pr-4 py-2.5 rounded-3xl text-sm focus:outline-none focus:border-orange-400 focus:bg-white transition-all placeholder:text-gray-400"
+              onFocus={(e) => e.target.placeholder = ''}
+              onBlur={(e) => e.target.placeholder = 'Search products, brands and categories...'}
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-orange-500 bg-white px-2 py-0.5 rounded-full border border-orange-200 hidden group-focus-within:block">
+              ⌘K
+            </div>
+          </div>
+        </div>
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
@@ -256,7 +310,7 @@ const Header: React.FC = () => {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-4">
+        <div className="flex items-center gap-0.5 md:gap-2 lg:gap-4">
           {!isLoggedIn ? (
             <div className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-1 lg:mr-2 text-left">
               <Link href="/signin" className="text-[10px] font-black uppercase tracking-widest text-jozi-forest hover:text-jozi-gold transition-colors whitespace-nowrap">
@@ -350,34 +404,42 @@ const Header: React.FC = () => {
             </div>
           )}
 
-          {/* Desktop-only action buttons */}
-          <div className="hidden lg:flex items-center space-x-1.5 lg:space-x-2">
-            <Link href="/profile?tab=wishlist" className="p-1.5 hover:bg-jozi-forest/5 rounded-full text-jozi-forest transition-colors">
-              <Heart className="w-4 h-4" />
-            </Link>
-            
+          {/* Action Icons */}
+          <div className="flex items-center gap-0.5 md:gap-2">
+            {/* Notifications - hidden on small mobile to reduce clutter */}
+            <button className="hidden sm:flex p-2 md:p-2.5 text-gray-700 hover:bg-gray-100 rounded-2xl transition-all relative min-h-[44px] min-w-[44px] items-center justify-center">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1 right-1 md:-top-0.5 md:-right-0.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">3</span>
+            </button>
+
+            {/* Cart */}
             <button 
               onClick={() => setIsCartOpen(true)}
-              className="p-1.5 hover:bg-jozi-forest/5 rounded-full text-jozi-forest transition-colors relative"
+              className="p-2 md:p-2.5 text-gray-700 hover:bg-gray-100 rounded-2xl transition-all relative min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
-                <span className="absolute top-0 right-0 bg-jozi-gold text-jozi-forest text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full border border-jozi-cream shadow-sm">
+                <span className="absolute top-0.5 right-0.5 md:-top-1 md:-right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow">
                   {totalItems}
                 </span>
               )}
             </button>
+
+            {/* Profile - hidden on mobile, available in BottomNav */}
+            <Link href="/profile" className="hidden md:flex p-2.5 text-gray-700 hover:bg-gray-100 rounded-2xl transition-all min-h-[44px] min-w-[44px] items-center justify-center">
+              <User className="w-5 h-5" />
+            </Link>
           </div>
           
           <Link href="/vendor/pricing" className="hidden lg:flex items-center bg-jozi-forest text-white px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-jozi-dark transition-all shadow-lg shadow-jozi-forest/10 ml-1 whitespace-nowrap">
             Sell
           </Link>
           
-          {/* Mobile: Search icon */}
+          {/* Mobile: Search */}
           <button 
-            className="lg:hidden p-2 text-jozi-forest min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+            className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-2xl min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => {
-              // TODO: Open search drawer
+              alert('Search modal coming soon');
             }}
           >
             <Search className="w-5 h-5" />
@@ -400,28 +462,28 @@ const Header: React.FC = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white border-b border-jozi-forest/10 overflow-y-auto max-h-[85vh] text-left"
+            className="lg:hidden bg-white border-b border-jozi-forest/10 overflow-y-auto max-h-[80vh] text-left overscroll-contain"
           >
-            <div className="px-6 py-8 space-y-6">
+            <div className="px-5 py-6 space-y-5">
               {!isLoggedIn ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <Link 
                     href="/signin" 
-                    className="flex items-center justify-center bg-jozi-cream border border-jozi-forest/10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                    className="flex items-center justify-center bg-jozi-cream border border-jozi-forest/10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest min-h-[48px]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Sign In
                   </Link>
                   <Link 
                     href="/signup" 
-                    className="flex items-center justify-center bg-jozi-gold text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-jozi-gold/20"
+                    className="flex items-center justify-center bg-jozi-gold text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-jozi-gold/20 min-h-[48px]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Join Jozi
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="bg-jozi-cream p-4 rounded-2xl border border-jozi-forest/10">
                     <p className="text-sm font-black text-jozi-forest uppercase tracking-widest">
                       {user?.fullName || 'User'}
@@ -430,7 +492,7 @@ const Header: React.FC = () => {
                   </div>
                   <Link 
                     href="/profile" 
-                    className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                    className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest min-h-[48px]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span>My Profile</span>
@@ -439,7 +501,7 @@ const Header: React.FC = () => {
                   {user?.role?.toLowerCase() === 'vendor' && (
                     <Link 
                       href="/vendor/dashboard" 
-                      className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                      className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <span>Vendor Dashboard</span>
@@ -449,7 +511,7 @@ const Header: React.FC = () => {
                   {user?.role?.toLowerCase() === 'admin' && (
                     <Link 
                       href="/admin/dashboard" 
-                      className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest"
+                      className="flex items-center justify-between bg-jozi-cream border border-jozi-forest/10 py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-jozi-forest min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <span>Admin Dashboard</span>
@@ -461,7 +523,7 @@ const Header: React.FC = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-between bg-red-50 border border-red-200 py-4 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-red-500"
+                    className="w-full flex items-center justify-between bg-red-50 border border-red-200 py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-widest text-red-500 min-h-[48px]"
                   >
                     <span>Sign Out</span>
                     <LogOut className="w-4 h-4" />
@@ -469,13 +531,13 @@ const Header: React.FC = () => {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 ml-1">Main Menu</p>
-                <div className="space-y-1">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 ml-1 mb-2">Main Menu</p>
+                <div className="space-y-0">
                   <div className="border-b border-jozi-forest/5">
                     <button 
                       onClick={() => setMobileExpandedCat(mobileExpandedCat === 'shop' ? null : 'shop')}
-                      className="w-full flex items-center justify-between py-4 text-lg font-black text-jozi-forest"
+                      className="w-full flex items-center justify-between py-3.5 text-base font-black text-jozi-forest min-h-[48px]"
                     >
                       <span>MARKETPLACE</span>
                       <ChevronDown className={`w-5 h-5 transition-transform ${mobileExpandedCat === 'shop' ? 'rotate-180 text-jozi-gold' : ''}`} />
@@ -487,22 +549,22 @@ const Header: React.FC = () => {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden pb-4 space-y-4"
+                          className="overflow-hidden pb-3 space-y-3"
                         >
                           {categories.map(cat => (
-                            <div key={cat.name} className="pl-4 space-y-3">
+                            <div key={cat.name} className="pl-3 space-y-2">
                               <button 
                                 onClick={() => handleCategoryClick(cat.name)}
-                                className="text-sm font-black text-jozi-gold uppercase tracking-widest block"
+                                className="text-sm font-black text-jozi-gold uppercase tracking-widest min-h-[40px] flex items-center"
                               >
                                 {cat.name}
                               </button>
-                              <div className="grid grid-cols-2 gap-2 pl-2">
+                              <div className="grid grid-cols-2 gap-1 pl-2">
                                 {cat.subcategories.map(sub => (
                                   <button
                                     key={sub}
                                     onClick={() => handleCategoryClick(cat.name, sub)}
-                                    className="text-xs font-bold text-gray-400 hover:text-jozi-forest text-left py-1"
+                                    className="text-xs font-bold text-gray-400 hover:text-jozi-forest text-left py-2 min-h-[40px]"
                                   >
                                     {sub}
                                   </button>
@@ -519,7 +581,7 @@ const Header: React.FC = () => {
                     <Link 
                       key={link.label} 
                       href={link.path} 
-                      className="block text-lg font-black text-jozi-forest py-4 border-b border-jozi-forest/5 uppercase tracking-tighter"
+                      className="flex items-center text-base font-black text-jozi-forest py-3.5 border-b border-jozi-forest/5 uppercase tracking-tighter min-h-[48px]"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {link.label}
@@ -530,7 +592,7 @@ const Header: React.FC = () => {
               
               <Link 
                 href="/vendor/pricing" 
-                className="block bg-jozi-forest text-white text-center py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-jozi-forest/20"
+                className="block bg-jozi-forest text-white text-center py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-jozi-forest/20 min-h-[48px]"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Start Selling

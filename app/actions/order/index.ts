@@ -2,7 +2,7 @@
 
 import { serverGET, serverPOST, serverPUT } from '@/lib/server-client';
 import { baseUrl } from '@/endpoints/url';
-import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestCancellation, IReviewCancellation, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem } from '@/interfaces/order/order';
+import { IOrder, ICreateOrder, IUpdateOrder, IUpdateOrderItemStatus, IRequestCancellation, IReviewCancellation, IVendorOrdersResponse, IOrderItemsGroupedResponse, IOrderItem, IPaginatedOrdersResponse } from '@/interfaces/order/order';
 import { CustomResponse } from '@/interfaces/response';
 import { logger } from '@/lib/log';
 import { decodeServerAccessToken } from '@/lib/server-auth';
@@ -109,6 +109,76 @@ export async function getMyOrdersAction(): Promise<CustomResponse<IOrder[]>> {
     return {
       data: [] as IOrder[],
       message: err?.message || 'Failed to fetch orders',
+      error: true,
+    };
+  }
+}
+
+/**
+ * Server action to get campaign claim orders with pagination and search (admin only)
+ */
+export async function getCampaignClaimOrdersAction(
+  page: number = 1,
+  limit: number = 10,
+  search?: string
+): Promise<CustomResponse<IPaginatedOrdersResponse>> {
+  try {
+    const decodedUser = await decodeServerAccessToken();
+    if (!decodedUser?.id) {
+      return {
+        data: {
+          orders: [],
+          pagination: {
+            page: 1,
+            limit: 10,
+            totalOrders: 0,
+            totalPages: 0,
+          }
+        },
+        message: 'Authentication required. Please log in to view campaign claim orders.',
+        error: true,
+      };
+    }
+
+    // Check if user is admin
+    if (decodedUser.role !== 'admin') {
+      return {
+        data: {
+          orders: [],
+          pagination: {
+            page: 1,
+            limit: 10,
+            totalOrders: 0,
+            totalPages: 0,
+          }
+        },
+        message: 'Admin access required to view campaign claim orders.',
+        error: true,
+      };
+    }
+
+    let url = `${baseUrl}/order/campaign-claims?page=${page}&limit=${limit}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+
+    logger.info(`[Order Action] Fetching campaign claim orders (page: ${page}, limit: ${limit}${search ? `, search: ${search}` : ''})`);
+    const response = await serverGET(url);
+    logger.info('[Order Action] Campaign claim orders fetched successfully');
+    return response;
+  } catch (err: any) {
+    logger.error('[Order Action] Error fetching campaign claim orders:', err);
+    return {
+      data: {
+        orders: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          totalOrders: 0,
+          totalPages: 0,
+        }
+      },
+      message: err?.message || 'Failed to fetch campaign claim orders',
       error: true,
     };
   }
