@@ -13,7 +13,6 @@ import {
   MapPin,
   Instagram,
   Facebook,
-  Mail,
   Loader2,
   X,
   Package,
@@ -449,43 +448,11 @@ export default function WaitlistPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="py-10 md:py-14 px-4 border-t border-white/5">
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 justify-center md:justify-start">
-                <div className="w-6 h-6 bg-[#C7A16E] rounded-lg flex items-center justify-center">
-                  <MapPin className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="font-black text-white text-sm uppercase tracking-widest">Jozi Market</span>
-              </div>
-              <p className="text-white/30 text-xs font-medium">Johannesburg, South Africa</p>
-              <a href="mailto:info@jozimarket.co.za" className="flex items-center gap-1.5 text-white/30 text-xs font-medium hover:text-[#C7A16E] transition-colors justify-center md:justify-start">
-                <Mail className="w-3 h-3" /> info@jozimarket.co.za
-              </a>
-            </div>
-
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-white/20 text-[10px] uppercase tracking-widest font-bold">Stay Connected</p>
-              <div className="flex items-center gap-3">
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 hover:border-[#C7A16E]/30 transition-colors" aria-label="Instagram">
-                  <Instagram className="w-4 h-4 text-white/40" />
-                </a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 hover:border-[#C7A16E]/30 transition-colors" aria-label="Facebook">
-                  <Facebook className="w-4 h-4 text-white/40" />
-                </a>
-                <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 hover:border-[#C7A16E]/30 transition-colors" aria-label="TikTok">
-                  <svg className="w-4 h-4 text-white/40 fill-current" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.73a8.17 8.17 0 0 0 4.78 1.52V6.82a4.85 4.85 0 0 1-1.01-.13z"/></svg>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
-            <p className="text-white/15 text-[10px] font-bold uppercase tracking-widest">
-              © {new Date().getFullYear()} Jozi Market · Precision Impact Solution · All rights reserved
-            </p>
-          </div>
+      <footer className="py-8 px-4 border-t border-white/5">
+        <div className="container mx-auto max-w-4xl text-center">
+          <p className="text-white/15 text-[10px] font-bold uppercase tracking-widest">
+            © {new Date().getFullYear()} Jozi Market · Precision Impact Solution · All rights reserved
+          </p>
         </div>
       </footer>
     </div>

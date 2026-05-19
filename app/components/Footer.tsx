@@ -45,31 +45,31 @@ const Footer: React.FC = () => {
             <div className="space-y-4 md:space-y-6">
               <h4 className="text-[10px] font-black uppercase text-jozi-gold tracking-[0.3em] border-b border-white/5 pb-3 md:pb-4">Market Hub</h4>
               <ul className="space-y-2.5 md:space-y-4">
-                <li><Link href="/about" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Who We Are</Link></li>
-                <li><Link href="/shop" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Our Gallery</Link></li>
-                <li><Link href="/vendors" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Artisan Collective</Link></li>
-                <li><Link href="/deals" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Active Promotions</Link></li>
-                <li><Link href="/games" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Play & Earn</Link></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Who We Are</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Our Gallery</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Artisan Collective</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Active Promotions</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Play &amp; Earn</span></li>
               </ul>
             </div>
 
             <div className="space-y-4 md:space-y-6">
               <h4 className="text-[10px] font-black uppercase text-jozi-gold tracking-[0.3em] border-b border-white/5 pb-3 md:pb-4">Seeker Care</h4>
               <ul className="space-y-2.5 md:space-y-4">
-                <li><Link href="/profile" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Dashboard</Link></li>
-                <li><Link href="/shipping" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Logistics Policy</Link></li>
-                <li><Link href="/returns" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Return Manifest</Link></li>
-                <li><Link href="/faq" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Hub Support (FAQ)</Link></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Dashboard</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Logistics Policy</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Return Manifest</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Hub Support (FAQ)</span></li>
               </ul>
             </div>
 
             <div className="space-y-4 md:space-y-6 col-span-2 md:col-span-1">
               <h4 className="text-[10px] font-black uppercase text-jozi-gold tracking-[0.3em] border-b border-white/5 pb-3 md:pb-4">Governance</h4>
               <ul className="grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-2.5 md:space-y-4 md:gap-0">
-                <li><Link href="/terms" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Terms of Service</Link></li>
-                <li><Link href="/privacy" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Privacy Protocol</Link></li>
-                <li><Link href="/vendor/pricing" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Apply to Sell</Link></li>
-                <li><Link href="/contact" className="text-xs md:text-sm font-bold text-jozi-cream/50 hover:text-white transition-colors inline-flex items-center min-h-[36px]">Platform Stewards</Link></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Terms of Service</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Privacy Protocol</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Apply to Sell</span></li>
+                <li><span className="text-xs md:text-sm font-bold text-jozi-cream/50 inline-flex items-center min-h-[36px] cursor-default">Platform Stewards</span></li>
               </ul>
             </div>
 
